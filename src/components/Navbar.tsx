@@ -13,6 +13,7 @@ export default function Navbar() {
           <a href="/#features" className="hover:text-zinc-900 transition-colors">Features</a>
           <a href="/#como-funciona" className="hover:text-zinc-900 transition-colors">Cómo funciona</a>
           <Link href="/templates" className="hover:text-zinc-900 transition-colors">Templates</Link>
+          <Link href="/demo" className="hover:text-zinc-900 transition-colors">Demo</Link>
           <a href="/#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
         </nav>
 

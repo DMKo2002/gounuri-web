@@ -25,8 +25,8 @@ export default function Hero() {
             Crear mi tienda
             <ArrowRight className="h-4 w-4" />
           </a>
-          <a href="#como-funciona" className="btn-outline !px-7 !py-3 !text-base">
-            Ver cómo funciona
+          <a href="/demo" className="btn-outline !px-7 !py-3 !text-base">
+            Probar la demo
           </a>
         </div>
 
