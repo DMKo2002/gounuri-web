@@ -10,9 +10,10 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm text-zinc-600 md:flex">
-          <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
-          <a href="#como-funciona" className="hover:text-zinc-900 transition-colors">Cómo funciona</a>
-          <a href="#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
+          <a href="/#features" className="hover:text-zinc-900 transition-colors">Features</a>
+          <a href="/#como-funciona" className="hover:text-zinc-900 transition-colors">Cómo funciona</a>
+          <Link href="/templates" className="hover:text-zinc-900 transition-colors">Templates</Link>
+          <a href="/#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
         </nav>
 
         <div className="flex items-center gap-3">

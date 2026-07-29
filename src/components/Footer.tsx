@@ -15,8 +15,9 @@ export default function Footer() {
           </div>
 
           <nav className="flex items-center gap-6 text-sm text-zinc-600">
-            <a href="#features" className="hover:text-zinc-900 transition-colors">Features</a>
-            <a href="#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
+            <a href="/#features" className="hover:text-zinc-900 transition-colors">Features</a>
+            <a href="/templates" className="hover:text-zinc-900 transition-colors">Templates</a>
+            <a href="/#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
             <a href={LOGIN_URL} className="hover:text-zinc-900 transition-colors">Ingresar</a>
             <a href={REGISTRO_URL} className="hover:text-zinc-900 transition-colors">Crear tienda</a>
           </nav>
