@@ -54,11 +54,13 @@ export default function TemplatesPage() {
                 className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all hover:border-zinc-900 hover:shadow-md"
               >
                 {screenshotDe(t.slug) ? (
+                  // Screenshot full-page: arranca mostrando el tope y al pasar
+                  // el mouse "scrollea" hasta el pie de la página y vuelve.
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={screenshotDe(t.slug)!}
                     alt={`Preview del template ${t.nombre}`}
-                    className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top"
+                    className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top transition-[object-position] duration-[4000ms] ease-in-out group-hover:object-bottom"
                   />
                 ) : (
                   <div className="flex aspect-[4/3] items-center justify-center border-b border-zinc-100 bg-zinc-100 text-sm text-zinc-400">
