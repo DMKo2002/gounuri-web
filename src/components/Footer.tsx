@@ -1,4 +1,4 @@
-import { LOGIN_URL, REGISTRO_URL } from '@/lib/site'
+import { REGISTRO_URL } from '@/lib/site'
 
 export default function Footer() {
   return (
@@ -18,7 +18,7 @@ export default function Footer() {
             <a href="/#features" className="hover:text-zinc-900 transition-colors">Features</a>
             <a href="/templates" className="hover:text-zinc-900 transition-colors">Templates</a>
             <a href="/#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
-            <a href={LOGIN_URL} className="hover:text-zinc-900 transition-colors">Ingresar</a>
+            <a href="/login" className="hover:text-zinc-900 transition-colors">Ingresar</a>
             <a href={REGISTRO_URL} className="hover:text-zinc-900 transition-colors">Crear tienda</a>
           </nav>
         </div>

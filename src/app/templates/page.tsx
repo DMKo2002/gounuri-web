@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import fs from 'fs'
+import path from 'path'
 import { ArrowUpRight } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -9,6 +11,17 @@ export const metadata: Metadata = {
   title: 'Templates — Gounuri',
   description:
     'Explorá los 6 diseños de tienda disponibles en Gounuri. Cada uno con demo en vivo para que lo pruebes como si fueras un cliente.',
+}
+
+// Busca el screenshot en public/templates/{slug}.jpg|.png (resuelto en build).
+// Para agregar previews: guardar las capturas con esos nombres y redeployar.
+function screenshotDe(slug: string): string | null {
+  for (const ext of ['jpg', 'png', 'webp']) {
+    if (fs.existsSync(path.join(process.cwd(), 'public', 'templates', `${slug}.${ext}`))) {
+      return `/templates/${slug}.${ext}`
+    }
+  }
+  return null
 }
 
 export default function TemplatesPage() {
@@ -40,10 +53,18 @@ export default function TemplatesPage() {
                 rel="noopener noreferrer"
                 className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white transition-all hover:border-zinc-900 hover:shadow-md"
               >
-                {/* Preview — screenshot pendiente para la etapa de diseño */}
-                <div className="flex aspect-[4/3] items-center justify-center border-b border-zinc-100 bg-zinc-100 text-sm text-zinc-400">
-                  Preview de {t.nombre}
-                </div>
+                {screenshotDe(t.slug) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={screenshotDe(t.slug)!}
+                    alt={`Preview del template ${t.nombre}`}
+                    className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top"
+                  />
+                ) : (
+                  <div className="flex aspect-[4/3] items-center justify-center border-b border-zinc-100 bg-zinc-100 text-sm text-zinc-400">
+                    Preview de {t.nombre}
+                  </div>
+                )}
 
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between">

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LOGIN_URL, REGISTRO_URL } from '@/lib/site'
+import NavAuth from '@/components/NavAuth'
 
 export default function Navbar() {
   return (
@@ -17,17 +17,7 @@ export default function Navbar() {
           <a href="/#planes" className="hover:text-zinc-900 transition-colors">Planes</a>
         </nav>
 
-        <div className="flex items-center gap-3">
-          <a
-            href={LOGIN_URL}
-            className="hidden text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors sm:block"
-          >
-            Ingresar
-          </a>
-          <a href={REGISTRO_URL} className="btn-black !px-4 !py-2">
-            Crear mi tienda
-          </a>
-        </div>
+        <NavAuth />
       </div>
     </header>
   )
