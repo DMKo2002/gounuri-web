@@ -1,0 +1,15 @@
+Poner acá los screenshots de página completa de cada template demo:
+
+  minimalista.jpg
+  atelier.jpg
+  mono.jpg
+  axis.jpg
+  glow.jpg
+  bazaar.jpg
+
+(también sirven .png o .webp)
+
+Cómo capturar página completa en Chrome:
+  F12 → Ctrl+Shift+P → "Capture full size screenshot" → Enter
+
+Después: git add + commit + push, y la página /templates los levanta sola.
