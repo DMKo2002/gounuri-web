@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { LOGIN_URL, TRIAL_DAYS } from '@/lib/site'
+import { friendlyAuthError } from '@/lib/auth-error'
 
 export default function RegistroPage() {
   const supabase = createClient()
@@ -31,20 +32,40 @@ export default function RegistroPage() {
     }
 
     setLoading(true)
-    const { error: err } = await supabase.auth.signUp({ email, password })
-    setLoading(false)
+    try {
+      const { data, error: err } = await supabase.auth.signUp({ email, password })
+      setLoading(false)
 
-    if (err) {
-      setError(
-        err.message.includes('already registered')
-          ? 'Ya existe una cuenta con ese email. Ingresá desde el login.'
-          : err.message
-      )
-      return
+      if (err) {
+        setError(friendlyAuthError(err))
+        return
+      }
+
+      // Supabase no siempre devuelve un error explícito cuando el email ya
+      // tiene cuenta (por diseño, para no revelar qué emails existen): en
+      // ese caso el usuario vuelve con identities=[] y sin sesión. Sin esta
+      // guarda el submit "no hacía nada" — parecía que el registro se había
+      // perdido, cuando en realidad había que ir al login.
+      const yaExiste = (data.user?.identities?.length ?? 0) === 0
+      if (yaExiste) {
+        setError('Ya existe una cuenta con ese email — puede ser de una compra anterior en alguna tienda de Gounuri. Ingresá desde el login.')
+        return
+      }
+
+      if (!data.session) {
+        // El proyecto tiene "Confirmar email" activado — no debería pasar
+        // con la config actual, pero cubrimos el caso para no dejar al
+        // usuario en un estado confuso.
+        setError('Te enviamos un email para confirmar tu cuenta. Confirmalo y volvé a ingresar desde el login.')
+        return
+      }
+
+      // Sin confirmación por email — directo al onboarding
+      window.location.href = '/onboarding'
+    } catch (err) {
+      setLoading(false)
+      setError(friendlyAuthError(err))
     }
-
-    // Sin confirmación por email — directo al onboarding
-    window.location.href = '/onboarding'
   }
 
   return (

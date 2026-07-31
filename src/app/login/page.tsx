@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { REGISTRO_URL } from '@/lib/site'
+import { friendlyAuthError } from '@/lib/auth-error'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -22,18 +23,19 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (err) {
-      setError(
-        err.message.includes('Invalid login credentials')
-          ? 'Email o contraseña incorrectos.'
-          : err.message
-      )
-      return
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+      setLoading(false)
+      if (err) {
+        setError(friendlyAuthError(err))
+        return
+      }
+      router.push('/perfil')
+      router.refresh()
+    } catch (err) {
+      setLoading(false)
+      setError(friendlyAuthError(err))
     }
-    router.push('/perfil')
-    router.refresh()
   }
 
   return (

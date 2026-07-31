@@ -4,6 +4,7 @@ import { ExternalLink, LayoutDashboard, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { PANEL_URL } from '@/lib/site'
+import { isSuperAdmin } from '@/lib/superadmin'
 import { SignOutButton, BajaButton } from './PerfilActions'
 
 export const dynamic = 'force-dynamic'
@@ -32,11 +33,36 @@ export default async function PerfilPage() {
   const tenantId = _rows?.[0]?.tenant_id
 
   if (!tenantId) {
+    // Superadmin sin tenant propio: gounuri.com/perfil es para dueños de
+    // tienda, no para el panel de administración de la plataforma.
+    if (isSuperAdmin(user.email)) {
+      return (
+        <main className="flex min-h-screen items-center justify-center px-6">
+          <div className="text-center">
+            <p className="text-zinc-600">
+              Esta cuenta es de administrador de la plataforma — no tiene una tienda propia.
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-4">
+              <a href={`${PANEL_URL}/superadmin`} className="text-sm font-medium text-zinc-900 underline underline-offset-2">
+                Ir al panel de superadmin
+              </a>
+              <SignOutButton />
+            </div>
+          </div>
+        </main>
+      )
+    }
+
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
         <div className="text-center">
           <p className="text-zinc-600">Tu cuenta no tiene una tienda asociada todavía.</p>
-          <div className="mt-4"><SignOutButton /></div>
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <a href="/onboarding" className="text-sm font-medium text-zinc-900 underline underline-offset-2">
+              Crear mi tienda
+            </a>
+            <SignOutButton />
+          </div>
         </div>
       </main>
     )
