@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { PLANES, REGISTRO_URL } from '@/lib/site'
+import { PLANES, REGISTRO_URL, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
 export default function Pricing() {
   return (
@@ -9,7 +9,7 @@ export default function Pricing() {
           Planes para cada etapa
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-zinc-600">
-          Precios en definición — durante el lanzamiento el acceso es sin costo.
+          Probá cualquier plan gratis durante {TRIAL_DAYS} días. Sin tarjeta para empezar.
         </p>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
@@ -33,8 +33,9 @@ export default function Pricing() {
 
               <div className="mt-6">
                 <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                  {plan.precio}
+                  {formatPrecio(plan.precioARS)}
                 </span>
+                <span className="ml-1 text-sm text-zinc-500">/ mes</span>
               </div>
 
               <ul className="mt-8 flex-1 space-y-3">

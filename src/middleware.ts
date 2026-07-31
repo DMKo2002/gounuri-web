@@ -30,5 +30,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/perfil/:path*', '/login', '/api/mi-tienda', '/api/baja'],
+  matcher: ['/perfil/:path*', '/login', '/registro', '/onboarding', '/api/mi-tienda', '/api/baja', '/api/create-tenant'],
 }
