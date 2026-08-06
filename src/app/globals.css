@@ -19,6 +19,10 @@
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-zinc-300 bg-white text-zinc-900 text-sm font-medium hover:border-zinc-900 transition-colors;
   }
+  .btn-red {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium transition-all hover:brightness-110;
+    background: #FE4648;
+  }
 }
 
 /* Grilla sutil de fondo estilo Vercel */
@@ -29,4 +33,249 @@
   background-size: 64px 64px;
   mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Migrado desde el landing rediseñado (Hero, Nav, 6 secciones "Tienda" y
+   Footer nuevos). Features / ComoFunciona / Pricing / CTA siguen con sus
+   estilos Tailwind originales, sin tocar.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --red:#FE4648;
+  --black:#101010;
+  --white:#ffffff;
+  --gray-panel:#f0f0f1;
+  --grid-line: rgba(204,198,198,0.35);
+  --nav-h: 72px;
+  --strip-h: clamp(150px, 19%, 230px);
+  --lockup-w: 150px;
+}
+
+/* ───────────────── NAV ───────────────── */
+.nav{
+  position:sticky; top:0; z-index:50;
+  height:var(--nav-h);
+  background:var(--white);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px;
+  box-shadow:0 4px 4px rgba(0,0,0,0.08);
+}
+.nav .wordmark{height:19px;width:auto}
+.nav-links{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:36px;font-size:12.5px;font-weight:500;letter-spacing:.03em;
+  white-space:nowrap;
+  list-style:none;
+}
+.nav-links a{color:var(--black);opacity:.85;transition:opacity .2s}
+.nav-links a:hover{opacity:1}
+.nav-right{display:flex;align-items:center;gap:28px}
+
+@media (max-width:900px){
+  .nav-links{display:none}
+}
+
+/* ───────────────── HERO ───────────────── */
+.hero{position:relative;height:calc(100vh - var(--nav-h));min-height:600px;overflow:hidden}
+.hero-slides{position:absolute;inset:0;background:#2a2a2a}
+.hero-slide{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  filter:grayscale(35%) brightness(.72) contrast(1.05);
+  opacity:0; transform:scale(1.08);
+  transition:opacity 1.4s ease, transform 8s linear;
+}
+.hero-slide.active{opacity:1; transform:scale(1.16)}
+.hero:hover .hero-slide.active{transform:scale(1.24); transition:opacity 1.4s ease, transform 12s linear}
+.hero-overlay{position:absolute;inset:0;background:rgba(10,10,10,.42);z-index:1}
+.hero-grid{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(0deg, var(--grid-line) 1px, transparent 1px);
+  background-size: clamp(28px, 4.2vw, 72px) clamp(28px, 4.2vw, 72px);
+  opacity:.5; transition:opacity .3s ease;
+}
+.hero:hover .hero-grid{opacity:.9}
+.hero-left{
+  position:absolute; left:0; top:0;
+  width:33.333%; height:calc(100% - var(--strip-h));
+  background:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:22px; z-index:2;
+}
+.g-logo{width:var(--lockup-w);height:auto}
+.slogan-svg{width:var(--lockup-w)}
+.slogan-svg svg{display:block;width:100%;height:auto}
+.hero-content{
+  position:absolute; left:33.333%; right:0;
+  top:31.25%; height:43.75%;
+  z-index:2; color:var(--white);
+  display:flex;flex-direction:column;justify-content:flex-start;
+  padding:0 0 0 64px; max-width:640px;
+}
+.hero-content h1{
+  font-size:clamp(44.88px,6.072vw,84.48px);
+  font-weight:800;line-height:1.08;letter-spacing:-.01em;
+  min-height:3.3em;
+}
+.hero-content h1 .line{display:block;white-space:pre}
+.hero-sub{
+  margin-top:22px;font-size:25.08px;font-weight:500;color:rgba(255,255,255,.92);
+  min-height:1.4em;
+}
+.hero-ctas{display:flex;gap:14px;margin-top:auto}
+.typed::after{
+  content:'';display:inline-block;width:2px;height:1em;background:currentColor;
+  margin-left:2px;vertical-align:-2px;opacity:0;
+}
+.typed.typing::after{opacity:1;animation:blink 1s step-end infinite}
+.typed.done::after{animation:none;opacity:0}
+@keyframes blink{50%{opacity:0}}
+.hero-strip{
+  position:absolute;left:33.333%;right:0;bottom:0;
+  height:var(--strip-h);
+  display:flex;z-index:3;
+}
+.strip-wordmark{
+  flex:0 0 50%;background:var(--gray-panel);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 -4px 10px rgba(0,0,0,.15);
+}
+.strip-wordmark svg{display:block;height:50px;width:auto}
+.strip-callout{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding-left:36px;gap:2px;position:relative;z-index:2;color:var(--white);
+}
+.strip-callout p{font-size:25.08px;font-weight:700}
+.hero::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:18%;
+  background:linear-gradient(to bottom, transparent, var(--black));
+  pointer-events:none;z-index:1;
+}
+@media (max-width:900px){
+  :root{--strip-h:auto}
+  .hero{height:auto;min-height:auto}
+  .hero-left{position:relative;width:100%;height:auto;padding:40px 0}
+  .hero-content{position:relative;left:auto;right:auto;top:auto;height:auto;min-height:520px;padding:40px 24px}
+  .hero-strip{position:relative;left:auto;height:auto;flex-direction:column}
+  .strip-wordmark{padding:24px 0}
+  .strip-callout{padding:24px}
+}
+
+/* ───────────────── SHOP / TIENDAS ───────────────── */
+.shop-section{position:relative;width:100%;overflow:hidden;background:var(--red);height:min(1117px, 64.6412vw)}
+.shop-graphic-outer{position:absolute;left:0;top:0;width:33.3333vw;height:100%}
+.shop-graphic{position:relative;width:min(576px,33.3333vw);height:100%;margin:0 auto}
+.shop-photo{position:absolute;left:18.5764%;top:24.7091%;width:65.2778%;height:50.1343%;overflow:hidden;background:#000}
+.shop-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:opacity 1s ease;animation:shopPhotoBreathe 9s ease-in-out infinite}
+.shop-photo img.state-a{opacity:calc(1 - var(--shop-progress, 0))}
+.shop-photo img.state-b{opacity:var(--shop-progress, 0)}
+@keyframes shopPhotoBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+.shop-mask{position:absolute;inset:0}
+.shop-mask img{display:block;width:100%;height:100%}
+.shop-wordmark{position:absolute;left:31.5972%;top:77.5291%;width:37.5%}
+.shop-wordmark svg{display:block;width:100%;height:auto}
+.shop-laptop{position:absolute;left:33.3333vw;right:0;top:0;height:100%;overflow:hidden;background:#000}
+.shop-laptop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;transition:opacity 1s ease}
+.shop-laptop img.state-a{opacity:calc(1 - var(--shop-progress, 0))}
+.shop-laptop img.state-b{opacity:var(--shop-progress, 0)}
+.shop-laptop-scrim{position:absolute;left:0;right:0;bottom:0;height:22%;
+  background:linear-gradient(to bottom, transparent, rgba(0,0,0,.5));
+  pointer-events:none;}
+.shop-grid{position:absolute;left:33.3333vw;right:0;top:0;height:100%;pointer-events:none;
+  background-image:
+    linear-gradient(90deg, rgba(204,198,198,.5) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(204,198,198,.5) 1px, transparent 1px);
+  background-size: calc(100%/16) calc(100%/16);
+}
+.shop-caption-top{position:absolute;left:calc(33.3333vw + 72px);top:min(175px,10.1273vw);width:min(72px,4.1667vw);height:min(409px,23.669vw)}
+.shop-caption-top .cap-layer{position:absolute;left:0;top:0;width:100%;transition:opacity 1s ease}
+.shop-caption-top .cap-layer svg{display:block;width:100%;height:auto}
+.shop-caption-top .state-a{opacity:calc(1 - var(--shop-progress, 0))}
+.shop-caption-top .state-b{opacity:var(--shop-progress, 0)}
+.shop-caption-bottom{position:absolute;left:calc(33.3333vw + 73px);top:min(941px,54.456vw);width:min(569px,32.9282vw)}
+.shop-caption-bottom svg{display:block;width:100%;height:auto}
+
+/* CTAs: ahora son botones de texto reales (btn-black/btn-red/btn-outline);
+   .shop-cta solo controla la posicion absoluta sobre la seccion. */
+.shop-cta{position:absolute;white-space:nowrap;transition:transform .18s ease, filter .18s ease}
+.shop-cta:hover{transform:translateY(-1px)}
+.shop-cta-atelier{right:min(72px,4.1667vw);top:min(175px,10.1273vw)}
+.shop-cta-probar{right:min(72px,4.1667vw);top:min(921px,53.2986vw)}
+.shop-cta-crear{right:min(72px,4.1667vw);top:min(971px,56.1921vw)}
+
+.shop-laptop,.shop-mask,.shop-photo,.shop-wordmark,.shop-caption-top,.shop-caption-bottom,.shop-cta{
+  opacity:0;transform:translateY(18px);transition:opacity .8s ease, transform .8s ease;
+}
+.shop-section.in-view .shop-laptop{opacity:1;transform:none;transition-delay:0s}
+.shop-section.in-view .shop-mask,
+.shop-section.in-view .shop-photo{opacity:1;transform:none;transition-delay:.5s}
+.shop-section.in-view .shop-wordmark{opacity:1;transform:none;transition-delay:.8s}
+.shop-section.in-view .shop-caption-top,
+.shop-section.in-view .shop-caption-bottom{opacity:1;transform:none;transition-delay:.95s}
+.shop-section.in-view .shop-cta{opacity:1;transform:none;transition-delay:1.1s}
+
+.shop-section-glow{background:#E7D7CB}
+.shop-section-glow .shop-wordmark{left:34.2014%;top:77.8871%;width:32.1829%}
+.shop-glow-avatar{
+  position:absolute;width:min(162px,9.375vw);aspect-ratio:1/1;
+  border-radius:50%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.25));
+  opacity:0;transform:translateY(18px);transition:opacity .8s ease, transform .8s ease;
+}
+.shop-glow-avatar img{width:100%;height:100%;border-radius:50%;display:block;object-fit:cover;
+  opacity:var(--shop-progress, 0);transition:opacity 1s ease}
+.shop-glow-avatar-1{left:min(897px,51.9097vw);top:min(182px,10.5324vw)}
+.shop-glow-avatar-2{left:min(1407px,81.4236vw);top:min(251px,14.5255vw)}
+.shop-section.in-view .shop-glow-avatar{opacity:1;transform:none;transition-delay:1.1s}
+
+@media (max-width:900px){
+  .shop-caption-top,
+  .shop-caption-bottom{left:calc(33.3333vw + 14px)}
+}
+
+.shop-section-minimalista{background:#54565B}
+.shop-section-axis{background:#C7B37E}
+.shop-section-bazaar{background:#E53935}
+
+/* ───────────────── FOOTER ───────────────── */
+.site-footer{background:var(--white);color:var(--black);border-top:1px solid #ececec}
+.footer-inner{
+  max-width:1600px;margin:0 auto;padding:56px 40px 32px;
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:56px;
+}
+.footer-brand{display:flex;flex-direction:column;gap:16px;flex:0 0 auto}
+.footer-logo svg{display:block;width:104px;height:auto}
+.footer-social{display:flex;align-items:center;gap:12px}
+.footer-social a{color:var(--black);opacity:.75;transition:opacity .2s, color .2s}
+.footer-social a:hover{opacity:1;color:var(--red)}
+.footer-social svg{display:block;width:15px;height:15px}
+.footer-divider{width:1px;align-self:stretch;background:#e2e2e2;flex:0 0 auto}
+.footer-links{display:flex;flex-wrap:wrap;gap:56px;flex:0 1 auto;margin-left:auto;list-style:none}
+.footer-col{display:flex;flex-direction:column;gap:12px;min-width:120px}
+.footer-col-title{
+  font-size:12px;font-weight:600;letter-spacing:.2em;color:var(--black);
+}
+.footer-col a{
+  font-size:12px;color:#878787;letter-spacing:.02em;transition:color .2s;
+}
+.footer-col a:hover{color:var(--red)}
+.footer-slogan{flex:0 0 auto;margin-left:32px}
+.footer-slogan svg{display:block;width:min(190px,14vw);height:auto}
+.footer-bottom{
+  max-width:1600px;margin:0 auto;padding:20px 40px 32px;
+  border-top:1px solid #ececec;
+}
+.footer-bottom p{
+  font-size:10px;color:#878787;letter-spacing:.05em;
+  display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;
+}
+.footer-bottom a{color:#878787;text-decoration:underline;text-underline-offset:2px;transition:color .2s}
+.footer-bottom a:hover{color:var(--red)}
+@media (max-width:900px){
+  .footer-inner{gap:32px;padding:40px 24px 24px}
+  .footer-divider{display:none}
+  .footer-links{gap:32px;margin-left:0}
+  .footer-slogan{margin-left:0}
+  .footer-bottom{padding:16px 24px 24px}
 }

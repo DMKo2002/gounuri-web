@@ -50,7 +50,7 @@ export default function ComoFunciona() {
 
         <div className="mt-14 text-center">
           <a href={REGISTRO_URL} className="btn-black !px-7 !py-3">
-            Empezar ahora
+            Crear mi tienda
           </a>
         </div>
       </div>

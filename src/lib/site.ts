@@ -43,7 +43,7 @@ export const PLANES: Plan[] = [
   },
   {
     id: 'standard',
-    nombre: 'Standard',
+    nombre: 'Business',
     precioARS: 29_999,
     descripcion: 'Para tiendas en crecimiento.',
     destacado: true,
@@ -66,7 +66,7 @@ export const PLANES: Plan[] = [
       'Hasta 1.000 productos',
       '10 GB de almacenamiento',
       '200.000 visitas por mes',
-      'Todo lo del plan Standard',
+      'Todo lo del plan Business',
       'Modo sin stock y pedidos por encargo',
       'Cuentas y roles para tu equipo',
       'Soporte prioritario',
