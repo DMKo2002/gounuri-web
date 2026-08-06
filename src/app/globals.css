@@ -71,7 +71,7 @@
 .nav-links a:hover{opacity:1}
 .nav-right{display:flex;align-items:center;gap:28px}
 .nav-right .ingresar{font-size:12.5px;font-weight:600;letter-spacing:.04em;color:var(--black)}
-.nav-cta-svg svg{height:21px;width:auto}
+.nav-cta-svg svg{height:16px;width:auto}
 
 @media (max-width:900px){
   .nav-links{display:none}
