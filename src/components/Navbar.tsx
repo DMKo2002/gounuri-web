@@ -25,11 +25,12 @@ export default function Navbar() {
       </Link>
 
       <ul className="nav-links">
-        <li><a href="#features">FEATURES</a></li>
-        <li><a href="#como-funciona">COMO FUNCIONA</a></li>
+        <li><a href="/#features">FEATURES</a></li>
+        <li><a href="/#como-funciona">COMO FUNCIONA</a></li>
         <li><Link href="/templates">TEMPLATE</Link></li>
         <li><Link href="/demo">DEMO</Link></li>
-        <li><a href="#planes">PLANES</a></li>
+        <li><a href="/#planes">PLANES</a></li>
+        <li><Link href="/migracion">MIGRACION</Link></li>
       </ul>
 
       <div className="nav-right">
