@@ -107,6 +107,13 @@
 .g-logo{width:var(--lockup-w);height:auto}
 .slogan-svg{width:var(--lockup-w)}
 .slogan-svg svg{display:block;width:100%;height:auto}
+
+/* botones: SVG de Figma usados tal cual, solo con micro-interaccion de hover */
+.btn-svg{display:inline-block;line-height:0;transition:transform .18s ease, filter .18s ease}
+.btn-svg:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.btn-svg:active{transform:translateY(0);filter:brightness(.96)}
+.btn-svg svg{display:block;width:auto;height:auto}
+.hero-ctas .btn-svg svg{width:200px;height:37px}
 .hero-content{
   position:absolute; left:33.333%; right:0;
   top:31.25%; height:43.75%;
@@ -197,10 +204,10 @@
 .shop-caption-bottom{position:absolute;left:calc(33.3333vw + 73px);top:min(941px,54.456vw);width:min(569px,32.9282vw)}
 .shop-caption-bottom svg{display:block;width:100%;height:auto}
 
-/* CTAs: ahora son botones de texto reales (btn-black/btn-red/btn-outline);
-   .shop-cta solo controla la posicion absoluta sobre la seccion. */
-.shop-cta{position:absolute;white-space:nowrap;transition:transform .18s ease, filter .18s ease}
-.shop-cta:hover{transform:translateY(-1px)}
+.shop-cta{position:absolute;line-height:0;transition:transform .18s ease, filter .18s ease}
+.shop-cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.shop-cta:active{transform:translateY(0);filter:brightness(.96)}
+.shop-cta svg{display:block;width:min(204px,11.8056vw);height:auto}
 .shop-cta-atelier{right:min(72px,4.1667vw);top:min(175px,10.1273vw)}
 .shop-cta-probar{right:min(72px,4.1667vw);top:min(921px,53.2986vw)}
 .shop-cta-crear{right:min(72px,4.1667vw);top:min(971px,56.1921vw)}
@@ -237,6 +244,24 @@
 .shop-section-minimalista{background:#54565B}
 .shop-section-axis{background:#C7B37E}
 .shop-section-bazaar{background:#E53935}
+
+/* ───────────────── TERMINOS Y CONDICIONES ───────────────── */
+.tc-page{max-width:760px;margin:0 auto;padding:64px 24px 96px;background:var(--white);color:var(--black)}
+.tc-page h1{font-size:clamp(18px,1.9vw,24px);font-weight:800;letter-spacing:-.01em;margin-bottom:8px}
+.tc-updated{color:#878787;font-size:13px;margin-bottom:28px}
+.tc-page blockquote{
+  border-left:3px solid var(--red);padding:16px 20px;background:var(--gray-panel);
+  font-style:italic;color:#333;margin:0 0 28px;border-radius:0 8px 8px 0;font-size:14.5px;line-height:1.7;
+}
+.tc-page h2{
+  font-size:19px;font-weight:700;margin:40px 0 14px;padding-top:24px;border-top:1px solid #ececec;
+  scroll-margin-top:88px;
+}
+.tc-page h2:first-of-type{border-top:none;padding-top:0;margin-top:8px}
+.tc-page p{font-size:14.5px;line-height:1.7;color:#2a2a2a;margin-bottom:14px}
+.tc-page p strong{color:var(--black)}
+.tc-page ul{margin:0 0 14px;padding-left:22px}
+.tc-page li{font-size:14.5px;line-height:1.7;color:#2a2a2a;margin-bottom:6px}
 
 /* ───────────────── FOOTER ───────────────── */
 .site-footer{background:var(--white);color:var(--black);border-top:1px solid #ececec}
