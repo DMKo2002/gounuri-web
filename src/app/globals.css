@@ -173,9 +173,9 @@
 }
 
 /* ───────────────── SHOP / TIENDAS ───────────────── */
-.shop-section{position:relative;width:100%;overflow:hidden;background:var(--red);height:min(1117px, 64.6412vw)}
+.shop-section{position:relative;width:100%;overflow:hidden;background:var(--red);height:64.6412vw}
 .shop-graphic-outer{position:absolute;left:0;top:0;width:33.3333vw;height:100%}
-.shop-graphic{position:relative;width:min(576px,33.3333vw);height:100%;margin:0 auto}
+.shop-graphic{position:relative;width:33.3333vw;height:100%;margin:0 auto}
 .shop-photo{position:absolute;left:18.5764%;top:24.7091%;width:65.2778%;height:50.1343%;overflow:hidden;background:#000}
 .shop-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;transition:opacity 1s ease;animation:shopPhotoBreathe 9s ease-in-out infinite}
 .shop-photo img.state-a{opacity:calc(1 - var(--shop-progress, 0))}
@@ -198,21 +198,21 @@
     linear-gradient(0deg, rgba(204,198,198,.5) 1px, transparent 1px);
   background-size: calc(100%/16) calc(100%/16);
 }
-.shop-caption-top{position:absolute;left:calc(33.3333vw + 72px);top:min(175px,10.1273vw);width:min(72px,4.1667vw);height:min(409px,23.669vw)}
+.shop-caption-top{position:absolute;left:calc(33.3333vw + 72px);top:10.1273vw;width:4.1667vw;height:23.669vw}
 .shop-caption-top .cap-layer{position:absolute;left:0;top:0;width:100%;transition:opacity 1s ease}
 .shop-caption-top .cap-layer svg{display:block;width:100%;height:auto}
 .shop-caption-top .state-a{opacity:calc(1 - var(--shop-progress, 0))}
 .shop-caption-top .state-b{opacity:var(--shop-progress, 0)}
-.shop-caption-bottom{position:absolute;left:calc(33.3333vw + 73px);top:min(941px,54.456vw);width:min(569px,32.9282vw)}
+.shop-caption-bottom{position:absolute;left:calc(33.3333vw + 73px);top:54.456vw;width:32.9282vw}
 .shop-caption-bottom svg{display:block;width:100%;height:auto}
 
 .shop-cta{position:absolute;line-height:0;transition:transform .18s ease, filter .18s ease}
 .shop-cta:hover{transform:translateY(-1px);filter:brightness(1.08)}
 .shop-cta:active{transform:translateY(0);filter:brightness(.96)}
-.shop-cta svg{display:block;width:min(204px,11.8056vw);height:auto}
-.shop-cta-atelier{right:min(72px,4.1667vw);top:min(175px,10.1273vw)}
-.shop-cta-probar{right:min(72px,4.1667vw);top:min(921px,53.2986vw)}
-.shop-cta-crear{right:min(72px,4.1667vw);top:min(971px,56.1921vw)}
+.shop-cta svg{display:block;width:11.8056vw;height:auto}
+.shop-cta-atelier{right:4.1667vw;top:10.1273vw}
+.shop-cta-probar{right:4.1667vw;top:53.2986vw}
+.shop-cta-crear{right:4.1667vw;top:56.1921vw}
 
 .shop-laptop,.shop-mask,.shop-photo,.shop-wordmark,.shop-caption-top,.shop-caption-bottom,.shop-cta{
   opacity:0;transform:translateY(18px);transition:opacity .8s ease, transform .8s ease;
