@@ -134,6 +134,14 @@ export default function RegistroPage() {
               Ingresá acá
             </Link>
           </p>
+
+          <p className="mt-6 text-center text-xs text-zinc-400">
+            Al crear la cuenta, aceptás las{' '}
+            <Link href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">
+              políticas, términos y condiciones
+            </Link>{' '}
+            de Gounuri.
+          </p>
         </div>
       </div>
       <Footer />
