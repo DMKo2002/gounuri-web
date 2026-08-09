@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda de moda online en minutos',
@@ -32,6 +33,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
+        <GoogleAnalytics />
       </body>
     </html>
   )
