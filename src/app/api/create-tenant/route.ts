@@ -28,12 +28,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, tenantId: _existing[0].tenant_id, existing: true })
   }
 
+  // El slug es literalmente {slug}.gounuri.com \u2014 antes ac\u00e1 se le pegaba
+  // siempre un sufijo random de 4 d\u00edgitos (prueba3-0746) sin chequear si el
+  // nombre limpio ya estaba libre, as\u00ed que la tienda nunca quedaba en
+  // nombre.gounuri.com como esperar\u00eda el tenant. Ahora: nombre limpio primero,
+  // y si ya existe se avisa en vez de generar uno random en silencio.
   const slug = name.trim()
     .toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
-    + '-' + Date.now().toString().slice(-4)
+    || 'tienda'
+
+  const { data: _slugTaken } = await service.from('tenants').select('id').eq('slug', slug).limit(1)
+  if (_slugTaken?.[0]) {
+    return NextResponse.json(
+      { error: `El nombre "${name.trim()}" ya est\u00e1 en uso. Prob\u00e1 con otro nombre para tu tienda.` },
+      { status: 409 }
+    )
+  }
 
   const validTemplates = TEMPLATES.map(t => t.slug)
   const chosenTemplate = validTemplates.includes(template) ? template : 'minimalista'
@@ -58,7 +71,19 @@ export async function POST(req: Request) {
     .select()
     .single()
 
-  if (tenantError) return NextResponse.json({ error: tenantError.message }, { status: 500 })
+  if (tenantError) {
+    // 23505 = unique_violation \u2014 dos submits casi simult\u00e1neos con el mismo
+    // nombre pasaron el chequeo de arriba antes de que el primero terminara
+    // de insertar. Poco com\u00fan, pero mismo mensaje claro en vez del error
+    // crudo de Postgres.
+    if (tenantError.code === '23505') {
+      return NextResponse.json(
+        { error: `El nombre "${name.trim()}" ya est\u00e1 en uso. Prob\u00e1 con otro nombre para tu tienda.` },
+        { status: 409 }
+      )
+    }
+    return NextResponse.json({ error: tenantError.message }, { status: 500 })
+  }
 
   const { error: configError } = await service
     .from('store_config')
