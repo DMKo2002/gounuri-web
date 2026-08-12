@@ -1,5 +1,5 @@
-import { Check } from 'lucide-react'
-import { PLANES, REGISTRO_URL, TRIAL_DAYS, formatPrecio } from '@/lib/site'
+import { Check, MessageCircle, Mail } from 'lucide-react'
+import { PLANES, REGISTRO_URL, TRIAL_DAYS, formatPrecio, TERM_DISCOUNTS_PCT, CONTACTO_EMAIL, whatsappUrl } from '@/lib/site'
 
 export default function Pricing() {
   return (
@@ -10,6 +10,9 @@ export default function Pricing() {
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-zinc-600">
           Probá cualquier plan gratis durante {TRIAL_DAYS} días. Sin tarjeta para empezar.
+        </p>
+        <p className="mx-auto mt-2 max-w-xl text-center text-sm text-zinc-500">
+          Pagando {6} meses de una ahorrás {TERM_DISCOUNTS_PCT[6]}%, y pagando {12} meses ahorrás {TERM_DISCOUNTS_PCT[12]}%. Elegís el plazo al activar tu plan.
         </p>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
@@ -55,6 +58,33 @@ export default function Pricing() {
               </a>
             </div>
           ))}
+        </div>
+
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col items-center gap-4 rounded-xl border border-zinc-200 bg-white p-8 text-center sm:flex-row sm:justify-between sm:text-left">
+          <div>
+            <h3 className="font-semibold text-zinc-900">¿Necesitás algo a medida?</h3>
+            <p className="mt-1 text-sm text-zinc-600">
+              Catálogos muy grandes, integraciones puntuales o límites distintos a los planes de arriba — armamos un plan Personalizado y evaluamos el precio según el trabajo.
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-3">
+            <a
+              href={whatsappUrl('Hola! Quiero consultar por un plan personalizado en gounuri.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-black inline-flex items-center gap-2 whitespace-nowrap"
+            >
+              <MessageCircle size={16} />
+              WhatsApp
+            </a>
+            <a
+              href={`mailto:${CONTACTO_EMAIL}?subject=${encodeURIComponent('Consulta por plan personalizado')}`}
+              className="btn-outline inline-flex items-center gap-2 whitespace-nowrap"
+            >
+              <Mail size={16} />
+              Email
+            </a>
+          </div>
         </div>
       </div>
     </section>
