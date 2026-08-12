@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import NavAuth from '@/components/NavAuth'
+import MobileNavToggle from '@/components/MobileNavToggle'
 
 export default function Navbar() {
   return (
@@ -34,6 +35,7 @@ export default function Navbar() {
       </ul>
 
       <div className="nav-right">
+        <MobileNavToggle />
         <NavAuth />
       </div>
     </nav>
