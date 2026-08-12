@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { TEMPLATES } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, PANEL_URL } from '@/lib/site'
+import { addSlugDomain } from '@/lib/vercel'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -82,6 +83,17 @@ export async function POST(req: Request) {
     )
 
   if (userError) return NextResponse.json({ error: userError.message }, { status: 500 })
+
+  // Alta de {slug}.gounuri.com en el proyecto de Vercel del template — sin
+  // esto la URL que le mandamos al tenant más abajo no resuelve (bug real,
+  // ver lib/vercel.ts). Best-effort: si falla (ej. falta VERCEL_TOKEN), no
+  // frena la creación del tenant, solo queda sin el dominio de respaldo por
+  // ahora — se puede reintentar después con el backfill del superadmin.
+  try {
+    await addSlugDomain(chosenTemplate, slug)
+  } catch (e) {
+    console.error('[create-tenant] no se pudo dar de alta el dominio en Vercel', e)
+  }
 
   // Notificación al admin + bienvenida al tenant (best effort, no bloqueante)
   const resendKey = process.env.RESEND_API_KEY
