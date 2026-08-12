@@ -1,5 +1,5 @@
 import { Check, MessageCircle, Mail } from 'lucide-react'
-import { PLANES, REGISTRO_URL, TRIAL_DAYS, formatPrecio, TERM_DISCOUNTS_PCT, CONTACTO_EMAIL, whatsappUrl } from '@/lib/site'
+import { PLANES, TRIAL_DAYS, formatPrecio, TERM_DISCOUNTS_PCT, CONTACTO_EMAIL, whatsappUrl } from '@/lib/site'
 
 export default function Pricing() {
   return (
@@ -51,7 +51,7 @@ export default function Pricing() {
               </ul>
 
               <a
-                href={REGISTRO_URL}
+                href={`/api/ir-a-plan?plan=${plan.id}`}
                 className={`mt-8 ${plan.destacado ? 'btn-black' : 'btn-outline'} w-full`}
               >
                 Empezar con {plan.nombre}

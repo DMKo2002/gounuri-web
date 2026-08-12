@@ -97,8 +97,14 @@ export default async function PerfilPage() {
         <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
 
         {tenant.plan_status === 'past_due' && (
-          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            Hay un pago pendiente de tu suscripción. Revisá tu medio de pago en MercadoPago para evitar interrupciones.
+          <div className="mt-6 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 sm:flex-row sm:items-center sm:justify-between">
+            <span>Hay un pago pendiente de tu suscripción — evitá que se suspenda tu tienda.</span>
+            <a
+              href={`${PANEL_URL}/dashboard/uso`}
+              className="shrink-0 rounded-lg bg-amber-600 px-4 py-1.5 text-center text-xs font-medium text-white transition-colors hover:bg-amber-700"
+            >
+              Actualizar método de pago
+            </a>
           </div>
         )}
 
@@ -143,6 +149,12 @@ export default async function PerfilPage() {
                   {estado.label}
                 </span>
               )}
+              <a
+                href={`${PANEL_URL}/dashboard/uso`}
+                className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600"
+              >
+                Cambiar de plan
+              </a>
             </Row>
             <Row label="Template">
               <span className="capitalize text-zinc-900">{tenant.template ?? 'minimalista'}</span>
