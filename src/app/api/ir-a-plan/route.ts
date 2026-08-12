@@ -2,18 +2,16 @@
 //
 // A dónde va el botón "Empezar con X" de la página de precios — no siempre a
 // /registro. Antes mandaba SIEMPRE a /registro, incluso si ya estabas
-// logueado y ya tenías una tienda (bug reportado 2026-08-12: alguien logueado
-// apretaba "Empezar con Business" y terminaba en la pantalla de crear cuenta
-// de nuevo, sin sentido). Ahora:
+// logueado y ya tenías una tienda (bug reportado 2026-08-12). Ahora:
 //   - No logueado           → /registro (arranca el trial, como siempre)
 //   - Logueado sin tienda   → /onboarding (ya tiene cuenta, solo le falta la tienda)
-//   - Logueado con tienda   → Panel Admin /dashboard/uso?plan=X (ahí elige
-//                              plazo — mensual/6/12 meses — y paga)
+//   - Logueado con tienda   → /perfil/plan?plan=X (ahí elige plazo —
+//                              mensual/6/12 meses — y paga, todo acá mismo en
+//                              gounuri.com, sin pasar por el Panel Admin)
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { PANEL_URL } from '@/lib/site'
 
 const VALID_PLANS = ['mini', 'standard', 'premium']
 
@@ -31,5 +29,5 @@ export async function GET(req: Request) {
   const tenantId = _rows?.[0]?.tenant_id
   if (!tenantId) return NextResponse.redirect(`${origin}/onboarding`)
 
-  return NextResponse.redirect(`${PANEL_URL}/dashboard/uso?plan=${plan}`)
+  return NextResponse.redirect(`${origin}/perfil/plan?plan=${plan}`)
 }
