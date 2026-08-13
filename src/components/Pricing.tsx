@@ -34,10 +34,8 @@ export default function Pricing() {
           {PLANES.map((plan) => (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-xl border bg-white p-8 ${
-                plan.destacado
-                  ? 'border-zinc-900 shadow-md'
-                  : 'border-zinc-200'
+              className={`relative flex flex-col rounded-xl border border-zinc-900 bg-white p-8 ${
+                plan.destacado ? 'shadow-md' : ''
               }`}
             >
               {plan.destacado && (
@@ -67,7 +65,7 @@ export default function Pricing() {
 
               <a
                 href={`/api/ir-a-plan?plan=${plan.id}`}
-                className={`mt-8 ${plan.destacado ? 'btn-black' : 'btn-outline'} w-full`}
+                className="btn-black mt-8 w-full"
               >
                 Empezar con {plan.nombre}
               </a>
