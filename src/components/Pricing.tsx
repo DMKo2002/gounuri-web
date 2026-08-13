@@ -44,8 +44,8 @@ export default function Pricing() {
                 </span>
               )}
 
-              <h3 className="text-lg font-semibold text-zinc-900">{plan.nombre}</h3>
-              <p className="mt-1 text-sm text-zinc-600">{plan.descripcion}</p>
+              <h3 className="text-lg font-bold text-zinc-900">{plan.nombre}</h3>
+              <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{plan.descripcion}</p>
 
               <div className="mt-6">
                 <span className="text-3xl font-bold tracking-tight text-zinc-900">
@@ -74,8 +74,8 @@ export default function Pricing() {
 
           {/* Plan Signature — ecosistema a medida, sin precio fijo, se coordina con un especialista */}
           <div className="relative flex flex-col rounded-xl border border-zinc-900 bg-white p-8">
-            <h3 className="text-lg font-semibold text-zinc-900">Signature</h3>
-            <p className="mt-1 text-sm text-zinc-600">
+            <h3 className="text-lg font-bold text-zinc-900">Signature</h3>
+            <p className="mt-1 min-h-[60px] text-sm text-zinc-600">
               Para marcas que exigen una identidad digital única y sin límites.
             </p>
 
