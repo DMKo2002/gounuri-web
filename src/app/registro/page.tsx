@@ -1,85 +1,113 @@
 'use client'
 
-// Registro de gounuri.com — crea la cuenta en Supabase (mismo proyecto que el
-// Panel Admin) y sigue al onboarding: nombre de tienda → template → plan.
+// Registro de gounuri.com — alta de la cuenta que va a ser dueña de la
+// tienda. Pega a /api/auth/registro (server): crea la cuenta de Auth sin
+// loguearla (admin.generateLink), guarda los datos personales en
+// gounuri_accounts, y manda el mail de confirmación con nuestro branding.
+// La cuenta queda bloqueada — sin sesión — hasta que confirman ese mail
+// (ver /auth/verificar), recién ahí se sigue al onboarding.
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import Turnstile from 'react-turnstile'
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react'
 import { LOGIN_URL, TRIAL_DAYS } from '@/lib/site'
-import { friendlyAuthError } from '@/lib/auth-error'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'
+
 export default function RegistroPage() {
-  const supabase = createClient()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
+  const [form, setForm] = useState({
+    nombre: '', apellido: '', dni: '', celular: '', storeName: '',
+    email: '', password: '', confirmar: '',
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmar, setShowConfirmar] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileKey, setTurnstileKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [enviado, setEnviado] = useState(false)
 
-  async function handleRegister(e: React.FormEvent) {
+  function set(field: keyof typeof form, value: string) {
+    setForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) {
+    if (form.password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.')
       return
     }
-    if (password !== confirm) {
+    if (form.password !== form.confirmar) {
       setError('Las contraseñas no coinciden.')
+      return
+    }
+    if (!turnstileToken) {
+      setError('Completá la verificación de seguridad.')
       return
     }
 
     setLoading(true)
     try {
-      const { data, error: err } = await supabase.auth.signUp({ email, password })
+      const res = await fetch('/api/auth/registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, turnstileToken }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error ?? 'Error al crear la cuenta. Intentá de nuevo.')
+        setTurnstileToken(null)
+        setTurnstileKey(k => k + 1)
+        return
+      }
+      setEnviado(true)
+    } catch {
+      setError('Error de conexión. Intentá de nuevo.')
+    } finally {
       setLoading(false)
-
-      if (err) {
-        setError(friendlyAuthError(err))
-        return
-      }
-
-      // Supabase no siempre devuelve un error explícito cuando el email ya
-      // tiene cuenta (por diseño, para no revelar qué emails existen): en
-      // ese caso el usuario vuelve con identities=[] y sin sesión. Sin esta
-      // guarda el submit "no hacía nada" — parecía que el registro se había
-      // perdido, cuando en realidad había que ir al login.
-      const yaExiste = (data.user?.identities?.length ?? 0) === 0
-      if (yaExiste) {
-        setError('Ya existe una cuenta con ese email — puede ser de una compra anterior en alguna tienda de Gounuri. Ingresá desde el login.')
-        return
-      }
-
-      if (!data.session) {
-        // El proyecto tiene "Confirmar email" activado — no debería pasar
-        // con la config actual, pero cubrimos el caso para no dejar al
-        // usuario en un estado confuso.
-        setError('Te enviamos un email para confirmar tu cuenta. Confirmalo y volvé a ingresar desde el login.')
-        return
-      }
-
-      // Sin confirmación por email — directo al onboarding
-      window.location.href = '/onboarding'
-    } catch (err) {
-      setLoading(false)
-      setError(friendlyAuthError(err))
     }
+  }
+
+  if (enviado) {
+    return (
+      <main>
+        <Navbar />
+        <div className="flex min-h-[calc(100vh-var(--nav-h))] items-center justify-center bg-zinc-50 px-6 py-16">
+          <div className="w-full max-w-sm text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900">
+              <Mail size={22} className="text-white" />
+            </div>
+            <h1 className="mt-6 text-xl font-semibold text-zinc-900">Falta un paso</h1>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+              Te enviamos un email a <strong className="text-zinc-700">{form.email}</strong> para confirmar tu cuenta.
+              Tu registro recién queda activo cuando hacés click en el link de ese correo — hasta entonces no vas a
+              poder iniciar sesión ni crear tu tienda. Si no lo ves en unos minutos, revisá spam / correo no deseado.
+            </p>
+            <Link href={LOGIN_URL} className="mt-6 inline-block text-sm font-medium text-zinc-900 underline underline-offset-2">
+              Ir al inicio de sesión
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </main>
+    )
   }
 
   return (
     <main>
       <Navbar />
       <div className="flex min-h-[calc(100vh-var(--nav-h))] items-center justify-center bg-zinc-50 px-6 py-16">
-        <div className="w-full max-w-sm">
+        <div className="w-full max-w-md">
           <Link href="/" className="block text-center text-xl font-semibold tracking-tight text-zinc-900">
             gounuri<span className="text-zinc-400">.com</span>
           </Link>
 
-          <form onSubmit={handleRegister} className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
+          <form onSubmit={handleSubmit} className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
             <h1 className="text-lg font-semibold text-zinc-900">Creá tu tienda</h1>
             <p className="mt-1 text-sm text-zinc-500">
               {TRIAL_DAYS} días gratis, sin tarjeta. En 2 minutos tenés tu tienda online.
@@ -89,39 +117,96 @@ export default function RegistroPage() {
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
             )}
 
-            <label className="mt-5 block text-xs font-medium text-zinc-700">Email</label>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-700">Nombre</label>
+                <input
+                  required autoFocus value={form.nombre} onChange={e => set('nombre', e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-700">Apellido</label>
+                <input
+                  required value={form.apellido} onChange={e => set('apellido', e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-700">DNI</label>
+                <input
+                  required value={form.dni} onChange={e => set('dni', e.target.value)}
+                  placeholder="Sin puntos"
+                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-700">Celular</label>
+                <input
+                  required type="tel" value={form.celular} onChange={e => set('celular', e.target.value)}
+                  placeholder="11 1234 5678"
+                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <label className="mt-4 block text-xs font-medium text-zinc-700">Nombre de la tienda</label>
             <input
-              type="email"
-              required
-              autoFocus
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              required value={form.storeName} onChange={e => set('storeName', e.target.value)}
+              placeholder="Así se va a ver en el encabezado de tu tienda"
+              className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+            />
+
+            <label className="mt-4 block text-xs font-medium text-zinc-700">Email</label>
+            <input
+              type="email" required value={form.email} onChange={e => set('email', e.target.value)}
               className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
             />
 
             <label className="mt-4 block text-xs font-medium text-zinc-700">Contraseña</label>
-            <input
-              type="password"
-              required
-              placeholder="Mínimo 8 caracteres"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-            />
+            <div className="relative mt-1.5">
+              <input
+                type={showPassword ? 'text' : 'password'} required minLength={8}
+                placeholder="Mínimo 8 caracteres"
+                value={form.password} onChange={e => set('password', e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 pr-10 text-sm focus:border-zinc-900 focus:outline-none"
+              />
+              <button type="button" onClick={() => setShowPassword(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700">
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
 
             <label className="mt-4 block text-xs font-medium text-zinc-700">Confirmá la contraseña</label>
-            <input
-              type="password"
-              required
-              value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-            />
+            <div className="relative mt-1.5">
+              <input
+                type={showConfirmar ? 'text' : 'password'} required minLength={8}
+                value={form.confirmar} onChange={e => set('confirmar', e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 pr-10 text-sm focus:border-zinc-900 focus:outline-none"
+              />
+              <button type="button" onClick={() => setShowConfirmar(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700">
+                {showConfirmar ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            <div className="mt-5 flex justify-center">
+              <Turnstile
+                key={turnstileKey}
+                sitekey={TURNSTILE_SITE_KEY}
+                onVerify={token => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                theme="light"
+              />
+            </div>
 
             <button
               type="submit"
-              disabled={loading}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
+              disabled={loading || !turnstileToken}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
             >
               {loading && <Loader2 size={15} className="animate-spin" />}
               Crear cuenta

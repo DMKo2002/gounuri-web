@@ -5,6 +5,7 @@
 // al Panel Admin via /auth/handoff (tokens en el fragment, nunca en query).
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Check, ExternalLink, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
@@ -83,8 +84,14 @@ function TemplateCard({
 // ── Página ────────────────────────────────────────────────────────────────────
 export default function OnboardingPage() {
   const supabase = createClient()
-  const [step, setStep] = useState<Step>('nombre')
-  const [name, setName] = useState('')
+  // El nombre de tienda ya se pidió en /registro (gounuri_accounts.store_name)
+  // y /auth/verificar lo pasa acá por query param al confirmar el mail — no
+  // hace falta volver a pedirlo, pero el paso "nombre" sigue disponible por
+  // si quieren cambiarlo (botón "← Volver" del paso 2).
+  const searchParams = useSearchParams()
+  const storeFromQuery = searchParams.get('store') ?? ''
+  const [step, setStep] = useState<Step>(storeFromQuery ? 'template' : 'nombre')
+  const [name, setName] = useState(storeFromQuery)
   const [domain, setDomain] = useState('')
   const [template, setTemplate] = useState('minimalista')
   const [plan, setPlan] = useState('standard')

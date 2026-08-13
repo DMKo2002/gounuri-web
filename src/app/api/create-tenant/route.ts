@@ -11,6 +11,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { TEMPLATES } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, PANEL_URL } from '@/lib/site'
 import { addSlugDomain } from '@/lib/vercel'
+import { sendEmail, emailBienvenidaTienda } from '@/lib/email'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -109,6 +110,17 @@ export async function POST(req: Request) {
 
   if (userError) return NextResponse.json({ error: userError.message }, { status: 500 })
 
+  // Vincula el tenant recién creado a la cuenta de gounuri (gounuri_accounts)
+  // del dueño — best effort: si por algún motivo no hay fila (cuenta vieja,
+  // de antes de este flujo), no frena la creación del tenant.
+  const { data: accountRow } = await service
+    .from('gounuri_accounts')
+    .update({ tenant_id: tenant.id })
+    .eq('auth_user_id', user.id)
+    .select('nombre')
+    .limit(1)
+    .maybeSingle()
+
   // Alta de {slug}.gounuri.com en el proyecto de Vercel del template — sin
   // esto la URL que le mandamos al tenant más abajo no resuelve (bug real,
   // ver lib/vercel.ts). Best-effort: si falla (ej. falta VERCEL_TOKEN), no
@@ -142,21 +154,20 @@ export async function POST(req: Request) {
     }).catch(() => {})
 
     if (user.email) {
-      fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'gounuri <onboarding@resend.dev>',
-          to: [user.email],
-          subject: `¡Tu tienda ${name.trim()} está lista! — gounuri`,
-          html: `
-            <h2>¡Bienvenido a gounuri!</h2>
-            <p>Tu tienda <strong>${name.trim()}</strong> ya está creada. Tenés <strong>${TRIAL_DAYS} días gratis</strong> para probarla.</p>
-            <p>Tu tienda pública: <a href="https://${slug}.gounuri.com">https://${slug}.gounuri.com</a></p>
-            <p>Administrala desde el panel: <a href="${PANEL_URL}/dashboard">${PANEL_URL}/dashboard</a></p>
-          `,
+      const chosenPlanObj = PLANES.find(p => p.id === chosenPlan)
+      sendEmail({
+        to: user.email,
+        subject: `¡Tu tienda ${name.trim()} está lista! — gounuri`,
+        html: emailBienvenidaTienda({
+          nombre: accountRow?.nombre ?? name.trim(),
+          storeName: name.trim(),
+          storeUrl: `https://${slug}.gounuri.com`,
+          panelUrl: PANEL_URL,
+          loginEmail: user.email,
+          planNombre: chosenPlanObj?.nombre ?? chosenPlan,
+          trialDays: TRIAL_DAYS,
         }),
-      }).catch(() => {})
+      }).catch(e => console.error('[email bienvenida tienda] error:', e))
     }
   }
 
