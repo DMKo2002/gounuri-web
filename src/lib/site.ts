@@ -52,7 +52,7 @@ export const PLANES: Plan[] = [
     precioARS: 10_000,
     descripcion: 'Para empezar a vender online sin vueltas.',
     features: [
-      'Hasta 100 productos',
+      'Hasta 50 productos',
       '300 MB de almacenamiento',
       '15.000 visitas por mes',
       'Pedidos ilimitados, sin comisión por venta',
