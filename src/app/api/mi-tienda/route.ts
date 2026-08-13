@@ -17,10 +17,16 @@ export async function GET(req: Request) {
   const tenantId = _rows?.[0]?.tenant_id
   if (!tenantId) return NextResponse.redirect(`${origin}/perfil`)
 
-  const { data: _tenants } = await service.from('tenants').select('slug, domain').eq('id', tenantId).limit(1)
+  const { data: _tenants } = await service.from('tenants').select('slug, domain, domain_status').eq('id', tenantId).limit(1)
   const tenant = _tenants?.[0]
   if (!tenant) return NextResponse.redirect(`${origin}/perfil`)
 
-  const url = tenant.domain ? `https://${tenant.domain}` : `https://${tenant.slug}.gounuri.com`
+  // Ojo: tenant.domain puede estar seteado (lo tipeó en el onboarding, o está
+  // "pending" desde Configuración > Dominio) sin que el DNS esté configurado
+  // todavía — solo redirigir ahí si Vercel ya lo confirmó como verified.
+  // Si no, siempre hay algo en vivo en slug.gounuri.com.
+  const url = tenant.domain && tenant.domain_status === 'verified'
+    ? `https://${tenant.domain}`
+    : `https://${tenant.slug}.gounuri.com`
   return NextResponse.redirect(url)
 }

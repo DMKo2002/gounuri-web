@@ -165,6 +165,15 @@ export default async function PerfilPage() {
             <Row label="Dirección de la tienda">
               <span className="text-zinc-900">{tiendaUrl.replace('https://', '')}</span>
             </Row>
+            <Row label="Datos de contacto">
+              <span className="text-zinc-500 text-xs">WhatsApp, redes, sucursales</span>
+              <Link
+                href="/perfil/tienda"
+                className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600"
+              >
+                Editar
+              </Link>
+            </Row>
             <Row label="Tienda creada">
               <span className="text-zinc-900">
                 {tenant.created_at
