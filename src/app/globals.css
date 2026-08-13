@@ -76,6 +76,7 @@
 @media (max-width:900px){
   .nav-links{display:none}
   .nav{padding-right:24px}
+  .nav-right{gap:14px}
 }
 
 /* Menú hamburguesa (mobile) — .nav-links de arriba se esconde a los 900px
