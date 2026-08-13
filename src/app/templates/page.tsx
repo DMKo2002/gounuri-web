@@ -36,8 +36,9 @@ export default function TemplatesPage() {
             Un diseño para cada marca
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-zinc-600">
-            6 templates pensados para moda. Todos con demo en vivo — entrá,
-            recorré el catálogo y probá el carrito como si fueras un cliente.
+            6 templates pensados para escalar. Todos con demo en vivo.
+            <br />
+            Entrá, explorá el catálogo y testeá el carrito en tiempo real.
           </p>
         </div>
       </section>
