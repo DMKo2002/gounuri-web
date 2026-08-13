@@ -86,7 +86,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
           placeholder="tu@email.com"
         />
         <p className="mt-1 text-xs text-zinc-400">
-          Ingresá el email de tu cuenta de Mercado Pago (puede ser distinto al que usás en esta tienda). Asegurate de que sea el correcto para que el pago se procese con éxito.
+          Asegurate de ingresar el email asociado a tu cuenta de Mercado Pago. De lo contrario, la suscripción no podrá concretarse.
         </p>
       </div>
 
