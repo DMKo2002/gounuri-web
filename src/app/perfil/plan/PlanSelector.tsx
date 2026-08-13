@@ -13,14 +13,6 @@ import { PLANES } from '@/lib/site'
 import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 
-const SIGNATURE_FEATURES = [
-  'Ecosistema 100% a medida',
-  'Arquitectura y flujos de usuario (UX/UI) diseñados con exclusividad',
-  'Funcionalidades complejas',
-  'Escalabilidad garantizada: preparadas para crecer al ritmo de la empresa',
-  'Integraciones especiales',
-]
-
 function formatARS(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
@@ -84,6 +76,16 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.
       </p>
 
+      <div className="mt-5 flex justify-center">
+        <img
+          src="/img/planes-descuento-terminos.svg"
+          alt="Pagando semestral ahorrás 10% y pagando anual ahorrás 20%"
+          width={360}
+          height={31}
+          className="h-auto w-full max-w-[360px]"
+        />
+      </div>
+
       <div className="mt-4">
         <label className="block text-sm font-medium text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
         <input
@@ -126,7 +128,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid gap-4 lg:grid-cols-3">
         {PLANES.map(card => {
           const esActual = card.id === currentPlan && !trialing
           return (
@@ -179,32 +181,9 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
             </div>
           )
         })}
-
-        {/* Plan Signature — ecosistema a medida, sin precio fijo, se coordina con un especialista */}
-        <div className="relative flex flex-col rounded-xl border border-zinc-900 bg-white p-5">
-          <h3 className="font-bold text-zinc-900">Signature</h3>
-          <p className="mt-1 text-sm text-zinc-600">
-            Para marcas que exigen una identidad digital única y sin límites.
-          </p>
-          <p className="mt-3 text-2xl font-bold text-zinc-900">A medida</p>
-          <ul className="mt-4 flex-1 space-y-2">
-            {SIGNATURE_FEATURES.map(f => (
-              <li key={f} className="flex items-start gap-2 text-sm text-zinc-600">
-                <Check size={15} className="mt-0.5 shrink-0 text-zinc-900" />
-                {f}
-              </li>
-            ))}
-          </ul>
-          <a
-            href="https://www.gounuri.com/migracion/contacto"
-            className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-          >
-            Contactá a un especialista
-          </a>
-        </div>
       </div>
 
-      <div className="mt-4 space-y-1 text-xs text-zinc-400">
+      <div className="mt-4 space-y-1 text-center text-xs text-zinc-400">
         <p>El pago se procesa con MercadoPago. Vas a cargar tu medio de pago en el sitio seguro de MP — nunca guardamos los datos de tu tarjeta.</p>
         <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago.</p>
         <p>No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
