@@ -100,10 +100,10 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
             className="pointer-events-none absolute inset-0 h-full w-full select-none"
           />
           {([1, 6, 12] as BillingTerm[]).map((t, i) => {
-            // Zonas de click = área realmente visible de cada píldora en la imagen final
-            // (no el ancho nominal del path, que se solapa con la píldora vecina).
-            const left = [0, 38.33, 69.79][i]
-            const width = [38.33, 31.46, 30.21][i]
+            // Zonas de click medidas sobre el SVG con geometrías ya restadas
+            // (sin superposición entre píldoras).
+            const left = [0, 37.9, 69][i]
+            const width = [37.9, 31.1, 31][i]
             const rounding = i === 0 ? 'rounded-l-full' : i === 2 ? 'rounded-r-full' : ''
             return (
               <button
