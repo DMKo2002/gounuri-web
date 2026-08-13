@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { TEMPLATES } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, PANEL_URL } from '@/lib/site'
+import { addSlugDomain } from '@/lib/vercel'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -27,12 +28,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, tenantId: _existing[0].tenant_id, existing: true })
   }
 
+  // El slug es literalmente {slug}.gounuri.com \u2014 antes ac\u00e1 se le pegaba
+  // siempre un sufijo random de 4 d\u00edgitos (prueba3-0746) sin chequear si el
+  // nombre limpio ya estaba libre, as\u00ed que la tienda nunca quedaba en
+  // nombre.gounuri.com como esperar\u00eda el tenant. Ahora: nombre limpio primero,
+  // y si ya existe se avisa en vez de generar uno random en silencio.
   const slug = name.trim()
     .toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
-    + '-' + Date.now().toString().slice(-4)
+    || 'tienda'
+
+  const { data: _slugTaken } = await service.from('tenants').select('id').eq('slug', slug).limit(1)
+  if (_slugTaken?.[0]) {
+    return NextResponse.json(
+      { error: `El nombre "${name.trim()}" ya est\u00e1 en uso. Prob\u00e1 con otro nombre para tu tienda.` },
+      { status: 409 }
+    )
+  }
 
   const validTemplates = TEMPLATES.map(t => t.slug)
   const chosenTemplate = validTemplates.includes(template) ? template : 'minimalista'
@@ -57,7 +71,19 @@ export async function POST(req: Request) {
     .select()
     .single()
 
-  if (tenantError) return NextResponse.json({ error: tenantError.message }, { status: 500 })
+  if (tenantError) {
+    // 23505 = unique_violation \u2014 dos submits casi simult\u00e1neos con el mismo
+    // nombre pasaron el chequeo de arriba antes de que el primero terminara
+    // de insertar. Poco com\u00fan, pero mismo mensaje claro en vez del error
+    // crudo de Postgres.
+    if (tenantError.code === '23505') {
+      return NextResponse.json(
+        { error: `El nombre "${name.trim()}" ya est\u00e1 en uso. Prob\u00e1 con otro nombre para tu tienda.` },
+        { status: 409 }
+      )
+    }
+    return NextResponse.json({ error: tenantError.message }, { status: 500 })
+  }
 
   const { error: configError } = await service
     .from('store_config')
@@ -82,6 +108,17 @@ export async function POST(req: Request) {
     )
 
   if (userError) return NextResponse.json({ error: userError.message }, { status: 500 })
+
+  // Alta de {slug}.gounuri.com en el proyecto de Vercel del template — sin
+  // esto la URL que le mandamos al tenant más abajo no resuelve (bug real,
+  // ver lib/vercel.ts). Best-effort: si falla (ej. falta VERCEL_TOKEN), no
+  // frena la creación del tenant, solo queda sin el dominio de respaldo por
+  // ahora — se puede reintentar después con el backfill del superadmin.
+  try {
+    await addSlugDomain(chosenTemplate, slug)
+  } catch (e) {
+    console.error('[create-tenant] no se pudo dar de alta el dominio en Vercel', e)
+  }
 
   // Notificación al admin + bienvenida al tenant (best effort, no bloqueante)
   const resendKey = process.env.RESEND_API_KEY

@@ -123,6 +123,9 @@ export default function OnboardingPage() {
     if (!res.ok || json.error) {
       setError(json.error ?? 'Error al crear la tienda. Probá de nuevo.')
       setSaving(false)
+      // 409 = nombre ya en uso — hay que volver al paso 1 para que lo cambien,
+      // no tiene sentido dejarlos varados en el paso de plan viendo el error.
+      if (res.status === 409) setStep('nombre')
       return
     }
 
