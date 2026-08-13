@@ -113,9 +113,9 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
                 aria-label={t === 1 ? 'Mensual' : t === 6 ? 'Semestral, 10% de descuento' : 'Anual, 20% de descuento'}
                 aria-pressed={term === t}
                 style={{ left: `${left}%`, width: `${width}%` }}
-                className="absolute inset-y-0"
+                className={`group absolute inset-y-0 overflow-hidden ${rounding}`}
               >
-                {term !== t && <span className={`absolute inset-0 bg-white/55 grayscale ${rounding}`} />}
+                <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
               </button>
             )
           })}
