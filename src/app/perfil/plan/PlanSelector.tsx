@@ -100,7 +100,11 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
             className="pointer-events-none absolute inset-0 h-full w-full select-none"
           />
           {([1, 6, 12] as BillingTerm[]).map((t, i) => {
-            const left = [0, 31.45, 61.67][i]
+            // Zonas de click = área realmente visible de cada píldora en la imagen final
+            // (no el ancho nominal del path, que se solapa con la píldora vecina).
+            const left = [0, 38.33, 69.79][i]
+            const width = [38.33, 31.46, 30.21][i]
+            const rounding = i === 0 ? 'rounded-l-full' : i === 2 ? 'rounded-r-full' : ''
             return (
               <button
                 key={t}
@@ -108,10 +112,10 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
                 onClick={() => setTerm(t)}
                 aria-label={t === 1 ? 'Mensual' : t === 6 ? 'Semestral, 10% de descuento' : 'Anual, 20% de descuento'}
                 aria-pressed={term === t}
-                style={{ left: `${left}%`, width: '38.34%' }}
+                style={{ left: `${left}%`, width: `${width}%` }}
                 className="absolute inset-y-0"
               >
-                {term !== t && <span className="absolute inset-0 rounded-full bg-white/55 grayscale" />}
+                {term !== t && <span className={`absolute inset-0 bg-white/55 grayscale ${rounding}`} />}
               </button>
             )
           })}
