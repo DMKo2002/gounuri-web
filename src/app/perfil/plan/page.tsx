@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { getTenantUsage } from '@/lib/usage'
 import PlanSelector from './PlanSelector'
+import UsageBars from './UsageBars'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,6 +34,8 @@ export default async function PlanPage() {
   const trialing = tenant.plan_status === 'trial' || tenant.status === 'suspended'
   const currentPlan = tenant.plan ?? 'standard'
 
+  const usage = await getTenantUsage(service, tenantId, currentPlan)
+
   return (
     <main className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
@@ -46,7 +50,12 @@ export default async function PlanPage() {
 
       <div className="mx-auto max-w-5xl px-6 py-10">
         <p className="text-sm text-zinc-500">{tenant.name}</p>
+
         <div className="mt-6">
+          <UsageBars usage={usage} />
+        </div>
+
+        <div className="mt-8">
           <PlanSelector currentPlan={currentPlan} trialing={trialing} />
         </div>
       </div>

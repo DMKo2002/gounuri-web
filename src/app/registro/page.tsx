@@ -2,10 +2,18 @@
 
 // Registro de gounuri.com — alta de la cuenta que va a ser dueña de la
 // tienda. Pega a /api/auth/registro (server): crea la cuenta de Auth sin
-// loguearla (admin.generateLink), guarda los datos personales en
-// gounuri_accounts, y manda el mail de confirmación con nuestro branding.
-// La cuenta queda bloqueada — sin sesión — hasta que confirman ese mail
-// (ver /auth/verificar), recién ahí se sigue al onboarding.
+// loguearla (admin.generateLink) y manda el mail de confirmación con
+// nuestro branding. La cuenta queda bloqueada — sin sesión — hasta que
+// confirman ese mail (ver /auth/verificar), recién ahí se sigue al
+// onboarding.
+//
+// Simplificado 2026-08-13: antes pedía nombre/apellido/DNI/celular/nombre
+// de tienda acá mismo — David y Aram lo sacaron por intimidante. Esos datos
+// ahora se completan opcionalmente después, desde gounuri.com/perfil (ver
+// /perfil/datos). El nombre de la tienda ya se pregunta en el onboarding
+// (paso 1), así que sacarlo de acá no perdía nada, era una pregunta
+// duplicada. También se sumó login social (Google/Facebook, ver
+// components/OAuthButtons.tsx) como alternativa a mail+contraseña.
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -14,12 +22,12 @@ import { Eye, EyeOff, Loader2, Mail } from 'lucide-react'
 import { LOGIN_URL, TRIAL_DAYS } from '@/lib/site'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import OAuthButtons from '@/components/OAuthButtons'
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'
 
 export default function RegistroPage() {
   const [form, setForm] = useState({
-    nombre: '', apellido: '', dni: '', celular: '', storeName: '',
     email: '', password: '', confirmar: '',
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -117,52 +125,19 @@ export default function RegistroPage() {
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
             )}
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-700">Nombre</label>
-                <input
-                  required autoFocus value={form.nombre} onChange={e => set('nombre', e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-700">Apellido</label>
-                <input
-                  required value={form.apellido} onChange={e => set('apellido', e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                />
-              </div>
+            <div className="mt-5">
+              <OAuthButtons />
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-zinc-700">DNI</label>
-                <input
-                  required value={form.dni} onChange={e => set('dni', e.target.value)}
-                  placeholder="Sin puntos"
-                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-700">Celular</label>
-                <input
-                  required type="tel" value={form.celular} onChange={e => set('celular', e.target.value)}
-                  placeholder="11 1234 5678"
-                  className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                />
-              </div>
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
+              <span className="text-xs text-zinc-400">o con mail</span>
+              <div className="h-px flex-1 bg-zinc-200" />
             </div>
 
-            <label className="mt-4 block text-xs font-medium text-zinc-700">Nombre de la tienda</label>
+            <label className="block text-xs font-medium text-zinc-700">Email</label>
             <input
-              required value={form.storeName} onChange={e => set('storeName', e.target.value)}
-              placeholder="Así se va a ver en el encabezado de tu tienda"
-              className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-            />
-
-            <label className="mt-4 block text-xs font-medium text-zinc-700">Email</label>
-            <input
-              type="email" required value={form.email} onChange={e => set('email', e.target.value)}
+              type="email" required autoFocus value={form.email} onChange={e => set('email', e.target.value)}
               className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
             />
 

@@ -12,6 +12,7 @@ import { REGISTRO_URL } from '@/lib/site'
 import { friendlyAuthError } from '@/lib/auth-error'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import OAuthButtons from '@/components/OAuthButtons'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -57,7 +58,17 @@ export default function LoginPage() {
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
             )}
 
-            <label className="mt-5 block text-xs font-medium text-zinc-700">Email</label>
+            <div className="mt-5">
+              <OAuthButtons />
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
+              <span className="text-xs text-zinc-400">o con mail</span>
+              <div className="h-px flex-1 bg-zinc-200" />
+            </div>
+
+            <label className="block text-xs font-medium text-zinc-700">Email</label>
             <input
               type="email"
               required

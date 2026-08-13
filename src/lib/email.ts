@@ -95,13 +95,13 @@ export function emailConfirmacionRegistro({
   nombre,
   confirmationUrl,
 }: {
-  nombre: string
+  nombre?: string
   confirmationUrl: string
 }): string {
   return layout(`
   <tr><td style="padding:40px 40px 32px;">
     <p style="margin:0 0 18px;font-size:12px;color:#999;letter-spacing:0.1em;text-transform:uppercase;">Confirmá tu cuenta</p>
-    <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">Hola, ${nombre}</h1>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">${nombre ? `Hola, ${nombre}` : '¡Hola!'}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7;">
       Gracias por registrarte en <strong>gounuri</strong>. Para activar tu cuenta y empezar a crear tu tienda, confirmá tu dirección de email:
     </p>

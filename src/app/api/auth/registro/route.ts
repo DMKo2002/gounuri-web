@@ -6,9 +6,12 @@
 // genérico de Supabase. La cuenta queda SIN sesión hasta que confirman el
 // mail — generateLink nunca loguea al usuario en el browser.
 //
-// Los datos personales (nombre, apellido, DNI, celular, nombre de tienda
-// elegido) se guardan en gounuri_accounts — tabla separada de customers
-// (clientes de cada tienda) y de users (rol dentro del panel).
+// Simplificado 2026-08-13: ya no pide nombre/apellido/DNI/celular/nombre de
+// tienda acá — solo mail+contraseña (esos datos opcionales se completan
+// después desde /perfil/datos). La fila en gounuri_accounts (tabla separada
+// de customers y de users) la crea sola el trigger
+// handle_new_gounuri_account() apenas se crea el auth.users — no hace falta
+// insertarla a mano acá.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
@@ -29,9 +32,9 @@ async function verifyTurnstile(token: string): Promise<boolean> {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { nombre, apellido, dni, celular, storeName, email, password, confirmar, turnstileToken } = body
+    const { email, password, confirmar, turnstileToken } = body
 
-    if (!nombre?.trim() || !apellido?.trim() || !dni?.trim() || !celular?.trim() || !storeName?.trim() || !email?.trim() || !password)
+    if (!email?.trim() || !password)
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 })
     if (password !== confirmar)
       return NextResponse.json({ error: 'Las contraseñas no coinciden' }, { status: 400 })
@@ -66,7 +69,6 @@ export async function POST(req: NextRequest) {
       password,
       options: {
         redirectTo: `${siteUrl}/auth/verificar`,
-        data: { full_name: `${nombre} ${apellido}`.trim() },
       },
     })
 
@@ -93,28 +95,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Error al generar el link de confirmación. Intentá de nuevo.' }, { status: 500 })
     }
 
-    const { error: insertErr } = await service.from('gounuri_accounts').insert({
-      auth_user_id: linkData.user.id,
-      nombre: nombre.trim(),
-      apellido: apellido.trim(),
-      dni: dni.trim(),
-      celular: celular.trim(),
-      email: normalizedEmail,
-      store_name: storeName.trim(),
-    })
-
-    if (insertErr) {
-      console.error('[registro] error insertando gounuri_accounts:', insertErr.message)
-      if (insertErr.code === '23505') {
-        return NextResponse.json({ error: 'Ya existe una cuenta de gounuri con ese email. Iniciá sesión.' }, { status: 409 })
-      }
-      return NextResponse.json({ error: 'No se pudo completar el registro. Intentá de nuevo o contactanos.' }, { status: 500 })
-    }
+    // La fila de gounuri_accounts (auth_user_id, email) la crea sola el
+    // trigger handle_new_gounuri_account() al insertarse el auth.users de
+    // arriba (generateLink ya lo crea, aunque quede sin confirmar) — no hace
+    // falta insertarla a mano acá.
 
     const emailResult = await sendEmail({
       to: normalizedEmail,
       subject: 'Confirmá tu cuenta en gounuri',
-      html: emailConfirmacionRegistro({ nombre: nombre.trim(), confirmationUrl }),
+      html: emailConfirmacionRegistro({ confirmationUrl }),
     }).catch(e => { console.error('[email confirmacion] error:', e); return { ok: false } })
     console.log(`[registro] email confirmacion a ${normalizedEmail}: ${emailResult.ok ? 'ENVIADO OK' : 'FALLO'}`)
 
