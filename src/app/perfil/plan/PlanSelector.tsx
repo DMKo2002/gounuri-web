@@ -76,16 +76,6 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.
       </p>
 
-      <div className="mt-5 flex justify-center">
-        <img
-          src="/img/planes-descuento-terminos.svg"
-          alt="Pagando semestral ahorrás 10% y pagando anual ahorrás 20%"
-          width={360}
-          height={31}
-          className="h-auto w-full max-w-[360px]"
-        />
-      </div>
-
       <div className="mt-4">
         <label className="block text-sm font-medium text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
         <input
@@ -100,29 +90,32 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         </p>
       </div>
 
-      <div className="mt-4">
-        <label className="block text-sm font-medium text-zinc-700 mb-1">Plazo de pago</label>
-        <div className="inline-flex rounded-full border border-zinc-900 p-1">
-          {([1, 6, 12] as BillingTerm[]).map(t => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTerm(t)}
-              className={`px-4 py-1.5 text-sm rounded-full font-medium transition-colors ${term === t ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-900'}`}
-            >
-              {t === 1 ? 'Mensual' : t === 6 ? 'Semestral' : 'Anual'}
-              {TERM_DISCOUNTS[t] > 0 && (
-                <span className={`ml-1 ${term === t ? 'text-emerald-400' : 'text-emerald-600'}`}>-{TERM_DISCOUNTS[t] * 100}%</span>
-              )}
-            </button>
-          ))}
+      <div className="mt-5 flex justify-center">
+        <div className="inline-flex w-full max-w-[360px] overflow-hidden rounded-full border border-zinc-900">
+          {([1, 6, 12] as BillingTerm[]).map(t => {
+            const bg = t === 1 ? 'bg-zinc-200' : t === 6 ? 'bg-zinc-500' : 'bg-zinc-900'
+            const fg = t === 1 ? 'text-zinc-900' : 'text-white'
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTerm(t)}
+                className={`flex-1 px-3 py-2 text-sm font-bold transition-opacity ${bg} ${fg} ${
+                  term === t ? 'ring-2 ring-inset ring-white' : 'opacity-90 hover:opacity-100'
+                }`}
+              >
+                {t === 1 ? 'Mensual' : t === 6 ? 'Semestral' : 'Anual'}
+                {TERM_DISCOUNTS[t] > 0 && <span className="ml-1">-{TERM_DISCOUNTS[t] * 100}%</span>}
+              </button>
+            )
+          })}
         </div>
-        {term > 1 && (
-          <p className="mt-1 text-xs text-zinc-400">
-            Se cobra el total de los {term} meses de una sola vez — recién vuelve a cobrarte cuando se cumpla el plazo, no todos los meses.
-          </p>
-        )}
       </div>
+      {term > 1 && (
+        <p className="mt-2 text-center text-xs text-zinc-400">
+          Se cobra el total de los {term} meses de una sola vez — recién vuelve a cobrarte cuando se cumpla el plazo, no todos los meses.
+        </p>
+      )}
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
