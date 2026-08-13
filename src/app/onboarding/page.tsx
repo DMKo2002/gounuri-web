@@ -4,7 +4,7 @@
 // Al finalizar crea el tenant (POST /api/create-tenant) y entrega la sesión
 // al Panel Admin via /auth/handoff (tokens en el fragment, nunca en query).
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Check, ExternalLink, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -82,7 +82,18 @@ function TemplateCard({
 }
 
 // ── Página ────────────────────────────────────────────────────────────────────
+// useSearchParams() (para precargar el nombre de tienda que viene del link de
+// /auth/verificar) exige un boundary de Suspense en Next 14 App Router o el
+// build falla al prerenderizar la página estáticamente.
 export default function OnboardingPage() {
+  return (
+    <Suspense fallback={null}>
+      <OnboardingContent />
+    </Suspense>
+  )
+}
+
+function OnboardingContent() {
   const supabase = createClient()
   // El nombre de tienda ya se pidió en /registro (gounuri_accounts.store_name)
   // y /auth/verificar lo pasa acá por query param al confirmar el mail — no
