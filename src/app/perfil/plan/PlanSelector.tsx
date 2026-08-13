@@ -172,48 +172,55 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="mt-12 grid gap-4 lg:grid-cols-3">
+      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {PLANES.map(card => {
           const esActual = card.id === currentPlan && !trialing
           return (
             <div
               key={card.id}
-              className={`relative flex flex-col rounded-xl border border-zinc-900 bg-white p-5 transition-shadow ${card.destacado ? 'shadow-md' : ''} ${highlightPlan === card.id ? 'ring-2 ring-emerald-400' : ''}`}
+              className={`relative flex flex-col rounded-xl border border-zinc-900 bg-white p-8 transition-shadow ${card.destacado ? 'shadow-md' : ''} ${highlightPlan === card.id ? 'ring-2 ring-emerald-400' : ''}`}
             >
               {card.destacado && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-zinc-900 px-2.5 py-0.5 text-[11px] font-medium text-white">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white">
                   Recomendado
                 </span>
               )}
-              <h3 className="font-bold text-zinc-900">{card.nombre}</h3>
+
+              <h3 className="text-lg font-bold text-zinc-900">{card.nombre}</h3>
+              <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{card.descripcion}</p>
+
               {term > 1 ? (
-                <div className="mt-1">
-                  <p className="text-2xl font-bold text-zinc-900">
+                <div className="mt-6">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
                     {formatARS(priceForTerm(card.id, term))}
-                    <span className="text-sm font-normal text-zinc-500"> total / {term} meses</span>
-                  </p>
-                  <p className="text-xs text-zinc-400">
+                  </span>
+                  <span className="ml-1 text-sm text-zinc-500">total / {term} meses</span>
+                  <p className="mt-1 text-xs text-zinc-400">
                     equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes
                   </p>
                 </div>
               ) : (
-                <p className="mt-1 text-2xl font-bold text-zinc-900">
-                  {formatARS(card.precioARS)}
-                  <span className="text-sm font-normal text-zinc-500"> /mes</span>
-                </p>
+                <div className="mt-6">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
+                    {formatARS(card.precioARS)}
+                  </span>
+                  <span className="ml-1 text-sm text-zinc-500">/ mes</span>
+                </div>
               )}
-              <ul className="mt-4 flex-1 space-y-2">
+
+              <ul className="mt-8 flex-1 space-y-3">
                 {card.features.map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-zinc-600">
-                    <Check size={15} className="mt-0.5 shrink-0 text-zinc-900" />
+                  <li key={f} className="flex items-start gap-3 text-sm text-zinc-700">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-zinc-900" />
                     {f}
                   </li>
                 ))}
               </ul>
+
               <button
                 onClick={() => subscribe(card.id)}
                 disabled={esActual || loading !== null}
-                className="mt-5 inline-flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
+                className="btn-black mt-8 w-full disabled:opacity-50"
               >
                 {loading === card.id && <Loader2 size={15} className="animate-spin" />}
                 {esActual
