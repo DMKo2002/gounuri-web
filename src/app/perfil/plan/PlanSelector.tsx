@@ -91,17 +91,22 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
       </div>
 
       <div className="mt-5 flex justify-center">
-        <div className="inline-flex w-full max-w-[360px] overflow-hidden rounded-full border border-zinc-900">
-          {([1, 6, 12] as BillingTerm[]).map(t => {
+        {/* Réplica del SVG de descuento (3 píldoras superpuestas: gris claro / gris / negro),
+            ahora clickeable para elegir el plazo real de pago. */}
+        <div className="relative h-9 w-full max-w-[360px]">
+          {([1, 6, 12] as BillingTerm[]).map((t, i) => {
             const bg = t === 1 ? 'bg-zinc-200' : t === 6 ? 'bg-zinc-500' : 'bg-zinc-900'
             const fg = t === 1 ? 'text-zinc-900' : 'text-white'
+            const left = [0, 31.45, 61.67][i]
+            const z = 3 - i
             return (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTerm(t)}
-                className={`flex-1 px-3 py-2 text-sm font-bold transition-opacity ${bg} ${fg} ${
-                  term === t ? 'ring-2 ring-inset ring-white' : 'opacity-90 hover:opacity-100'
+                style={{ left: `${left}%`, width: '38.34%', zIndex: z }}
+                className={`absolute inset-y-0 flex items-center justify-center rounded-full text-sm font-bold transition-opacity ${bg} ${fg} ${
+                  term === t ? 'opacity-100' : 'opacity-80 hover:opacity-100'
                 }`}
               >
                 {t === 1 ? 'Mensual' : t === 6 ? 'Semestral' : 'Anual'}
