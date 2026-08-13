@@ -77,7 +77,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
       </p>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
+        <label className="block text-sm font-bold text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
         <input
           type="email"
           className="max-w-sm w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
@@ -90,37 +90,39 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         </p>
       </div>
 
-      <div className="mt-5 flex justify-center">
-        {/* Réplica del SVG de descuento (3 píldoras superpuestas: gris claro / gris / negro),
-            ahora clickeable para elegir el plazo real de pago. */}
-        <div className="relative h-9 w-full max-w-[360px]">
+      <div className="mt-10 flex justify-center">
+        {/* SVG de descuento tal cual el archivo original, con 3 zonas invisibles
+            encima para poder elegir el plazo real de pago sin tocar el diseño. */}
+        <div className="relative h-[31px] w-full max-w-[360px]">
+          <img
+            src="/img/planes-descuento-terminos.svg"
+            alt="Mensual, Semestral -10%, Anual -20%"
+            className="pointer-events-none absolute inset-0 h-full w-full select-none"
+          />
           {([1, 6, 12] as BillingTerm[]).map((t, i) => {
-            const bg = t === 1 ? 'bg-zinc-200' : t === 6 ? 'bg-zinc-500' : 'bg-zinc-900'
-            const fg = t === 1 ? 'text-zinc-900' : 'text-white'
             const left = [0, 31.45, 61.67][i]
-            const z = 3 - i
+            const center = left + 19.17
             return (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTerm(t)}
-                style={{ left: `${left}%`, width: '38.34%', zIndex: z }}
-                className={`absolute inset-y-0 flex items-center justify-center rounded-full text-sm font-bold transition-opacity ${bg} ${fg} ${
-                  term === t ? 'opacity-100' : 'opacity-80 hover:opacity-100'
-                }`}
+                aria-label={t === 1 ? 'Mensual' : t === 6 ? 'Semestral, 10% de descuento' : 'Anual, 20% de descuento'}
+                aria-pressed={term === t}
+                style={{ left: `${left}%`, width: '38.34%' }}
+                className="absolute inset-y-0"
               >
-                {t === 1 ? 'Mensual' : t === 6 ? 'Semestral' : 'Anual'}
-                {TERM_DISCOUNTS[t] > 0 && <span className="ml-1">-{TERM_DISCOUNTS[t] * 100}%</span>}
+                {term === t && (
+                  <span
+                    style={{ left: `${center - left}%` }}
+                    className="absolute -bottom-2 h-2 w-2 -translate-x-1/2 rotate-45 bg-zinc-900"
+                  />
+                )}
               </button>
             )
           })}
         </div>
       </div>
-      {term > 1 && (
-        <p className="mt-2 text-center text-xs text-zinc-400">
-          Se cobra el total de los {term} meses de una sola vez — recién vuelve a cobrarte cuando se cumpla el plazo, no todos los meses.
-        </p>
-      )}
 
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
