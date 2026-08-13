@@ -93,7 +93,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento tal cual el archivo original, con 3 zonas invisibles
             encima para poder elegir el plazo real de pago sin tocar el diseño. */}
-        <div className="relative h-[31px] w-full max-w-[360px]">
+        <div className="relative h-[37px] w-full max-w-[432px]">
           <img
             src="/img/planes-descuento-terminos.svg"
             alt="Mensual, Semestral -10%, Anual -20%"
@@ -101,7 +101,6 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
           />
           {([1, 6, 12] as BillingTerm[]).map((t, i) => {
             const left = [0, 31.45, 61.67][i]
-            const center = left + 19.17
             return (
               <button
                 key={t}
@@ -112,12 +111,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
                 style={{ left: `${left}%`, width: '38.34%' }}
                 className="absolute inset-y-0"
               >
-                {term === t && (
-                  <span
-                    style={{ left: `${center - left}%` }}
-                    className="absolute -bottom-2 h-2 w-2 -translate-x-1/2 rotate-45 bg-zinc-900"
-                  />
-                )}
+                {term !== t && <span className="absolute inset-0 rounded-full bg-white/55 grayscale" />}
               </button>
             )
           })}
@@ -128,7 +122,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+      <div className="mt-12 grid gap-4 lg:grid-cols-3">
         {PLANES.map(card => {
           const esActual = card.id === currentPlan && !trialing
           return (
@@ -183,7 +177,7 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
         })}
       </div>
 
-      <div className="mt-4 space-y-1 text-center text-xs text-zinc-400">
+      <div className="mt-10 space-y-1 text-center text-xs text-zinc-400">
         <p>El pago se procesa con MercadoPago. Vas a cargar tu medio de pago en el sitio seguro de MP — nunca guardamos los datos de tu tarjeta.</p>
         <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago.</p>
         <p>No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
