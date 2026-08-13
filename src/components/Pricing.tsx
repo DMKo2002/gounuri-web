@@ -24,9 +24,9 @@ export default function Pricing() {
           <img
             src="/img/planes-descuento-terminos.svg"
             alt="Pagando semestral ahorrás 10% y pagando anual ahorrás 20%"
-            width={305}
-            height={26}
-            className="h-auto w-full max-w-[305px]"
+            width={360}
+            height={31}
+            className="h-auto w-full max-w-[360px]"
           />
         </div>
 
