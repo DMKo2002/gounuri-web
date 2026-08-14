@@ -2,6 +2,10 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Cookie a nivel .gounuri.com para compartir sesión con panel.gounuri.com —
+// ver nota en lib/supabase/client.ts. Solo en producción.
+const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' ? '.gounuri.com' : undefined
+
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -9,6 +13,7 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: { domain: COOKIE_DOMAIN },
       cookies: {
         getAll() {
           return cookieStore.getAll()

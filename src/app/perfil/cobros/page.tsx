@@ -57,6 +57,26 @@ export default async function CobrosPage() {
             }}
           />
         </div>
+
+        {/* Siguiente paso del setup inicial — sin esto quien viene del popup
+            de "empezamos a configurar tu tienda" se quedaba sin salida. */}
+        <div className="mt-6 flex items-center justify-between rounded-xl border border-zinc-200 bg-white px-5 py-4">
+          <div>
+            <p className="text-sm font-medium text-zinc-900">Siguiente: datos de contacto</p>
+            <p className="text-xs text-zinc-500">WhatsApp, redes y sucursales para el pie de tu tienda.</p>
+          </div>
+          <Link
+            href="/perfil/tienda"
+            className="shrink-0 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            Continuar
+          </Link>
+        </div>
+        <div className="mt-3 text-center">
+          <Link href="/perfil" className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-600">
+            Prefiero hacerlo más tarde — volver a Mi cuenta
+          </Link>
+        </div>
       </div>
     </main>
   )
