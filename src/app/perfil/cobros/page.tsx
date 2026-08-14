@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import CobrosForm from './CobrosForm'
@@ -32,11 +31,14 @@ export default async function CobrosPage() {
     <main className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-4 px-6">
-          <Link href="/perfil" className="text-lg font-semibold tracking-tight text-zinc-900">
+          {/* <a> normal, no <Link> — vuelve con un request nuevo al server,
+              así el popup de CBU (que depende de datos recién guardados acá)
+              no se queda con la versión vieja cacheada del lado del cliente. */}
+          <a href="/perfil" className="text-lg font-semibold tracking-tight text-zinc-900">
             gounuri<span className="text-zinc-400">.com</span>
-          </Link>
+          </a>
           <span className="text-zinc-300">/</span>
-          <Link href="/perfil" className="text-sm text-zinc-500 hover:text-zinc-900">Mi cuenta</Link>
+          <a href="/perfil" className="text-sm text-zinc-500 hover:text-zinc-900">Mi cuenta</a>
         </div>
       </header>
 
@@ -65,17 +67,17 @@ export default async function CobrosPage() {
             <p className="text-sm font-medium text-zinc-900">Siguiente: datos de contacto</p>
             <p className="text-xs text-zinc-500">WhatsApp, redes y sucursales para el pie de tu tienda.</p>
           </div>
-          <Link
+          <a
             href="/perfil/tienda"
             className="shrink-0 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800"
           >
             Continuar
-          </Link>
+          </a>
         </div>
         <div className="mt-3 text-center">
-          <Link href="/perfil" className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-600">
+          <a href="/perfil" className="text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-600">
             Prefiero hacerlo más tarde — volver a Mi cuenta
-          </Link>
+          </a>
         </div>
       </div>
     </main>

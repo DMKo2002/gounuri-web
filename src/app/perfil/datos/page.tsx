@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import DatosPersonalesForm from './DatosPersonalesForm'
@@ -29,11 +28,13 @@ export default async function DatosPersonalesPage() {
     <main className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-3xl items-center gap-4 px-6">
-          <Link href="/perfil" className="text-lg font-semibold tracking-tight text-zinc-900">
+          {/* <a> normal — ver nota en /perfil/cobros/page.tsx sobre por qué
+              no usamos <Link> acá. */}
+          <a href="/perfil" className="text-lg font-semibold tracking-tight text-zinc-900">
             gounuri<span className="text-zinc-400">.com</span>
-          </Link>
+          </a>
           <span className="text-zinc-300">/</span>
-          <Link href="/perfil" className="text-sm text-zinc-500 hover:text-zinc-900">Mi cuenta</Link>
+          <a href="/perfil" className="text-sm text-zinc-500 hover:text-zinc-900">Mi cuenta</a>
         </div>
       </header>
 

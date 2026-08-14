@@ -3,7 +3,7 @@
 // Login de gounuri.com — mismas credenciales que el Panel Admin
 // (mismo proyecto Supabase). Al entrar va al perfil.
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -14,13 +14,24 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import OAuthButtons from '@/components/OAuthButtons'
 
+// "Recordarme" guarda solo el email en localStorage para prellenar el
+// campo la próxima vez — no guarda la contraseña. La sesión en sí ya
+// persiste sola vía cookies (eso no depende de este checkbox).
+const REMEMBER_KEY = 'gounuri_remember_email'
+
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem(REMEMBER_KEY)
+    if (saved) setEmail(saved)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -33,6 +44,8 @@ export default function LoginPage() {
         setError(friendlyAuthError(err))
         return
       }
+      if (remember) localStorage.setItem(REMEMBER_KEY, email)
+      else localStorage.removeItem(REMEMBER_KEY)
       router.push('/perfil')
       router.refresh()
     } catch (err) {
@@ -85,6 +98,16 @@ export default function LoginPage() {
               onChange={e => setPassword(e.target.value)}
               className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
             />
+
+            <label className="mt-3 flex items-center gap-2 text-xs text-zinc-600">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-zinc-300"
+              />
+              Recordarme
+            </label>
 
             <button
               type="submit"
