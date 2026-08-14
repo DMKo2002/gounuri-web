@@ -1,15 +1,21 @@
 'use client'
 
 // Onboarding post-registro: 1) nombre de la tienda → 2) template → 3) plan.
-// Al finalizar crea el tenant (POST /api/create-tenant) y entrega la sesión
-// al Panel Admin via /auth/handoff (tokens en el fragment, nunca en query).
+// Al finalizar crea el tenant (POST /api/create-tenant).
+//
+// Cambio 2026-08-14: antes, al terminar, se entregaba la sesión al Panel
+// Admin vía /auth/handoff (tokens en el fragment) y se sacaba al usuario de
+// gounuri.com de una. David lo sacó explícitamente — después de crear la
+// tienda tiene que quedarse en gounuri.com (/perfil), no saltar
+// automáticamente a Panel Admin. Desde /perfil ya hay un botón "Ir al Panel
+// Admin" para quien quiera entrar a cargar productos.
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Check, ExternalLink, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
-import { PLANES, PANEL_URL, TRIAL_DAYS, formatPrecio } from '@/lib/site'
+import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
 type Step = 'nombre' | 'template' | 'plan'
 
@@ -147,15 +153,10 @@ function OnboardingContent() {
       return
     }
 
-    // Handoff de sesión al Panel Admin (tokens en fragment — no llegan al server)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      window.location.href =
-        `${PANEL_URL}/auth/handoff#access_token=${encodeURIComponent(session.access_token)}` +
-        `&refresh_token=${encodeURIComponent(session.refresh_token)}`
-    } else {
-      window.location.href = `${PANEL_URL}/login`
-    }
+    // Tienda creada — quedarse en gounuri.com (Mi cuenta), no saltar a Panel
+    // Admin de una. La sesión ya está en las cookies de este mismo dominio,
+    // no hace falta ningún handoff para esto.
+    window.location.href = '/perfil'
   }
 
   const pasos: { id: Step; label: string }[] = [
