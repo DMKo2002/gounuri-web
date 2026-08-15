@@ -79,7 +79,7 @@ export const PLANES: Plan[] = [
   {
     id: 'premium',
     nombre: 'Premium',
-    precioARS: 74_900,
+    precioARS: 54_900,
     descripcion: 'Para marcas establecidas que quieren todo.',
     features: [
       'Hasta 600 productos',
