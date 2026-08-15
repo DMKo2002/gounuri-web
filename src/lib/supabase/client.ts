@@ -1,16 +1,16 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-// Cookie a nivel .gounuri.com (no solo el host actual) para que la misma
-// sesión valga tanto en gounuri.com/www.gounuri.com como en
-// panel.gounuri.com — es lo que permite entrar a Panel Admin sin volver a
-// loguearse si ya iniciaste sesión acá. Solo en producción: en localhost
-// (dev) un dominio con punto no aplica y rompería el login local.
-const COOKIE_DOMAIN = process.env.NODE_ENV === 'production' ? '.gounuri.com' : undefined
+// Cookie host-only (sin domain compartido). El pase de sesión hacia
+// panel.gounuri.com NO se hace ampliando el dominio de la cookie —eso
+// generó un loop de refresh token que rompió producción el 14/8 (ver
+// mensaje-para-aram.md)— sino con un handoff explícito: se mandan
+// access_token/refresh_token una sola vez por el fragment de la URL hacia
+// panel.gounuri.com/auth/handoff, que ahí arma su propia cookie host-only.
+// Ver components/PanelHandoffLink.tsx.
 
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookieOptions: { domain: COOKIE_DOMAIN } }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 }

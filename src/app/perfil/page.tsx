@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { ExternalLink, LayoutDashboard, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { PANEL_URL } from '@/lib/site'
 import { isSuperAdmin } from '@/lib/superadmin'
 import { SignOutButton, BajaButton } from './PerfilActions'
 import SetupPopup from './SetupPopup'
+import PanelHandoffLink from '@/components/PanelHandoffLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,9 +44,9 @@ export default async function PerfilPage() {
               Esta cuenta es de administrador de la plataforma — no tiene una tienda propia.
             </p>
             <div className="mt-4 flex items-center justify-center gap-4">
-              <a href={`${PANEL_URL}/superadmin`} className="text-sm font-medium text-zinc-900 underline underline-offset-2">
+              <PanelHandoffLink className="text-sm font-medium text-zinc-900 underline underline-offset-2">
                 Ir al panel de superadmin
-              </a>
+              </PanelHandoffLink>
               <SignOutButton />
             </div>
           </div>
@@ -134,17 +134,14 @@ export default async function PerfilPage() {
             </div>
             <ExternalLink className="ml-auto h-4 w-4 text-zinc-400" />
           </a>
-          <a
-            href={`${PANEL_URL}/dashboard`}
-            className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-5 transition-all hover:border-zinc-900 hover:shadow-sm"
-          >
+          <PanelHandoffLink className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-5 transition-all hover:border-zinc-900 hover:shadow-sm">
             <LayoutDashboard className="h-5 w-5 text-zinc-900" />
             <div>
               <p className="font-medium text-zinc-900">Ir al Panel Admin</p>
               <p className="text-xs text-zinc-500">Productos, pedidos y configuración</p>
             </div>
             <ExternalLink className="ml-auto h-4 w-4 text-zinc-400" />
-          </a>
+          </PanelHandoffLink>
         </div>
 
         {/* Datos */}
