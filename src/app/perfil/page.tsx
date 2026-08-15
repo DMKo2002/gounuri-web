@@ -13,9 +13,9 @@ export const dynamic = 'force-dynamic'
 const PLAN_NOMBRES: Record<string, string> = {
   free: 'Gratis',
   mini: 'Mini',
-  standard: 'Standard',
+  standard: 'Business',
   premium: 'Premium',
-  basic: 'Standard', // legacy
+  basic: 'Business', // legacy
 }
 
 const ESTADOS: Record<string, { label: string; clase: string }> = {
@@ -87,7 +87,7 @@ export default async function PerfilPage() {
   const mostrarPopup = !tieneCbu && !tenant.cbu_popup_dismissed_at
 
   const tiendaUrl = tenant.domain ? `https://${tenant.domain}` : `https://${tenant.slug}.gounuri.com`
-  const planNombre = PLAN_NOMBRES[tenant.plan ?? ''] ?? 'Standard'
+  const planNombre = PLAN_NOMBRES[tenant.plan ?? ''] ?? 'Business'
   const estado = tenant.plan_status ? ESTADOS[tenant.plan_status] : null
   const tieneSuscripcion = !!tenant.mp_preapproval_id && (tenant.plan_status === 'active' || tenant.plan_status === 'past_due')
 
