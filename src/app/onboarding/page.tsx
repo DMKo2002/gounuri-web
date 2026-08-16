@@ -349,7 +349,7 @@ function OnboardingContent() {
                 renglones arranquen en el mismo borde. */}
             <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
               <div className="text-left">
-                <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
+                <h2 className="text-[3.6rem] font-extrabold">Bienvenido!</h2>
                 <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
               </div>
             </div>
