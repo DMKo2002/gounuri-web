@@ -19,24 +19,11 @@ import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
 type Step = 'nombre' | 'template' | 'plan'
 
-// Mismas fotos del carrusel del Hero de gounuri.com (public/img/hero) — se
-// reutilizan acá para el panel derecho del paso 1 del onboarding (diseño
-// Figma "Registracion 1A/1B/1C", que son la misma pantalla con 3 fondos
-// distintos: en vez de elegir una sola foto o armar un asset nuevo, las
-// rotamos las 4 con la misma técnica que ya usa el Hero — ver .hero-slide
-// en globals.css).
-const ONBOARDING_SLIDES = ['/img/hero/hero-01.jpg', '/img/hero/hero-02.jpg', '/img/hero/hero-03.jpg', '/img/hero/hero-04.jpg']
-
-// Isotipo "G" de gounuri — mismo trazo que components/Hero.tsx (.g-logo),
-// reutilizado acá en dos tamaños en vez de bajar el asset de Figma (que
-// vence a los 7 días).
-function GMark({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 155 212" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M127.122 35.918L110.309 44.5352L110.307 44.5342V44.5371L110.309 44.5352C115.55 49.0924 119.662 50.4132 124.824 57.1289C129.34 63.0044 132.347 69.97 133.502 76.7695C138.149 104.103 120.678 125.377 98.3216 132.125C102.081 134.479 104.406 137.448 104.783 140.878C105.308 145.642 101.985 150.481 96.0569 154.64C99.8321 156.04 103.168 158.747 105.299 162.528C109.947 170.779 107.097 181.021 98.9319 185.405C90.7672 189.789 80.3808 186.655 75.7327 178.404C73.0476 173.638 72.8643 168.207 74.763 163.625C71.5104 164.415 68.0864 165.05 64.5383 165.498C41.141 168.453 21.2249 162.221 20.054 151.578C18.9302 141.363 35.4837 130.799 57.5042 127.354C31.7655 112.249 29.4898 83.149 40.6233 64.208C48.4958 50.8128 57.5434 46.5131 73.1936 38.3916C87.2253 31.1111 102.315 22.5295 116.558 16L127.122 35.918ZM104.184 70.4844C96.3186 61.6071 80.4737 58.1668 68.4466 67.7715L68.4446 67.7744C41.5219 89.2772 75.0498 126.203 100.963 104.854C109.797 97.5739 114.27 81.8684 104.184 70.4844Z" fill="currentColor" />
-    </svg>
-  )
-}
+// Fotos exportadas de Figma para el paso 1 (pantallas "Registracion
+// 1A/1B/1C" — misma pantalla, 3 fondos distintos) — bajadas y comprimidas
+// (PNG originales ~2.5-3.5MB c/u → JPG ~85% más liviano) en
+// public/img/onboarding/.
+const ONBOARDING_SLIDES = ['/img/onboarding/onboarding-01.jpg', '/img/onboarding/onboarding-02.jpg', '/img/onboarding/onboarding-03.jpg']
 
 // ── Preview de template con iframe escalado ──────────────────────────────────
 function TemplateCard({
@@ -316,13 +303,13 @@ function OnboardingContent() {
               </form>
             </div>
 
-            <div className="mt-12 hidden items-center gap-3 text-zinc-900 sm:flex">
-              <GMark className="h-10 w-auto" />
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">Safe · High · Gounuri</span>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element -- asset SVG exportado de Figma tal cual, no una foto a optimizar */}
+            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="mt-12 hidden h-24 w-auto sm:block" />
           </div>
 
-          {/* Panel de imagen — carrusel de fotos del Hero + CTA circular */}
+          {/* Panel de imagen — carrusel de fotos exportadas de Figma + CTA circular
+              (el botón queda exactamente en el centro x/y del lienzo completo,
+              que coincide con el borde entre el panel del form y el de la foto). */}
           <div className="relative hidden flex-1 lg:block">
             <div className="hero-slides">
               {ONBOARDING_SLIDES.map((src, i) => (
@@ -339,19 +326,17 @@ function OnboardingContent() {
               type="submit"
               form="onb-paso1-form"
               aria-label="Continuar"
-              className="absolute left-0 top-1/2 z-10 flex h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-lg transition hover:brightness-110"
-              style={{ background: 'var(--red)' }}
+              className="absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 transition hover:brightness-110 hover:scale-105"
             >
-              <ArrowRight size={28} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/img/onboarding/boton-siguiente.svg" alt="Continuar" className="h-full w-full drop-shadow-lg" />
             </button>
           </div>
 
-          {/* Franja lateral decorativa (bicolor, con isotipo) */}
-          <div className="hidden w-[150px] flex-col xl:flex">
-            <div className="flex-1" style={{ background: '#2f3b4c' }} />
-            <div className="flex flex-1 items-center justify-center" style={{ background: 'var(--red)' }}>
-              <GMark className="h-10 w-auto text-white" />
-            </div>
+          {/* Franja lateral decorativa — asset único de Figma (bicolor + isotipo) */}
+          <div className="hidden w-[150px] xl:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/img/onboarding/barra-lateral-derecha.svg" alt="" className="block h-full w-full" />
           </div>
         </div>
       )}
