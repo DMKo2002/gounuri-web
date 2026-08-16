@@ -314,29 +314,27 @@ function OnboardingContent() {
 
             {/* Logo fijo abajo a la izquierda — posición absoluta en vez de
                 empujado por flujo normal, así no se mueve si el form cambia
-                de alto (validación, error, etc). */}
+                de alto (validación, error, etc). Agrandado 150% respecto al
+                tamaño anterior. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- asset SVG exportado de Figma tal cual, no una foto a optimizar */}
-            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-24 w-auto sm:left-16 sm:block lg:left-24" />
+            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
           </div>
 
-          {/* Panel de imagen — foto exportada de Figma (rota entre las 3 sin
-              crossfade: se reemplaza el div entero vía `key`, así nunca hay
-              dos fotos superpuestas al mismo tiempo) + CTA circular (el botón
-              queda exactamente en el centro x/y del lienzo completo, que
-              coincide con el borde entre el panel del form y el de la foto).
-              Ancho fijo en % (no flex-1) para mantener la proporción exacta
-              del Figma: form 50% / foto 41.1% (710 de 1728) / franja 8.9%
-              (150 de 1728) — así no se deforma al ensanchar la ventana. */}
+          {/* Panel de imagen — foto exportada de Figma tal cual, sin filtro ni
+              velo oscuro encima (se había aplicado un overlay negro y un
+              filtro grayscale/brightness que no eran parte del asset — se
+              sacan). Rota entre las 3 sin crossfade (se reemplaza el div
+              entero vía `key`, nunca hay dos fotos superpuestas). Ancho fijo
+              en % (no flex-1) para mantener la proporción exacta del Figma:
+              form 50% / foto 41.1% (710 de 1728) / franja 8.9% (150 de 1728). */}
           <div className="relative hidden lg:block lg:w-[41.1%]">
-            <div className="hero-slides">
-              <div
-                key={slideIndex}
-                className="hero-slide active"
-                style={{ backgroundImage: `url('${ONBOARDING_SLIDES[slideIndex]}')` }}
-              />
-            </div>
-            <div className="absolute inset-0 bg-black/15" />
-            <div className="absolute inset-x-0 top-[28%] flex justify-center px-6 text-center text-white">
+            <div
+              key={slideIndex}
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('${ONBOARDING_SLIDES[slideIndex]}')` }}
+            />
+            {/* "Bienvenido!" centrado en X e Y respecto a la foto */}
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-white">
               <div>
                 <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
                 <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
@@ -354,12 +352,19 @@ function OnboardingContent() {
             </button>
           </div>
 
-          {/* Franja lateral decorativa — asset único de Figma (bicolor + isotipo).
-              object-cover (no "fill") para no deformar el SVG: mantiene su
-              proporción 150:1117 y recorta el sobrante en vez de estirarlo. */}
-          <div className="hidden xl:block xl:w-[8.9%]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/img/onboarding/barra-lateral-derecha.svg" alt="" className="block h-full w-full object-cover" />
+          {/* Franja lateral decorativa — reconstruida con los colores exactos
+              del SVG (#454B53 / #FE4648) en dos bloques al 50%, en vez de
+              estirar/recortar la imagen compuesta. Así los rectángulos nunca
+              se deforman (son color sólido, no importa el tamaño) y el
+              isotipo "G" queda siempre centrado de verdad en el bloque rojo,
+              en su tamaño nativo — sin forzar ningún recorte o escalado. */}
+          <div className="hidden xl:flex xl:w-[8.9%] xl:flex-col">
+            <div className="flex-1" style={{ background: '#454B53' }} />
+            <div className="flex flex-1 items-center justify-center" style={{ background: '#FE4648' }}>
+              <svg width="28" height="40" viewBox="55 1010 41 59" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M90.752 1018.28L85.4541 1020.99C87.1055 1022.43 88.4021 1022.84 90.0283 1024.96C91.4512 1026.81 92.3987 1029.01 92.7627 1031.15C94.2271 1039.76 88.7192 1046.46 81.6738 1048.59C82.8602 1049.33 83.5949 1050.27 83.7139 1051.35C83.879 1052.85 82.8299 1054.37 80.9609 1055.68C82.1514 1056.12 83.2042 1056.98 83.876 1058.17C85.3404 1060.77 84.4422 1063.99 81.8701 1065.38C79.2977 1066.76 76.0252 1065.77 74.5606 1063.17C73.714 1061.67 73.6575 1059.96 74.2568 1058.51C73.2314 1058.76 72.1519 1058.96 71.0332 1059.1C63.6613 1060.04 57.3865 1058.07 57.0176 1054.72C56.6639 1051.5 61.8803 1048.17 68.8193 1047.09C60.7076 1042.33 59.9898 1033.16 63.4981 1027.19C65.9785 1022.97 68.8297 1021.61 73.7607 1019.05C78.1817 1016.76 82.9364 1014.06 87.4238 1012L90.752 1018.28ZM83.5244 1029.17C81.0462 1026.37 76.0541 1025.29 72.2647 1028.31L72.2637 1028.31C63.7815 1035.09 74.3451 1046.72 82.5098 1040C85.2929 1037.7 86.7021 1032.75 83.5244 1029.17Z" fill="white" />
+              </svg>
+            </div>
           </div>
         </div>
       )}
