@@ -749,7 +749,7 @@ function OnboardingContent() {
             <h1 className="text-3xl font-extrabold leading-tight text-zinc-900 lg:hidden">Escalá con tus Ventas</h1>
             <p className="mt-1 text-base font-medium text-zinc-500 lg:hidden">B2B Mayoristas y B2C Minoristas</p>
 
-            <div className="mt-10 max-w-md space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
+            <div className="mt-10 w-full space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
               <button
                 type="button"
                 onClick={handleFinalSubmit}
