@@ -1,9 +1,47 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Check } from 'lucide-react'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 import { priceForTerm, type BillingTerm } from '@/lib/plans'
+
+// Leyenda animada tipo "máquina de escribir" en loop, entre el selector de
+// plazo y las tarjetas — solo texto, sin marco ni fondo.
+const LOOP_PHRASES = ['0% Comisión de Venta', '0% Dinero Confiscado', '0% letra chica']
+
+function TypingLoop() {
+  const [phraseIndex, setPhraseIndex] = useState(0)
+  const [text, setText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const current = LOOP_PHRASES[phraseIndex]
+
+    if (!deleting && text === current) {
+      const t = setTimeout(() => setDeleting(true), 1400)
+      return () => clearTimeout(t)
+    }
+    if (deleting && text === '') {
+      const t = setTimeout(() => {
+        setDeleting(false)
+        setPhraseIndex((i) => (i + 1) % LOOP_PHRASES.length)
+      }, 300)
+      return () => clearTimeout(t)
+    }
+
+    const t = setTimeout(() => {
+      setText(current.slice(0, deleting ? text.length - 1 : text.length + 1))
+    }, deleting ? 35 : 55)
+    return () => clearTimeout(t)
+  }, [text, deleting, phraseIndex])
+
+  return (
+    <p className="text-center text-lg font-bold tracking-tight text-zinc-900 sm:text-xl" aria-live="polite">
+      {text}
+      <span className="ml-0.5 inline-block h-[1em] w-[2px] animate-pulse bg-zinc-900 align-middle" />
+    </p>
+  )
+}
 
 const SIGNATURE_FEATURES = [
   'Ecosistema 100% a medida',
@@ -108,6 +146,10 @@ export default function Pricing() {
         </svg>
       </div>
 
+      <div className="mt-6">
+        <TypingLoop />
+      </div>
+
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PLANES.map((plan) => (
             <div
@@ -189,12 +231,6 @@ export default function Pricing() {
               Contactá a un especialista
             </a>
           </div>
-        </div>
-
-        <div className="mt-10 flex justify-center">
-          <span className="rounded-full bg-zinc-900 px-6 py-2 text-sm font-semibold text-white">
-            0% Comisión de Venta
-          </span>
         </div>
       </div>
     </section>
