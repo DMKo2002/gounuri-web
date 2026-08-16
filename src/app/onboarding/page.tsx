@@ -702,7 +702,7 @@ function OnboardingContent() {
       {/* ── PASO 3: Plan ── */}
       {step === 'plan' && (
         <div className="mx-auto max-w-5xl px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 3 de 3</p>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 4 de 4</p>
           <h1 className="text-2xl font-semibold text-zinc-900">Elegí tu plan</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Probás el plan que elijas <strong>gratis durante {TRIAL_DAYS} días</strong>, sin tarjeta.
