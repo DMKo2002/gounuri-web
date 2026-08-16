@@ -40,7 +40,7 @@ export const TEMPLATES: TemplateDef[] = [
     slug: 'glow',
     nombre: 'Glow',
     descripcion: 'Cálido y luminoso, con detalles suaves y foco en las fotos de producto.',
-    publico: 'Moda femenina, accesorios y marcas con estética delicada.',
+    publico: 'Marcas de belleza, accesorios y lifestyle con alto impacto visual.',
   },
   {
     slug: 'bazaar',
