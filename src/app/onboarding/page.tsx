@@ -1,6 +1,7 @@
 'use client'
 
-// Onboarding post-registro: 1) nombre de la tienda → 2) template → 3) plan.
+// Onboarding post-registro: 1) nombre de la tienda → 2) template →
+// 3) configurar tienda → 4) cargá tus productos → 5) plan.
 // Al finalizar crea el tenant (POST /api/create-tenant).
 //
 // Cambio 2026-08-14: antes, al terminar, se entregaba la sesión al Panel
@@ -18,15 +19,15 @@ import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
-type Step = 'nombre' | 'template' | 'configurar' | 'plan'
+type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'plan'
 
-// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04) para que se
+// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04, 05) para que se
 // pueda compartir/guardar un link a un paso puntual y para que el botón
 // "atrás" del navegador vuelva al paso anterior en vez de salir de
 // /onboarding. Sigue siendo la misma página/estado de siempre (no son rutas
 // separadas) — solo se sincroniza la URL con `router.push` cada vez que
 // cambia el paso.
-const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'plan']
+const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'plan']
 function stepParam(step: Step): string {
   return String(STEP_ORDER.indexOf(step) + 1).padStart(2, '0')
 }
@@ -367,18 +368,19 @@ function OnboardingContent() {
     { id: 'nombre', label: '1. Tu tienda' },
     { id: 'template', label: '2. Diseño' },
     { id: 'configurar', label: '3. Configuración' },
-    { id: 'plan', label: '4. Plan' },
+    { id: 'productos', label: '4. Productos' },
+    { id: 'plan', label: '5. Plan' },
   ]
   const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
   const templateElegido = TEMPLATES.find(t => t.slug === template) ?? TEMPLATES[0]
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header — en los pasos 1, 2 y 2.5 usamos el navbar real del sitio
-          (igual al diseño de Figma "Registracion 1", "2" y "3"); en el paso
-          de plan seguimos con la barra liviana con el indicador de paso,
-          que todavía no tiene diseño de Figma. */}
-      {step === 'nombre' || step === 'template' || step === 'configurar' ? (
+      {/* Header — en los pasos 1 a 3.5 usamos el navbar real del sitio
+          (igual al diseño de Figma "Registracion 1", "2", "3" y "4"); en el
+          paso de plan seguimos con la barra liviana con el indicador de
+          paso, que todavía no tiene diseño de Figma. */}
+      {step === 'nombre' || step === 'template' || step === 'configurar' || step === 'productos' ? (
         <Navbar />
       ) : (
         <div className="border-b border-zinc-200 bg-white px-6 py-4">
@@ -687,22 +689,51 @@ function OnboardingContent() {
                 para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => goToStep('plan')}
+              onClick={() => goToStep('productos')}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
             >
               Continuar <ArrowRight size={16} />
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('plan')} />
+          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('productos')} />
           <SideStrip color="#3B9DA2" />
         </div>
       )}
 
-      {/* ── PASO 3: Plan ── */}
+      {/* ── PASO 3.5: Cargá tus productos (diseño Figma "Registracion 4") —
+          pantalla informativa (imagen ilustrativa de la tienda en
+          tablet/celular), todavía sin carga real de productos — esa carga
+          en sí se hace después, desde el Panel Admin. ── */}
+      {step === 'productos' && (
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-[#f2f2f2]">
+          <div className="relative w-full lg:w-[68.5%]">
+            {/* eslint-disable-next-line @next/next/no-img-element -- imagen ilustrativa exportada de Figma, no dato dinámico */}
+            <img
+              src="/img/onboarding/onboarding-04-productos.jpg"
+              alt="Vista previa de tu tienda en tablet y celular"
+              className="h-full w-full object-cover object-center"
+            />
+            {/* Botón visible en mobile/tablet, donde no hay panel derecho
+                para alojar el botón circular de "Siguiente". */}
+            <button
+              type="button"
+              onClick={() => goToStep('plan')}
+              className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 sm:inset-x-10 lg:hidden"
+            >
+              Continuar <ArrowRight size={16} />
+            </button>
+          </div>
+
+          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('plan')} />
+          <SideStrip color="#C9B67C" />
+        </div>
+      )}
+
+      {/* ── PASO 4: Plan ── */}
       {step === 'plan' && (
         <div className="mx-auto max-w-5xl px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 4 de 4</p>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 5 de 5</p>
           <h1 className="text-2xl font-semibold text-zinc-900">Elegí tu plan</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Probás el plan que elijas <strong>gratis durante {TRIAL_DAYS} días</strong>, sin tarjeta.
@@ -752,7 +783,7 @@ function OnboardingContent() {
           )}
 
           <div className="flex gap-3">
-            <button onClick={() => goToStep('template')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button onClick={() => goToStep('productos')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
               ← Volver
             </button>
             <button
