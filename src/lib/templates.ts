@@ -33,8 +33,8 @@ export const TEMPLATES: TemplateDef[] = [
   {
     slug: 'axis',
     nombre: 'Axis',
-    descripcion: 'Un diseño dinámico que incorpora video para generar impacto visual desde el primer momento. Ideal para marcas que quieren mostrar sus productos, campañas o identidad de forma más atractiva y envolvente.',
-    publico: 'Catálogos grandes y venta mayorista donde importa encontrar rápido.',
+    descripcion: 'Un diseño dinámico que incorpora video para generar impacto visual desde el primer momento.',
+    publico: 'Marcas que quieren mostrar sus productos, campañas o identidad de forma más atractiva y envolvente.',
   },
   {
     slug: 'glow',
