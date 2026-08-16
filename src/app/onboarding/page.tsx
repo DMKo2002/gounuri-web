@@ -26,71 +26,78 @@ type Step = 'nombre' | 'template' | 'plan'
 // public/img/onboarding/.
 const ONBOARDING_SLIDES = ['/img/onboarding/onboarding-01.jpg', '/img/onboarding/onboarding-02.jpg', '/img/onboarding/onboarding-03.jpg']
 
-// ── Preview de template con iframe escalado ──────────────────────────────────
+// Roadmap decorativo del panel derecho del paso 2 (diseño Figma "Registracion
+// 2") — mismo espíritu que el "Bienvenido!" del paso 1: contexto/motivación,
+// no forma parte de la lógica de `pasos`/Step de más abajo.
+const TEMPLATE_ROADMAP = [
+  'Bienvenido',
+  'Seleccioná un Template',
+  'Configurá tu tienda',
+  'Cargá tus productos',
+  'Escalá con tus Ventas',
+]
+
+// ── Tarjeta de template — misma captura y textos que la página /templates
+//    (public/templates/{slug}.webp + TEMPLATES de lib/templates.ts), en vez
+//    de reconstruir el mockup plano exportado de Figma: ese asset es solo
+//    una captura de referencia de esa página, no contenido para renderizar
+//    tal cual. Se le agrega el botón "Seleccionar" que no está en /templates
+//    (ahí las tarjetas solo llevan a la demo — acá además hay que poder
+//    elegir el diseño para el onboarding). ────────────────────────────────
 function TemplateCard({
   slug, nombre, descripcion, publico, selected, onSelect,
 }: {
   slug: string; nombre: string; descripcion: string; publico: string
   selected: boolean; onSelect: () => void
 }) {
-  const [loaded, setLoaded] = useState(false)
   const url = demoUrl(slug)
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`relative w-full overflow-hidden rounded-xl border-2 text-left transition-all ${
+    <div
+      className={`flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-all ${
         selected ? 'border-zinc-900 ring-2 ring-zinc-300' : 'border-zinc-200 hover:border-zinc-400'
       }`}
     >
-      <div className="relative overflow-hidden bg-zinc-100" style={{ height: 180 }}>
-        {!loaded && (
-          <div className="absolute inset-0 flex items-center justify-center text-zinc-400">
-            <Loader2 size={20} className="animate-spin" />
-          </div>
-        )}
-        <iframe
-          src={url}
-          title={`Demo ${nombre}`}
-          scrolling="no"
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          style={{
-            width: 1280,
-            height: 800,
-            transform: 'scale(0.234)',
-            transformOrigin: 'top left',
-            pointerEvents: 'none',
-            border: 'none',
-            opacity: loaded ? 1 : 0,
-            transition: 'opacity 0.3s',
-          }}
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element -- captura real, no asset vectorial */}
+        <img
+          src={`/templates/${slug}.webp`}
+          alt={`Preview del template ${nombre}`}
+          className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top"
         />
         {selected && (
-          <div className="absolute left-3 top-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 shadow">
-            <Check size={13} className="text-white" />
+          <div className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 shadow">
+            <Check size={14} className="text-white" />
           </div>
         )}
-      </div>
-      <div className="flex items-start justify-between gap-3 bg-white p-4">
-        <div>
-          <p className="text-sm font-semibold text-zinc-900">{nombre}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{descripcion}</p>
-          <p className="mt-1 text-[11px] text-zinc-400">{publico}</p>
-        </div>
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
-          className="mt-0.5 flex-shrink-0 text-zinc-400 transition-colors hover:text-zinc-900"
           title="Ver demo completa"
+          className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-zinc-500 shadow transition-colors hover:text-zinc-900"
         >
-          <ExternalLink size={14} />
+          <ExternalLink size={13} />
         </a>
       </div>
-    </button>
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-semibold text-zinc-900">{nombre}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-zinc-600">{descripcion}</p>
+        <p className="mt-3 text-xs text-zinc-500">
+          <span className="font-medium text-zinc-700">Ideal para:</span> {publico}
+        </p>
+        <button
+          type="button"
+          onClick={onSelect}
+          className={`mt-auto w-full rounded-lg py-2.5 text-xs font-medium transition-colors ${
+            selected ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+          }`}
+        >
+          {selected ? 'Seleccionado ✓' : 'Seleccionar'}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -204,10 +211,11 @@ function OnboardingContent() {
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header — en el paso 1 usamos el navbar real del sitio (igual al
-          mockup de Figma); en los pasos 2/3 seguimos con la barra liviana
-          con el indicador de paso, que no forma parte del diseño de hoy. */}
-      {step === 'nombre' ? (
+      {/* Header — en los pasos 1 y 2 usamos el navbar real del sitio (igual
+          al diseño de Figma "Registracion 1" y "Registracion 2"); en el
+          paso 3 seguimos con la barra liviana con el indicador de paso, que
+          todavía no tiene diseño de Figma. */}
+      {step === 'nombre' || step === 'template' ? (
         <Navbar />
       ) : (
         <div className="border-b border-zinc-200 bg-white px-6 py-4">
@@ -397,37 +405,104 @@ function OnboardingContent() {
         </div>
       )}
 
-      {/* ── PASO 2: Template ── */}
+      {/* ── PASO 2: Template (diseño Figma "Registracion 2") ── */}
       {step === 'template' && (
-        <div className="mx-auto max-w-5xl px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 2 de 3</p>
-          <h1 className="text-2xl font-semibold text-zinc-900">Elegí el diseño de tu tienda</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Podés cambiarlo después desde el panel. Hacé click en{' '}
-            <ExternalLink size={11} className="inline" /> para ver la demo completa.
-          </p>
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          {/* Panel de templates — grilla 3×2 con las tarjetas reales (misma
+              captura y textos que /templates), fondo gris clarito como en
+              el Figma. Ancho en % siguiendo la misma proporción del lienzo
+              (1184 de 1728). */}
+          <div className="w-full overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {TEMPLATES.map(t => (
+                <TemplateCard
+                  key={t.slug}
+                  {...t}
+                  selected={template === t.slug}
+                  onSelect={() => setTemplate(t.slug)}
+                />
+              ))}
+            </div>
 
-          <div className="mb-8 mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {TEMPLATES.map(t => (
-              <TemplateCard
-                key={t.slug}
-                {...t}
-                selected={template === t.slug}
-                onSelect={() => setTemplate(t.slug)}
-              />
-            ))}
+            {/* Botón visible en mobile/tablet, donde no hay panel derecho
+                para alojar el botón circular de "Siguiente". */}
+            <button
+              type="button"
+              onClick={() => setStep('plan')}
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
+            >
+              Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
+            </button>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={() => setStep('nombre')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
-              ← Volver
-            </button>
+          {/* Panel derecho: roadmap del proceso ("Bienvenido" → "Seleccioná
+              un Template" destacado → pasos futuros) + botón circular
+              "Siguiente" en el borde, centrado verticalmente respecto al
+              lienzo completo (misma técnica que el paso 1: top-1/2 sobre un
+              panel con el mismo alto que sus hermanos de la fila). */}
+          <div className="relative hidden lg:block lg:w-[22.8%]">
+            <div className="absolute inset-0 flex flex-col items-end justify-center gap-10 px-8 xl:px-10">
+              {TEMPLATE_ROADMAP.map((label, i) => {
+                const active = label === 'Seleccioná un Template'
+                return (
+                  <div key={label} className="flex items-center gap-4">
+                    <span
+                      className={
+                        active
+                          ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
+                          : 'text-right text-base font-bold text-zinc-300'
+                      }
+                    >
+                      {label}
+                    </span>
+                    <span className="relative flex-shrink-0">
+                      <span className="block h-[19px] w-[19px] rounded-full" style={{ background: '#B9C96F' }} />
+                      {/* Línea que conecta el 1er punto ("Bienvenido") con el
+                          2do (paso actual) — el resto queda sin conectar,
+                          igual que en el asset "Puntos secuenciales.svg". */}
+                      {i === 0 && (
+                        <span
+                          className="absolute left-1/2 top-full h-10 w-[2px] -translate-x-1/2"
+                          style={{ background: '#B9C96F' }}
+                        />
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
             <button
+              type="button"
               onClick={() => setStep('plan')}
-              className="flex-1 rounded-lg bg-zinc-900 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              aria-label="Continuar"
+              className="absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:brightness-110 hover:scale-105"
+              style={{ background: '#B9C96F' }}
             >
-              Continuar con &quot;{templateElegido.nombre}&quot; →
+              <svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
+                <path d="M49 38L32.5 47.5263L32.5 28.4737L49 38Z" fill="white" />
+              </svg>
             </button>
+          </div>
+
+          {/* Franja lateral decorativa — mismos bloques sólidos que el paso
+              1, con el verde oliva (#B9C96F) del asset de este paso en vez
+              del rojo, e ícono "G" en la misma posición inferior-central. */}
+          <div className="hidden xl:flex xl:w-[8.9%] xl:flex-col">
+            <div className="flex-1" style={{ background: '#454B53' }} />
+            <div className="relative flex-1" style={{ background: '#B9C96F' }}>
+              <svg
+                width="28"
+                height="40"
+                viewBox="55 1010 41 59"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="absolute bottom-[9%] left-1/2 -translate-x-1/2"
+              >
+                <path d="M90.752 1018.28L85.4541 1020.99C87.1055 1022.43 88.4021 1022.84 90.0283 1024.96C91.4512 1026.81 92.3987 1029.01 92.7627 1031.15C94.2271 1039.76 88.7192 1046.46 81.6738 1048.59C82.8602 1049.33 83.5949 1050.27 83.7139 1051.35C83.879 1052.85 82.8299 1054.37 80.9609 1055.68C82.1514 1056.12 83.2042 1056.98 83.876 1058.17C85.3404 1060.77 84.4422 1063.99 81.8701 1065.38C79.2977 1066.76 76.0252 1065.77 74.5606 1063.17C73.714 1061.67 73.6575 1059.96 74.2568 1058.51C73.2314 1058.76 72.1519 1058.96 71.0332 1059.1C63.6613 1060.04 57.3865 1058.07 57.0176 1054.72C56.6639 1051.5 61.8803 1048.17 68.8193 1047.09C60.7076 1042.33 59.9898 1033.16 63.4981 1027.19C65.9785 1022.97 68.8297 1021.61 73.7607 1019.05C78.1817 1016.76 82.9364 1014.06 87.4238 1012L90.752 1018.28ZM83.5244 1029.17C81.0462 1026.37 76.0541 1025.29 72.2647 1028.31L72.2637 1028.31C63.7815 1035.09 74.3451 1046.72 82.5098 1040C85.2929 1037.7 86.7021 1032.75 83.5244 1029.17Z" fill="white" />
+              </svg>
+            </div>
           </div>
         </div>
       )}
