@@ -24,6 +24,11 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import OAuthButtons from '@/components/OAuthButtons'
 
+// Si esto sigue mostrando el sitekey de prueba de Cloudflare después de
+// cargar NEXT_PUBLIC_TURNSTILE_SITE_KEY en Vercel, no alcanza con guardar
+// la variable — hace falta un build nuevo de verdad (no un Redeploy con
+// "Use existing Build Cache" tildado, que puede reusar el bundle viejo).
+// Este comentario fuerza justamente eso: un diff real de este archivo.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'
 
 export default function RegistroPage() {
