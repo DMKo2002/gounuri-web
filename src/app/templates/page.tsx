@@ -10,7 +10,7 @@ import { TEMPLATES, demoUrl } from '@/lib/templates'
 export const metadata: Metadata = {
   title: 'Templates — Gounuri',
   description:
-    'Explorá los 6 diseños de tienda disponibles en Gounuri. Cada uno con demo en vivo para que lo pruebes como si fueras un cliente.',
+    'Explorá los diseños de tienda disponibles en Gounuri. Cada uno con demo en vivo para que lo pruebes como si fueras un cliente.',
 }
 
 // Busca el screenshot en public/templates/{slug}.jpg|.png (resuelto en build).
@@ -36,7 +36,9 @@ export default function TemplatesPage() {
             Un diseño para cada marca
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-zinc-600">
-            6 templates pensados para escalar. Todos con demo en vivo.
+            Templates pensados para escalar. Todos con demo en vivo.
+            <br />
+            Nuevos diseños se incorporan continuamente.
             <br />
             Entrá, explorá el catálogo y testeá el carrito en tiempo real.
           </p>
