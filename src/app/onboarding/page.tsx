@@ -36,6 +36,10 @@ const TEMPLATE_ROADMAP = [
   'Cargá tus productos',
   'Escalá con tus Ventas',
 ]
+const TEMPLATE_ROADMAP_ACTIVE_INDEX = 1 // "Seleccioná un Template"
+// Separación real entre puntos en el asset "Puntos secuenciales.svg"
+// (círculos en y=9.5, 142.5, 275.5, 408.5, 541.5 → 133px parejos).
+const TEMPLATE_ROADMAP_ROW_GAP = 133
 
 // ── Tarjeta de template — misma captura y textos que la página /templates
 //    (public/templates/{slug}.webp + TEMPLATES de lib/templates.ts), en vez
@@ -54,16 +58,19 @@ function TemplateCard({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-all ${
+      className={`group flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-all ${
         selected ? 'border-zinc-900 ring-2 ring-zinc-300' : 'border-zinc-200 hover:border-zinc-400'
       }`}
     >
       <div className="relative">
+        {/* Misma captura full-page y misma animación que /templates: arranca
+            mostrando el tope y al pasar el mouse "scrollea" hasta el pie de
+            la página y vuelve (transition-[object-position]). */}
         {/* eslint-disable-next-line @next/next/no-img-element -- captura real, no asset vectorial */}
         <img
           src={`/templates/${slug}.webp`}
           alt={`Preview del template ${nombre}`}
-          className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top"
+          className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top transition-[object-position] duration-[4000ms] ease-in-out group-hover:object-bottom"
         />
         {selected && (
           <div className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-900 shadow">
@@ -81,20 +88,33 @@ function TemplateCard({
           <ExternalLink size={13} />
         </a>
       </div>
-      <div className="flex flex-1 flex-col p-5">
+      <div className="relative flex flex-1 flex-col p-5 pr-12">
         <h3 className="font-semibold text-zinc-900">{nombre}</h3>
         <p className="mt-2 text-sm leading-relaxed text-zinc-600">{descripcion}</p>
         <p className="mt-3 text-xs text-zinc-500">
           <span className="font-medium text-zinc-700">Ideal para:</span> {publico}
         </p>
+
+        {/* Botón "Seleccionar" como ícono en la esquina inferior derecha de
+            la tarjeta (asset "Boton seleccionar.svg") en vez del botón de
+            ancho completo de antes, que tapaba el texto de "Ideal para"
+            cuando la descripción era larga. */}
         <button
           type="button"
           onClick={onSelect}
-          className={`mt-auto w-full rounded-lg py-2.5 text-xs font-medium transition-colors ${
-            selected ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+          title={selected ? 'Seleccionado' : 'Seleccionar'}
+          aria-pressed={selected}
+          className={`absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+            selected ? 'bg-zinc-900' : 'bg-zinc-100 hover:bg-zinc-200'
           }`}
         >
-          {selected ? 'Seleccionado ✓' : 'Seleccionar'}
+          {selected ? (
+            <Check size={14} className="text-white" />
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M7.385 16V7.385H16V8.385H9.092L16 15.292L15.292 16L8.384 9.092V16H7.385ZM3.692 16V14.77H4.923V16H3.692ZM0 1.23V0H1.23V1.23H0ZM3.692 1.23V0H4.923V1.23H3.692ZM7.384 1.23V0H8.616V1.23H7.384ZM11.077 1.23V0H12.307V1.23H11.077ZM14.769 1.23V0H16V1.23H14.769ZM0 16V14.77H1.23V16H0ZM0 12.308V11.077H1.23V12.307L0 12.308ZM0 8.615V7.385H1.23V8.615H0ZM0 4.923V3.693H1.23V4.923H0ZM14.77 4.923V3.693H16V4.923H14.77Z" fill="currentColor" />
+            </svg>
+          )}
         </button>
       </div>
     </div>
@@ -441,36 +461,47 @@ function OnboardingContent() {
               lienzo completo (misma técnica que el paso 1: top-1/2 sobre un
               panel con el mismo alto que sus hermanos de la fila). */}
           <div className="relative hidden lg:block lg:w-[22.8%]">
-            <div className="absolute inset-0 flex flex-col items-end justify-center gap-10 px-8 xl:px-10">
-              {TEMPLATE_ROADMAP.map((label, i) => {
-                const active = label === 'Seleccioná un Template'
-                return (
-                  <div key={label} className="flex items-center gap-4">
-                    <span
-                      className={
-                        active
-                          ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
-                          : 'text-right text-base font-bold text-zinc-300'
-                      }
-                    >
-                      {label}
-                    </span>
-                    <span className="relative flex-shrink-0">
-                      <span className="block h-[19px] w-[19px] rounded-full" style={{ background: '#B9C96F' }} />
-                      {/* Línea que conecta el 1er punto ("Bienvenido") con el
-                          2do (paso actual) — el resto queda sin conectar,
-                          igual que en el asset "Puntos secuenciales.svg". */}
-                      {i === 0 && (
-                        <span
-                          className="absolute left-1/2 top-full h-10 w-[2px] -translate-x-1/2"
-                          style={{ background: '#B9C96F' }}
-                        />
-                      )}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
+            {/* Puntos posicionados por altura fija (no por flujo/flex), para
+                que la distancia entre uno y otro sea siempre la misma
+                (133px, la separación real del asset "Puntos
+                secuenciales.svg") sin importar que el texto activo sea más
+                grande que el resto. El punto activo ("Seleccioná un
+                Template", índice 1) se ubica exactamente en el centro
+                vertical del panel — el mismo top-1/2 que usa el botón
+                "Siguiente" — y los demás se calculan a partir de ahí. */}
+            {TEMPLATE_ROADMAP.map((label, i) => {
+              const active = i === TEMPLATE_ROADMAP_ACTIVE_INDEX
+              const offset = (i - TEMPLATE_ROADMAP_ACTIVE_INDEX) * TEMPLATE_ROADMAP_ROW_GAP
+              return (
+                <div
+                  key={label}
+                  className="absolute right-8 flex items-center gap-4 xl:right-10"
+                  style={{ top: `calc(50% + ${offset}px)`, transform: 'translateY(-50%)' }}
+                >
+                  <span
+                    className={
+                      active
+                        ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
+                        : 'text-right text-base font-bold text-zinc-300'
+                    }
+                  >
+                    {label}
+                  </span>
+                  <span className="relative flex-shrink-0">
+                    <span className="block h-[19px] w-[19px] rounded-full" style={{ background: '#B9C96F' }} />
+                    {/* Línea que conecta el 1er punto ("Bienvenido") con el
+                        2do (paso actual) — el resto queda sin conectar,
+                        igual que en el asset "Puntos secuenciales.svg". */}
+                    {i === 0 && (
+                      <span
+                        className="absolute left-1/2 top-full w-[2px] -translate-x-1/2"
+                        style={{ background: '#B9C96F', height: TEMPLATE_ROADMAP_ROW_GAP - 19 }}
+                      />
+                    )}
+                  </span>
+                </div>
+              )
+            })}
 
             <button
               type="button"
