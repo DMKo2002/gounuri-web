@@ -3,12 +3,12 @@ import './globals.css'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 export const metadata: Metadata = {
-  title: 'Gounuri — Tu tienda de moda online en minutos',
+  title: 'Gounuri — Tu tienda online',
   description:
     'Plataforma para crear tiendas online de indumentaria en Argentina. Catálogo, pedidos, pagos con MercadoPago y diseño profesional, todo en un solo lugar.',
   metadataBase: new URL('https://gounuri.com'),
   openGraph: {
-    title: 'Gounuri — Tu tienda de moda online en minutos',
+    title: 'Gounuri — Tu tienda online',
     description:
       'Creá tu tienda online de indumentaria: catálogo, pedidos, pagos y diseño profesional.',
     locale: 'es_AR',
