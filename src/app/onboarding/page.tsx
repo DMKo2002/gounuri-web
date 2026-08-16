@@ -12,12 +12,31 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Check, ExternalLink, Loader2 } from 'lucide-react'
+import { ArrowRight, Check, ExternalLink, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
 type Step = 'nombre' | 'template' | 'plan'
+
+// Mismas fotos del carrusel del Hero de gounuri.com (public/img/hero) — se
+// reutilizan acá para el panel derecho del paso 1 del onboarding (diseño
+// Figma "Registracion 1A/1B/1C", que son la misma pantalla con 3 fondos
+// distintos: en vez de elegir una sola foto o armar un asset nuevo, las
+// rotamos las 4 con la misma técnica que ya usa el Hero — ver .hero-slide
+// en globals.css).
+const ONBOARDING_SLIDES = ['/img/hero/hero-01.jpg', '/img/hero/hero-02.jpg', '/img/hero/hero-03.jpg', '/img/hero/hero-04.jpg']
+
+// Isotipo "G" de gounuri — mismo trazo que components/Hero.tsx (.g-logo),
+// reutilizado acá en dos tamaños en vez de bajar el asset de Figma (que
+// vence a los 7 días).
+function GMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 155 212" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M127.122 35.918L110.309 44.5352L110.307 44.5342V44.5371L110.309 44.5352C115.55 49.0924 119.662 50.4132 124.824 57.1289C129.34 63.0044 132.347 69.97 133.502 76.7695C138.149 104.103 120.678 125.377 98.3216 132.125C102.081 134.479 104.406 137.448 104.783 140.878C105.308 145.642 101.985 150.481 96.0569 154.64C99.8321 156.04 103.168 158.747 105.299 162.528C109.947 170.779 107.097 181.021 98.9319 185.405C90.7672 189.789 80.3808 186.655 75.7327 178.404C73.0476 173.638 72.8643 168.207 74.763 163.625C71.5104 164.415 68.0864 165.05 64.5383 165.498C41.141 168.453 21.2249 162.221 20.054 151.578C18.9302 141.363 35.4837 130.799 57.5042 127.354C31.7655 112.249 29.4898 83.149 40.6233 64.208C48.4958 50.8128 57.5434 46.5131 73.1936 38.3916C87.2253 31.1111 102.315 22.5295 116.558 16L127.122 35.918ZM104.184 70.4844C96.3186 61.6071 80.4737 58.1668 68.4466 67.7715L68.4446 67.7744C41.5219 89.2772 75.0498 126.203 100.963 104.854C109.797 97.5739 114.27 81.8684 104.184 70.4844Z" fill="currentColor" />
+    </svg>
+  )
+}
 
 // ── Preview de template con iframe escalado ──────────────────────────────────
 function TemplateCard({
@@ -110,10 +129,13 @@ function OnboardingContent() {
   const [step, setStep] = useState<Step>(storeFromQuery ? 'template' : 'nombre')
   const [name, setName] = useState(storeFromQuery)
   const [domain, setDomain] = useState('')
+  const [dniCuit, setDniCuit] = useState('')
+  const [celular, setCelular] = useState('')
   const [template, setTemplate] = useState('minimalista')
   const [plan, setPlan] = useState('standard')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [slideIndex, setSlideIndex] = useState(0)
 
   // Sin sesión no hay onboarding
   useEffect(() => {
@@ -122,6 +144,13 @@ function OnboardingContent() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Carrusel de fondo del paso 1 (mismo timing que el Hero de gounuri.com)
+  useEffect(() => {
+    if (step !== 'nombre') return
+    const t = setInterval(() => setSlideIndex(i => (i + 1) % ONBOARDING_SLIDES.length), 3500)
+    return () => clearInterval(t)
+  }, [step])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -132,6 +161,24 @@ function OnboardingContent() {
     e.preventDefault()
     if (!name.trim()) { setError('El nombre de la tienda es obligatorio.'); return }
     setError(null)
+
+    // DNI/CUIT y WhatsApp son opcionales y no bloquean el paso — son datos
+    // de la tienda para dejarla más preparada (facturación, botón de
+    // WhatsApp de la tienda, etc.), no un requisito para poder crearla. Se
+    // guardan en gounuri_accounts vía el mismo endpoint que usa
+    // /perfil/datos — best effort: si falla, seguimos igual al paso 2, el
+    // dueño puede completarlos después desde /perfil.
+    if (dniCuit.trim() || celular.trim()) {
+      fetch('/api/perfil/datos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dni: dniCuit.trim(),
+          celular: celular.trim() ? `+54 ${celular.trim()}` : '',
+        }),
+      }).catch(e => console.error('[onboarding] no se pudieron guardar DNI/CUIT y WhatsApp', e))
+    }
+
     setStep('template')
   }
 
@@ -191,46 +238,121 @@ function OnboardingContent() {
         </div>
       </div>
 
-      {/* ── PASO 1: Nombre ── */}
+      {/* ── PASO 1: Nombre (diseño Figma "Registracion 1A/1B/1C") ── */}
       {step === 'nombre' && (
-        <div className="mx-auto max-w-lg px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 1 de 3</p>
-          <h1 className="text-2xl font-semibold text-zinc-900">Configurá tu tienda</h1>
-          <p className="mt-1 text-sm text-zinc-500">Solo necesitamos el nombre para empezar.</p>
+        <div className="relative flex min-h-[calc(100vh-73px)] overflow-hidden bg-white">
+          {/* Panel del formulario */}
+          <div className="flex w-full flex-col justify-between px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
+            <div>
+              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 1 de 3</p>
+              <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
+                Empezamos a crear<br />tu tienda.
+              </h1>
 
-          <form onSubmit={handleNombreSubmit} className="mt-8 space-y-5 rounded-xl border border-zinc-200 bg-white p-6">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
-                Nombre de la tienda <span className="text-red-400">*</span>
-              </label>
-              <input
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Ej: Moda Caro, Iruda, Connors..."
-                autoFocus
-                required
-              />
+              <form id="onb-paso1-form" onSubmit={handleNombreSubmit} className="mt-10 max-w-md space-y-5">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    Nombre de la Tienda <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Ej: Moda Caro, Iruda, Connors..."
+                    autoFocus
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={dniCuit}
+                    onChange={e => setDniCuit(e.target.value)}
+                    placeholder="Sin puntos"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <div className="flex items-center gap-2 rounded-2xl bg-[#f0f0f1] px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
+                    <span className="text-sm text-zinc-900">+54</span>
+                    <input
+                      className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
+                      value={celular}
+                      onChange={e => setCelular(e.target.value)}
+                      placeholder="11 1234 5678"
+                    />
+                  </div>
+                </div>
+
+                {/* No está en el diseño de Figma, pero ya existía y create-tenant
+                    lo usa — lo dejamos como cuarto campo opcional para no
+                    perder la función de dominio propio durante el onboarding. */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={domain}
+                    onChange={e => setDomain(e.target.value)}
+                    placeholder="Ej: mitienda.com — lo podés configurar después"
+                  />
+                </div>
+
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+                )}
+
+                {/* Botón visible en mobile/tablet, donde no hay panel de imagen
+                    para alojar el botón circular de "Siguiente". */}
+                <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden">
+                  Continuar <ArrowRight size={16} />
+                </button>
+              </form>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
-                Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
-              </label>
-              <input
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-                value={domain}
-                onChange={e => setDomain(e.target.value)}
-                placeholder="Ej: mitienda.com"
-              />
-              <p className="mt-1 text-xs text-zinc-400">Lo podés configurar después desde el panel.</p>
+
+            <div className="mt-12 hidden items-center gap-3 text-zinc-900 sm:flex">
+              <GMark className="h-10 w-auto" />
+              <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">Safe · High · Gounuri</span>
             </div>
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-            )}
-            <button type="submit" className="w-full rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700">
-              Continuar →
+          </div>
+
+          {/* Panel de imagen — carrusel de fotos del Hero + CTA circular */}
+          <div className="relative hidden flex-1 lg:block">
+            <div className="hero-slides">
+              {ONBOARDING_SLIDES.map((src, i) => (
+                <div key={src} className={`hero-slide${i === slideIndex ? ' active' : ''}`} style={{ backgroundImage: `url('${src}')` }} />
+              ))}
+            </div>
+            <div className="absolute inset-0 bg-black/15" />
+            <div className="absolute inset-x-0 top-[28%] px-14 text-white xl:px-20">
+              <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
+              <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
+            </div>
+
+            <button
+              type="submit"
+              form="onb-paso1-form"
+              aria-label="Continuar"
+              className="absolute left-0 top-1/2 z-10 flex h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-lg transition hover:brightness-110"
+              style={{ background: 'var(--red)' }}
+            >
+              <ArrowRight size={28} />
             </button>
-          </form>
+          </div>
+
+          {/* Franja lateral decorativa (bicolor, con isotipo) */}
+          <div className="hidden w-[150px] flex-col xl:flex">
+            <div className="flex-1" style={{ background: '#2f3b4c' }} />
+            <div className="flex flex-1 items-center justify-center" style={{ background: 'var(--red)' }}>
+              <GMark className="h-10 w-auto text-white" />
+            </div>
+          </div>
         </div>
       )}
 
