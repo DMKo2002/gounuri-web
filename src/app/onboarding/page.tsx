@@ -323,8 +323,11 @@ function OnboardingContent() {
               crossfade: se reemplaza el div entero vía `key`, así nunca hay
               dos fotos superpuestas al mismo tiempo) + CTA circular (el botón
               queda exactamente en el centro x/y del lienzo completo, que
-              coincide con el borde entre el panel del form y el de la foto). */}
-          <div className="relative hidden flex-1 lg:block">
+              coincide con el borde entre el panel del form y el de la foto).
+              Ancho fijo en % (no flex-1) para mantener la proporción exacta
+              del Figma: form 50% / foto 41.1% (710 de 1728) / franja 8.9%
+              (150 de 1728) — así no se deforma al ensanchar la ventana. */}
+          <div className="relative hidden lg:block lg:w-[41.1%]">
             <div className="hero-slides">
               <div
                 key={slideIndex}
@@ -333,9 +336,11 @@ function OnboardingContent() {
               />
             </div>
             <div className="absolute inset-0 bg-black/15" />
-            <div className="absolute inset-x-0 top-[28%] px-14 text-white xl:px-20">
-              <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
-              <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
+            <div className="absolute inset-x-0 top-[28%] flex justify-center px-6 text-center text-white">
+              <div>
+                <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
+                <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
+              </div>
             </div>
 
             <button
@@ -349,10 +354,12 @@ function OnboardingContent() {
             </button>
           </div>
 
-          {/* Franja lateral decorativa — asset único de Figma (bicolor + isotipo) */}
-          <div className="hidden w-[150px] xl:block">
+          {/* Franja lateral decorativa — asset único de Figma (bicolor + isotipo).
+              object-cover (no "fill") para no deformar el SVG: mantiene su
+              proporción 150:1117 y recorta el sobrante en vez de estirarlo. */}
+          <div className="hidden xl:block xl:w-[8.9%]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/img/onboarding/barra-lateral-derecha.svg" alt="" className="block h-full w-full" />
+            <img src="/img/onboarding/barra-lateral-derecha.svg" alt="" className="block h-full w-full object-cover" />
           </div>
         </div>
       )}
