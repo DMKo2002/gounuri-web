@@ -1,7 +1,8 @@
 'use client'
 
 // Onboarding post-registro: 1) nombre de la tienda → 2) template →
-// 3) configurar tienda → 4) cargá tus productos → 5) plan.
+// 3) configurar tienda → 4) cargá tus productos → 5) escalá con tus ventas
+// (CTA final: prueba gratis directo o ir al selector de planes) → 6) plan.
 // Al finalizar crea el tenant (POST /api/create-tenant).
 //
 // Cambio 2026-08-14: antes, al terminar, se entregaba la sesión al Panel
@@ -19,15 +20,15 @@ import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
-type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'plan'
+type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'escalar' | 'plan'
 
-// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04, 05) para que se
-// pueda compartir/guardar un link a un paso puntual y para que el botón
+// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04, 05, 06) para que
+// se pueda compartir/guardar un link a un paso puntual y para que el botón
 // "atrás" del navegador vuelva al paso anterior en vez de salir de
 // /onboarding. Sigue siendo la misma página/estado de siempre (no son rutas
 // separadas) — solo se sincroniza la URL con `router.push` cada vez que
 // cambia el paso.
-const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'plan']
+const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar', 'plan']
 function stepParam(step: Step): string {
   return String(STEP_ORDER.indexOf(step) + 1).padStart(2, '0')
 }
@@ -369,18 +370,19 @@ function OnboardingContent() {
     { id: 'template', label: '2. Diseño' },
     { id: 'configurar', label: '3. Configuración' },
     { id: 'productos', label: '4. Productos' },
-    { id: 'plan', label: '5. Plan' },
+    { id: 'escalar', label: '5. Escalá' },
+    { id: 'plan', label: '6. Plan' },
   ]
   const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
   const templateElegido = TEMPLATES.find(t => t.slug === template) ?? TEMPLATES[0]
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header — en los pasos 1 a 3.5 usamos el navbar real del sitio
-          (igual al diseño de Figma "Registracion 1", "2", "3" y "4"); en el
-          paso de plan seguimos con la barra liviana con el indicador de
-          paso, que todavía no tiene diseño de Figma. */}
-      {step === 'nombre' || step === 'template' || step === 'configurar' || step === 'productos' ? (
+      {/* Header — en los pasos 1 a 4.5 usamos el navbar real del sitio
+          (igual al diseño de Figma "Registracion 1" a "5"); en el paso de
+          plan seguimos con la barra liviana con el indicador de paso, que
+          todavía no tiene diseño de Figma. */}
+      {step === 'nombre' || step === 'template' || step === 'configurar' || step === 'productos' || step === 'escalar' ? (
         <Navbar />
       ) : (
         <div className="border-b border-zinc-200 bg-white px-6 py-4">
@@ -718,22 +720,89 @@ function OnboardingContent() {
                 para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => goToStep('plan')}
+              onClick={() => goToStep('escalar')}
               className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 sm:inset-x-10 lg:hidden"
             >
               Continuar <ArrowRight size={16} />
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('plan')} />
+          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} />
           <SideStrip color="#C9B67C" />
         </div>
       )}
 
-      {/* ── PASO 4: Plan ── */}
+      {/* ── PASO 4.5: Escalá con tus Ventas (diseño Figma "Registracion 5") —
+          mismo patrón visual que el Paso 1 (foto + leyenda superpuesta +
+          franja lateral), pero sin RoadmapPanel: acá la leyenda del último
+          ítem del roadmap ("Escalá con tus Ventas") pasa a ser el título
+          grande de la pantalla, como cierre del recorrido. Dos CTAs: la roja
+          crea la tienda directo con el plan por defecto (prueba gratis, sin
+          elegir plan); la negra manda al selector de planes de siempre. */}
+      {step === 'escalar' && (
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          <div className="relative flex w-full flex-col px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
+            {/* Título visible solo en mobile/tablet (en desktop va superpuesto
+                a la foto, como en el Figma) — el diseño de Figma es solo
+                desktop, esto es para no dejar la pantalla sin contexto en
+                pantallas chicas. */}
+            <h1 className="text-3xl font-extrabold leading-tight text-zinc-900 lg:hidden">Escalá con tus Ventas</h1>
+            <p className="mt-1 text-base font-medium text-zinc-500 lg:hidden">B2B Mayoristas y B2C Minoristas</p>
+
+            <div className="mt-10 max-w-md space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
+              <button
+                type="button"
+                onClick={handleFinalSubmit}
+                disabled={saving}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
+              >
+                {saving && <Loader2 size={15} className="animate-spin" />}
+                {saving ? 'Creando tu tienda...' : `Crear mi tienda - Probar Gratis ${TRIAL_DAYS} días`}
+              </button>
+              <button
+                type="button"
+                onClick={() => goToStep('plan')}
+                className="flex w-full items-center justify-center rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              >
+                Crear mi tienda
+              </button>
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              )}
+            </div>
+
+            {/* Logo fijo abajo a la izquierda, igual que en el paso 1. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
+          </div>
+
+          {/* Panel de foto — misma pareja foto+franja que el paso 1, ancho
+              41.1% (709 de 1728), sin overlay ni filtro sobre la imagen. */}
+          <div className="relative hidden lg:block lg:w-[41.1%]">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('/img/onboarding/onboarding-05-escalar.jpg')` }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
+              <div className="text-left">
+                <h2 className="text-[4.3rem] font-extrabold leading-[1.05]">
+                  Escalá con
+                  <br />
+                  tus Ventas
+                </h2>
+                <p className="mt-2 text-xl font-semibold">B2B Mayoristas y B2C Minoristas</p>
+              </div>
+            </div>
+          </div>
+
+          <SideStrip color="#FE4648" />
+        </div>
+      )}
+
+      {/* ── PASO 5: Plan ── */}
       {step === 'plan' && (
         <div className="mx-auto max-w-5xl px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 5 de 5</p>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 6 de 6</p>
           <h1 className="text-2xl font-semibold text-zinc-900">Elegí tu plan</h1>
           <p className="mt-1 text-sm text-zinc-500">
             Probás el plan que elijas <strong>gratis durante {TRIAL_DAYS} días</strong>, sin tarjeta.
@@ -783,7 +852,7 @@ function OnboardingContent() {
           )}
 
           <div className="flex gap-3">
-            <button onClick={() => goToStep('productos')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button onClick={() => goToStep('escalar')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
               ← Volver
             </button>
             <button
