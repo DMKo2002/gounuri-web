@@ -239,78 +239,88 @@ function OnboardingContent() {
               (flex-1 + justify-center), el logo queda fijo abajo a la
               izquierda sin importar cuánto contenido tenga el formulario. */}
           <div className="relative flex w-full flex-col px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
-            <div className="flex flex-1 flex-col justify-center">
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 1 de 3</p>
-              <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
-                Empezamos a crear<br />tu tienda.
-              </h1>
+            {/* Título en el flujo normal, arriba del todo (ya no forma parte
+                del bloque centrado) — queda más arriba que antes. */}
+            <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
+              Empezamos a crear<br />tu tienda.
+            </h1>
 
-              <form id="onb-paso1-form" onSubmit={handleNombreSubmit} className="mt-10 max-w-md space-y-5">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    Nombre de la Tienda <span className="text-red-400">*</span>
-                  </label>
+            {/* Bloque de 4 campos centrado respecto al botón "Siguiente": el
+                botón usa top-1/2 -translate-y-1/2 sobre el panel de imagen,
+                que tiene el mismo alto (son hermanos flex de la misma fila).
+                Usamos la misma técnica acá, desacoplada del título y del
+                logo, para que ambos queden a la misma altura exacta. En
+                mobile/tablet (sin botón circular) el form sigue en el flujo
+                normal, debajo del título. */}
+            <form
+              id="onb-paso1-form"
+              onSubmit={handleNombreSubmit}
+              className="mt-10 max-w-md space-y-5 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2"
+            >
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                  Nombre de la Tienda <span className="text-red-400">*</span>
+                </label>
+                <input
+                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Ej: Moda Caro, Iruda, Connors..."
+                  autoFocus
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                  DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
+                </label>
+                <input
+                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  value={dniCuit}
+                  onChange={e => setDniCuit(e.target.value)}
+                  placeholder="Sin puntos"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                  WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
+                </label>
+                <div className="flex items-center gap-2 rounded-2xl bg-[#f0f0f1] px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
+                  <span className="text-sm text-zinc-900">+54</span>
                   <input
-                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Ej: Moda Caro, Iruda, Connors..."
-                    autoFocus
-                    required
+                    className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
+                    value={celular}
+                    onChange={e => setCelular(e.target.value)}
+                    placeholder="11 1234 5678"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                    value={dniCuit}
-                    onChange={e => setDniCuit(e.target.value)}
-                    placeholder="Sin puntos"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <div className="flex items-center gap-2 rounded-2xl bg-[#f0f0f1] px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
-                    <span className="text-sm text-zinc-900">+54</span>
-                    <input
-                      className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
-                      value={celular}
-                      onChange={e => setCelular(e.target.value)}
-                      placeholder="11 1234 5678"
-                    />
-                  </div>
-                </div>
+              </div>
 
-                {/* No está en el diseño de Figma, pero ya existía y create-tenant
-                    lo usa — lo dejamos como cuarto campo opcional para no
-                    perder la función de dominio propio durante el onboarding. */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                    value={domain}
-                    onChange={e => setDomain(e.target.value)}
-                    placeholder="Ej: mitienda.com — lo podés configurar después"
-                  />
-                </div>
+              {/* No está en el diseño de Figma, pero ya existía y create-tenant
+                  lo usa — lo dejamos como cuarto campo opcional para no
+                  perder la función de dominio propio durante el onboarding. */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                  Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
+                </label>
+                <input
+                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  value={domain}
+                  onChange={e => setDomain(e.target.value)}
+                  placeholder="Ej: mitienda.com — lo podés configurar después"
+                />
+              </div>
 
-                {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-                )}
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              )}
 
-                {/* Botón visible en mobile/tablet, donde no hay panel de imagen
-                    para alojar el botón circular de "Siguiente". */}
-                <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden">
-                  Continuar <ArrowRight size={16} />
-                </button>
-              </form>
-            </div>
+              {/* Botón visible en mobile/tablet, donde no hay panel de imagen
+                  para alojar el botón circular de "Siguiente". */}
+              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden">
+                Continuar <ArrowRight size={16} />
+              </button>
+            </form>
 
             {/* Logo fijo abajo a la izquierda — posición absoluta en vez de
                 empujado por flujo normal, así no se mueve si el form cambia
@@ -333,9 +343,12 @@ function OnboardingContent() {
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: `url('${ONBOARDING_SLIDES[slideIndex]}')` }}
             />
-            {/* "Bienvenido!" centrado en X e Y respecto a la foto */}
-            <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-white">
-              <div>
+            {/* "Bienvenido!" centrado como bloque en X e Y respecto a la foto,
+                pero con las dos líneas alineadas a la izquierda entre sí
+                (en vez de cada una centrada por separado), para que ambos
+                renglones arranquen en el mismo borde. */}
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
+              <div className="text-left">
                 <h2 className="text-5xl font-extrabold">Bienvenido!</h2>
                 <p className="mt-3 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
               </div>
@@ -360,8 +373,23 @@ function OnboardingContent() {
               en su tamaño nativo — sin forzar ningún recorte o escalado. */}
           <div className="hidden xl:flex xl:w-[8.9%] xl:flex-col">
             <div className="flex-1" style={{ background: '#454B53' }} />
-            <div className="flex flex-1 items-center justify-center" style={{ background: '#FE4648' }}>
-              <svg width="28" height="40" viewBox="55 1010 41 59" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* Isotipo "G" bajado a la parte inferior-central del bloque
+                rojo (no al centro exacto), replicando su posición real
+                dentro del asset original: en el SVG de 150×1117 el ícono
+                termina ~50px antes del borde inferior del bloque rojo de
+                559px de alto (~9%). Usamos position absolute + bottom en %
+                para que esa proporción se mantenga sea cual sea el alto de
+                pantalla. */}
+            <div className="relative flex-1" style={{ background: '#FE4648' }}>
+              <svg
+                width="28"
+                height="40"
+                viewBox="55 1010 41 59"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                className="absolute bottom-[9%] left-1/2 -translate-x-1/2"
+              >
                 <path d="M90.752 1018.28L85.4541 1020.99C87.1055 1022.43 88.4021 1022.84 90.0283 1024.96C91.4512 1026.81 92.3987 1029.01 92.7627 1031.15C94.2271 1039.76 88.7192 1046.46 81.6738 1048.59C82.8602 1049.33 83.5949 1050.27 83.7139 1051.35C83.879 1052.85 82.8299 1054.37 80.9609 1055.68C82.1514 1056.12 83.2042 1056.98 83.876 1058.17C85.3404 1060.77 84.4422 1063.99 81.8701 1065.38C79.2977 1066.76 76.0252 1065.77 74.5606 1063.17C73.714 1061.67 73.6575 1059.96 74.2568 1058.51C73.2314 1058.76 72.1519 1058.96 71.0332 1059.1C63.6613 1060.04 57.3865 1058.07 57.0176 1054.72C56.6639 1051.5 61.8803 1048.17 68.8193 1047.09C60.7076 1042.33 59.9898 1033.16 63.4981 1027.19C65.9785 1022.97 68.8297 1021.61 73.7607 1019.05C78.1817 1016.76 82.9364 1014.06 87.4238 1012L90.752 1018.28ZM83.5244 1029.17C81.0462 1026.37 76.0541 1025.29 72.2647 1028.31L72.2637 1028.31C63.7815 1035.09 74.3451 1046.72 82.5098 1040C85.2929 1037.7 86.7021 1032.75 83.5244 1029.17Z" fill="white" />
               </svg>
             </div>
