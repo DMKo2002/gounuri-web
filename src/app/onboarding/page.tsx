@@ -13,6 +13,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, ExternalLink, Loader2 } from 'lucide-react'
+import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
@@ -203,34 +204,42 @@ function OnboardingContent() {
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header */}
-      <div className="border-b border-zinc-200 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <span className="text-lg font-semibold tracking-tight text-zinc-900">
-            gounuri<span className="text-zinc-400">.com</span>
-          </span>
-          <div className="flex items-center gap-6">
-            <div className="hidden items-center gap-2 text-xs sm:flex">
-              {pasos.map((p, i) => (
-                <span key={p.id} className="flex items-center gap-2">
-                  {i > 0 && <span className="text-zinc-200">→</span>}
-                  <span className={step === p.id ? 'font-medium text-zinc-900' : 'text-zinc-400'}>{p.label}</span>
-                </span>
-              ))}
+      {/* Header — en el paso 1 usamos el navbar real del sitio (igual al
+          mockup de Figma); en los pasos 2/3 seguimos con la barra liviana
+          con el indicador de paso, que no forma parte del diseño de hoy. */}
+      {step === 'nombre' ? (
+        <Navbar />
+      ) : (
+        <div className="border-b border-zinc-200 bg-white px-6 py-4">
+          <div className="mx-auto flex max-w-5xl items-center justify-between">
+            <span className="text-lg font-semibold tracking-tight text-zinc-900">
+              gounuri<span className="text-zinc-400">.com</span>
+            </span>
+            <div className="flex items-center gap-6">
+              <div className="hidden items-center gap-2 text-xs sm:flex">
+                {pasos.map((p, i) => (
+                  <span key={p.id} className="flex items-center gap-2">
+                    {i > 0 && <span className="text-zinc-200">→</span>}
+                    <span className={step === p.id ? 'font-medium text-zinc-900' : 'text-zinc-400'}>{p.label}</span>
+                  </span>
+                ))}
+              </div>
+              <button onClick={handleLogout} className="text-xs text-zinc-400 transition-colors hover:text-zinc-600">
+                Cerrar sesión
+              </button>
             </div>
-            <button onClick={handleLogout} className="text-xs text-zinc-400 transition-colors hover:text-zinc-600">
-              Cerrar sesión
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* ── PASO 1: Nombre (diseño Figma "Registracion 1A/1B/1C") ── */}
       {step === 'nombre' && (
-        <div className="relative flex min-h-[calc(100vh-73px)] overflow-hidden bg-white">
-          {/* Panel del formulario */}
-          <div className="flex w-full flex-col justify-between px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
-            <div>
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          {/* Panel del formulario — el bloque de datos va centrado en el eje Y
+              (flex-1 + justify-center), el logo queda fijo abajo a la
+              izquierda sin importar cuánto contenido tenga el formulario. */}
+          <div className="relative flex w-full flex-col px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
+            <div className="flex flex-1 flex-col justify-center">
               <p className="mb-3 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 1 de 3</p>
               <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
                 Empezamos a crear<br />tu tienda.
@@ -303,18 +312,25 @@ function OnboardingContent() {
               </form>
             </div>
 
+            {/* Logo fijo abajo a la izquierda — posición absoluta en vez de
+                empujado por flujo normal, así no se mueve si el form cambia
+                de alto (validación, error, etc). */}
             {/* eslint-disable-next-line @next/next/no-img-element -- asset SVG exportado de Figma tal cual, no una foto a optimizar */}
-            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="mt-12 hidden h-24 w-auto sm:block" />
+            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-24 w-auto sm:left-16 sm:block lg:left-24" />
           </div>
 
-          {/* Panel de imagen — carrusel de fotos exportadas de Figma + CTA circular
-              (el botón queda exactamente en el centro x/y del lienzo completo,
-              que coincide con el borde entre el panel del form y el de la foto). */}
+          {/* Panel de imagen — foto exportada de Figma (rota entre las 3 sin
+              crossfade: se reemplaza el div entero vía `key`, así nunca hay
+              dos fotos superpuestas al mismo tiempo) + CTA circular (el botón
+              queda exactamente en el centro x/y del lienzo completo, que
+              coincide con el borde entre el panel del form y el de la foto). */}
           <div className="relative hidden flex-1 lg:block">
             <div className="hero-slides">
-              {ONBOARDING_SLIDES.map((src, i) => (
-                <div key={src} className={`hero-slide${i === slideIndex ? ' active' : ''}`} style={{ backgroundImage: `url('${src}')` }} />
-              ))}
+              <div
+                key={slideIndex}
+                className="hero-slide active"
+                style={{ backgroundImage: `url('${ONBOARDING_SLIDES[slideIndex]}')` }}
+              />
             </div>
             <div className="absolute inset-0 bg-black/15" />
             <div className="absolute inset-x-0 top-[28%] px-14 text-white xl:px-20">
