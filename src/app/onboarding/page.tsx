@@ -11,14 +11,29 @@
 // Admin" para quien quiera entrar a cargar productos.
 
 import { Suspense, useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowRight, Check, ExternalLink, Loader2 } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 
-type Step = 'nombre' | 'template' | 'plan'
+type Step = 'nombre' | 'template' | 'configurar' | 'plan'
+
+// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04) para que se
+// pueda compartir/guardar un link a un paso puntual y para que el botón
+// "atrás" del navegador vuelva al paso anterior en vez de salir de
+// /onboarding. Sigue siendo la misma página/estado de siempre (no son rutas
+// separadas) — solo se sincroniza la URL con `router.push` cada vez que
+// cambia el paso.
+const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'plan']
+function stepParam(step: Step): string {
+  return String(STEP_ORDER.indexOf(step) + 1).padStart(2, '0')
+}
+function stepFromParam(param: string | null): Step | null {
+  const i = Number(param) - 1
+  return STEP_ORDER[i] ?? null
+}
 
 // Fotos exportadas de Figma para el paso 1 (pantallas "Registracion
 // 1A/1B/1C" — misma pantalla, 3 fondos distintos) — bajadas y comprimidas
@@ -26,20 +41,120 @@ type Step = 'nombre' | 'template' | 'plan'
 // public/img/onboarding/.
 const ONBOARDING_SLIDES = ['/img/onboarding/onboarding-01.jpg', '/img/onboarding/onboarding-02.jpg', '/img/onboarding/onboarding-03.jpg']
 
-// Roadmap decorativo del panel derecho del paso 2 (diseño Figma "Registracion
-// 2") — mismo espíritu que el "Bienvenido!" del paso 1: contexto/motivación,
-// no forma parte de la lógica de `pasos`/Step de más abajo.
-const TEMPLATE_ROADMAP = [
+// Roadmap decorativo del panel derecho de los pasos 2+ (diseño Figma
+// "Registracion 2", "Registracion 3", ...) — mismo espíritu que el
+// "Bienvenido!" del paso 1: contexto/motivación, no forma parte de la
+// lógica de `pasos`/Step de más abajo. Se reutiliza en cada pantalla con un
+// activeIndex y color distintos (ver <RoadmapPanel>).
+const ROADMAP_STEPS = [
   'Bienvenido',
   'Seleccioná un Template',
-  'Configurá tu tienda',
+  'Configurá tu Tienda',
   'Cargá tus productos',
   'Escalá con tus Ventas',
 ]
-const TEMPLATE_ROADMAP_ACTIVE_INDEX = 1 // "Seleccioná un Template"
 // Separación real entre puntos en el asset "Puntos secuenciales.svg"
 // (círculos en y=9.5, 142.5, 275.5, 408.5, 541.5 → 133px parejos).
-const TEMPLATE_ROADMAP_ROW_GAP = 133
+const ROADMAP_ROW_GAP = 133
+
+// Path del isotipo "G" de la franja lateral derecha — mismo en todas las
+// pantallas (Registracion 2 y 3 comparten el mismo asset salvo el color del
+// bloque inferior), solo cambia el color vía prop.
+const G_ICON_PATH =
+  'M90.752 1018.28L85.4541 1020.99C87.1055 1022.43 88.4021 1022.84 90.0283 1024.96C91.4512 1026.81 92.3987 1029.01 92.7627 1031.15C94.2271 1039.76 88.7192 1046.46 81.6738 1048.59C82.8602 1049.33 83.5949 1050.27 83.7139 1051.35C83.879 1052.85 82.8299 1054.37 80.9609 1055.68C82.1514 1056.12 83.2042 1056.98 83.876 1058.17C85.3404 1060.77 84.4422 1063.99 81.8701 1065.38C79.2977 1066.76 76.0252 1065.77 74.5606 1063.17C73.714 1061.67 73.6575 1059.96 74.2568 1058.51C73.2314 1058.76 72.1519 1058.96 71.0332 1059.1C63.6613 1060.04 57.3865 1058.07 57.0176 1054.72C56.6639 1051.5 61.8803 1048.17 68.8193 1047.09C60.7076 1042.33 59.9898 1033.16 63.4981 1027.19C65.9785 1022.97 68.8297 1021.61 73.7607 1019.05C78.1817 1016.76 82.9364 1014.06 87.4238 1012L90.752 1018.28ZM83.5244 1029.17C81.0462 1026.37 76.0541 1025.29 72.2647 1028.31L72.2637 1028.31C63.7815 1035.09 74.3451 1046.72 82.5098 1040C85.2929 1037.7 86.7021 1032.75 83.5244 1029.17Z'
+
+// ── Panel derecho reutilizable: roadmap ("Bienvenido" → paso actual
+//    destacado → pasos futuros) + botón circular "Siguiente" en el borde,
+//    centrado verticalmente respecto al lienzo completo (top-1/2 sobre un
+//    panel con el mismo alto que sus hermanos de la fila). El color cambia
+//    por pantalla (verde oliva en "Seleccioná un Template", turquesa en
+//    "Configurá tu Tienda", etc. — cada asset de Figma trae su propio
+//    color). ────────────────────────────────────────────────────────────
+function RoadmapPanel({ activeIndex, color, onNext }: { activeIndex: number; color: string; onNext: () => void }) {
+  return (
+    <div className="relative hidden lg:block lg:w-[22.8%]">
+      {/* Puntos posicionados por altura fija (no por flujo/flex), para que
+          la distancia entre uno y otro sea siempre la misma (133px, la
+          separación real del asset) sin importar que el texto activo sea
+          más grande que el resto. El punto activo se ubica exactamente en
+          el centro vertical del panel — el mismo top-1/2 que usa el botón
+          "Siguiente" — y los demás se calculan a partir de ahí. */}
+      {ROADMAP_STEPS.map((label, i) => {
+        const active = i === activeIndex
+        const offset = (i - activeIndex) * ROADMAP_ROW_GAP
+        return (
+          <div
+            key={label}
+            className="absolute right-8 flex items-center gap-4 xl:right-10"
+            style={{ top: `calc(50% + ${offset}px)`, transform: 'translateY(-50%)' }}
+          >
+            <span
+              className={
+                active
+                  ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
+                  : 'text-right text-base font-bold text-zinc-300'
+              }
+            >
+              {label}
+            </span>
+            <span className="relative flex-shrink-0">
+              <span className="block h-[19px] w-[19px] rounded-full" style={{ background: color }} />
+              {/* Línea que conecta el 1er punto ("Bienvenido") con el punto
+                  del paso actual — crece a medida que avanza el onboarding,
+                  igual que en los assets "Puntos secuenciales/de
+                  secuencia.svg" de cada pantalla. */}
+              {i === 0 && activeIndex > 0 && (
+                <span
+                  className="absolute left-1/2 top-full w-[2px] -translate-x-1/2"
+                  style={{ background: color, height: activeIndex * ROADMAP_ROW_GAP - 19 }}
+                />
+              )}
+            </span>
+          </div>
+        )
+      })}
+
+      <button
+        type="button"
+        onClick={onNext}
+        aria-label="Continuar"
+        className="absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:brightness-110 hover:scale-105"
+        style={{ background: color }}
+      >
+        <svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
+          <path d="M49 38L32.5 47.5263L32.5 28.4737L49 38Z" fill="white" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+// ── Franja lateral decorativa reutilizable — reconstruida con colores
+//    sólidos exactos (nunca se deforman, a diferencia del asset compuesto)
+//    en vez de estirar/recortar la imagen. El bloque superior es siempre
+//    #454B53; el inferior cambia de color por pantalla. El isotipo "G"
+//    queda centrado en su tamaño nativo, bajado a la posición real que
+//    tiene dentro del asset (~9% del borde inferior del bloque). ────────
+function SideStrip({ color }: { color: string }) {
+  return (
+    <div className="hidden xl:flex xl:w-[8.9%] xl:flex-col">
+      <div className="flex-1" style={{ background: '#454B53' }} />
+      <div className="relative flex-1" style={{ background: color }}>
+        <svg
+          width="28"
+          height="40"
+          viewBox="55 1010 41 59"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+          className="absolute bottom-[9%] left-1/2 -translate-x-1/2"
+        >
+          <path d={G_ICON_PATH} fill="white" />
+        </svg>
+      </div>
+    </div>
+  )
+}
 
 // ── Tarjeta de template — misma captura y textos que la página /templates
 //    (public/templates/{slug}.webp + TEMPLATES de lib/templates.ts), en vez
@@ -135,13 +250,17 @@ export default function OnboardingPage() {
 
 function OnboardingContent() {
   const supabase = createClient()
+  const router = useRouter()
   // El nombre de tienda ya se pidió en /registro (gounuri_accounts.store_name)
   // y /auth/verificar lo pasa acá por query param al confirmar el mail — no
   // hace falta volver a pedirlo, pero el paso "nombre" sigue disponible por
   // si quieren cambiarlo (botón "← Volver" del paso 2).
   const searchParams = useSearchParams()
   const storeFromQuery = searchParams.get('store') ?? ''
-  const [step, setStep] = useState<Step>(storeFromQuery ? 'template' : 'nombre')
+  // `?paso=NN` manda sobre `?store=` si ambos están presentes (por ejemplo,
+  // alguien que comparte/guarda el link de un paso puntual ya avanzado).
+  const initialStep = stepFromParam(searchParams.get('paso')) ?? (storeFromQuery ? 'template' : 'nombre')
+  const [step, setStepState] = useState<Step>(initialStep)
   const [name, setName] = useState(storeFromQuery)
   const [domain, setDomain] = useState('')
   const [dniCuit, setDniCuit] = useState('')
@@ -151,6 +270,29 @@ function OnboardingContent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [slideIndex, setSlideIndex] = useState(0)
+
+  // Cambia de paso y refleja el nuevo paso en la URL (`?paso=01/02/03/04`)
+  // con `router.push`, para que quede como una entrada de historial propia
+  // — el botón "atrás" del navegador vuelve al paso anterior en vez de
+  // salir de /onboarding. Ojo: esto NO persiste los datos ya cargados
+  // (nombre, template, etc.) — siguen viviendo solo en memoria de React,
+  // así que entrar de cero a un link de un paso avanzado no trae precargado
+  // lo que se completó antes.
+  function goToStep(next: Step) {
+    setStepState(next)
+    router.push(`/onboarding?paso=${stepParam(next)}`, { scroll: false })
+  }
+
+  // Si se entra sin `?paso=` (por ejemplo /onboarding a secas, o con
+  // `?store=`), deja la URL en línea con el paso inicial ya resuelto —
+  // reemplaza en vez de empujar, para no sumar una entrada de historial
+  // extra en la primera carga.
+  useEffect(() => {
+    if (!searchParams.get('paso')) {
+      router.replace(`/onboarding?paso=${stepParam(initialStep)}`, { scroll: false })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Sin sesión no hay onboarding
   useEffect(() => {
@@ -194,7 +336,7 @@ function OnboardingContent() {
       }).catch(e => console.error('[onboarding] no se pudieron guardar DNI/CUIT y WhatsApp', e))
     }
 
-    setStep('template')
+    goToStep('template')
   }
 
   async function handleFinalSubmit() {
@@ -211,7 +353,7 @@ function OnboardingContent() {
       setSaving(false)
       // 409 = nombre ya en uso — hay que volver al paso 1 para que lo cambien,
       // no tiene sentido dejarlos varados en el paso de plan viendo el error.
-      if (res.status === 409) setStep('nombre')
+      if (res.status === 409) goToStep('nombre')
       return
     }
 
@@ -224,18 +366,19 @@ function OnboardingContent() {
   const pasos: { id: Step; label: string }[] = [
     { id: 'nombre', label: '1. Tu tienda' },
     { id: 'template', label: '2. Diseño' },
-    { id: 'plan', label: '3. Plan' },
+    { id: 'configurar', label: '3. Configuración' },
+    { id: 'plan', label: '4. Plan' },
   ]
   const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
   const templateElegido = TEMPLATES.find(t => t.slug === template) ?? TEMPLATES[0]
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header — en los pasos 1 y 2 usamos el navbar real del sitio (igual
-          al diseño de Figma "Registracion 1" y "Registracion 2"); en el
-          paso 3 seguimos con la barra liviana con el indicador de paso, que
-          todavía no tiene diseño de Figma. */}
-      {step === 'nombre' || step === 'template' ? (
+      {/* Header — en los pasos 1, 2 y 2.5 usamos el navbar real del sitio
+          (igual al diseño de Figma "Registracion 1", "2" y "3"); en el paso
+          de plan seguimos con la barra liviana con el indicador de paso,
+          que todavía no tiene diseño de Figma. */}
+      {step === 'nombre' || step === 'template' || step === 'configurar' ? (
         <Navbar />
       ) : (
         <div className="border-b border-zinc-200 bg-white px-6 py-4">
@@ -448,93 +591,111 @@ function OnboardingContent() {
                 para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => setStep('plan')}
+              onClick={() => goToStep('configurar')}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
             >
               Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
             </button>
           </div>
 
-          {/* Panel derecho: roadmap del proceso ("Bienvenido" → "Seleccioná
-              un Template" destacado → pasos futuros) + botón circular
-              "Siguiente" en el borde, centrado verticalmente respecto al
-              lienzo completo (misma técnica que el paso 1: top-1/2 sobre un
-              panel con el mismo alto que sus hermanos de la fila). */}
-          <div className="relative hidden lg:block lg:w-[22.8%]">
-            {/* Puntos posicionados por altura fija (no por flujo/flex), para
-                que la distancia entre uno y otro sea siempre la misma
-                (133px, la separación real del asset "Puntos
-                secuenciales.svg") sin importar que el texto activo sea más
-                grande que el resto. El punto activo ("Seleccioná un
-                Template", índice 1) se ubica exactamente en el centro
-                vertical del panel — el mismo top-1/2 que usa el botón
-                "Siguiente" — y los demás se calculan a partir de ahí. */}
-            {TEMPLATE_ROADMAP.map((label, i) => {
-              const active = i === TEMPLATE_ROADMAP_ACTIVE_INDEX
-              const offset = (i - TEMPLATE_ROADMAP_ACTIVE_INDEX) * TEMPLATE_ROADMAP_ROW_GAP
-              return (
-                <div
-                  key={label}
-                  className="absolute right-8 flex items-center gap-4 xl:right-10"
-                  style={{ top: `calc(50% + ${offset}px)`, transform: 'translateY(-50%)' }}
-                >
-                  <span
-                    className={
-                      active
-                        ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
-                        : 'text-right text-base font-bold text-zinc-300'
-                    }
-                  >
-                    {label}
-                  </span>
-                  <span className="relative flex-shrink-0">
-                    <span className="block h-[19px] w-[19px] rounded-full" style={{ background: '#B9C96F' }} />
-                    {/* Línea que conecta el 1er punto ("Bienvenido") con el
-                        2do (paso actual) — el resto queda sin conectar,
-                        igual que en el asset "Puntos secuenciales.svg". */}
-                    {i === 0 && (
-                      <span
-                        className="absolute left-1/2 top-full w-[2px] -translate-x-1/2"
-                        style={{ background: '#B9C96F', height: TEMPLATE_ROADMAP_ROW_GAP - 19 }}
-                      />
-                    )}
-                  </span>
-                </div>
-              )
-            })}
+          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} />
+          <SideStrip color="#B9C96F" />
+        </div>
+      )}
 
+      {/* ── PASO 2.5: Configurar tu tienda (diseño Figma "Registracion 3") —
+          pantalla informativa, sin datos propios que guardar todavía (los
+          campos de Contacto y Redes son un preview de lo que va a poder
+          cargar más adelante desde el Panel Admin/perfil). ── */}
+      {step === 'configurar' && (
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          <div className="w-full overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+            <div className="max-w-3xl space-y-8 text-black">
+              <section>
+                <h2 className="text-2xl font-bold">General</h2>
+                <p className="mt-3 leading-relaxed">
+                  Podés activar <strong className="font-bold">modo sin stock</strong>, si preferís operar sin especificar el stock de cada producto publicado.
+                  <br />
+                  También podés definir el <strong className="font-bold">monto mínimo de pedido</strong> y{' '}
+                  <strong className="font-bold">la cantidad mínima de unidades para la venta mayorista</strong>.
+                  <br />
+                  Tu tienda está preparada para <strong className="font-bold">precios escalonados</strong> por volumen o según el segmento de clientes.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold">Contacto y Redes</h2>
+                <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">WhatsApp</label>
+                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Dirección</label>
+                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Instagram</label>
+                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Facebook</label>
+                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
+                  </div>
+                </div>
+                <p className="mt-4 leading-relaxed">
+                  Para campañas de publicidad en Meta, Google Ads o TikTok, podés instalar los píxeles de seguimiento simplemente ingresando el Meta Pixel ID, Google Ads ID o TikTok Pixel ID.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold">Cobranzas &amp; Finanzas</h2>
+                <p className="mt-3 leading-relaxed">Tu tienda ofrece 3 formas de cobro:</p>
+                <ul className="ml-6 list-disc leading-relaxed">
+                  <li>Mercado Pago</li>
+                  <li>Transferencia bancaria</li>
+                  <li>Efectivo en el local</li>
+                </ul>
+                <p className="mt-3 leading-relaxed">
+                  <strong className="font-bold italic">Debés habilitar al menos una forma de cobro</strong> para que tus clientes puedan finalizar la compra.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold">Envíos</h2>
+                <p className="mt-3 leading-relaxed">
+                  Podés habilitar distintos tipos de envío según las necesidades de tu tienda, como envío a domicilio, retiro en local u otras modalidades disponibles.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold">Catálogo</h2>
+                <p className="mt-3 leading-relaxed">
+                  Esta sección es para definir las <strong className="font-bold">variantes</strong> y <strong className="font-bold">atributos</strong> de tus productos, como talle, color, tamaño u otras características, y establecer el <strong className="font-bold">formato</strong> y las dimensiones recomendadas para las imágenes de producto.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-2xl font-bold">Apariencia</h2>
+                <p className="mt-3 leading-relaxed">
+                  Podés personalizar tu landing page a tu gusto, cambiando imágenes, logotipo y otros elementos visuales con solo <strong className="font-bold">arrastrar y soltar</strong> para adaptarlos a la identidad de tu marca.
+                </p>
+              </section>
+            </div>
+
+            {/* Botón visible en mobile/tablet, donde no hay panel derecho
+                para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => setStep('plan')}
-              aria-label="Continuar"
-              className="absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:brightness-110 hover:scale-105"
-              style={{ background: '#B9C96F' }}
+              onClick={() => goToStep('plan')}
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
             >
-              <svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
-                <path d="M49 38L32.5 47.5263L32.5 28.4737L49 38Z" fill="white" />
-              </svg>
+              Continuar <ArrowRight size={16} />
             </button>
           </div>
 
-          {/* Franja lateral decorativa — mismos bloques sólidos que el paso
-              1, con el verde oliva (#B9C96F) del asset de este paso en vez
-              del rojo, e ícono "G" en la misma posición inferior-central. */}
-          <div className="hidden xl:flex xl:w-[8.9%] xl:flex-col">
-            <div className="flex-1" style={{ background: '#454B53' }} />
-            <div className="relative flex-1" style={{ background: '#B9C96F' }}>
-              <svg
-                width="28"
-                height="40"
-                viewBox="55 1010 41 59"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-                className="absolute bottom-[9%] left-1/2 -translate-x-1/2"
-              >
-                <path d="M90.752 1018.28L85.4541 1020.99C87.1055 1022.43 88.4021 1022.84 90.0283 1024.96C91.4512 1026.81 92.3987 1029.01 92.7627 1031.15C94.2271 1039.76 88.7192 1046.46 81.6738 1048.59C82.8602 1049.33 83.5949 1050.27 83.7139 1051.35C83.879 1052.85 82.8299 1054.37 80.9609 1055.68C82.1514 1056.12 83.2042 1056.98 83.876 1058.17C85.3404 1060.77 84.4422 1063.99 81.8701 1065.38C79.2977 1066.76 76.0252 1065.77 74.5606 1063.17C73.714 1061.67 73.6575 1059.96 74.2568 1058.51C73.2314 1058.76 72.1519 1058.96 71.0332 1059.1C63.6613 1060.04 57.3865 1058.07 57.0176 1054.72C56.6639 1051.5 61.8803 1048.17 68.8193 1047.09C60.7076 1042.33 59.9898 1033.16 63.4981 1027.19C65.9785 1022.97 68.8297 1021.61 73.7607 1019.05C78.1817 1016.76 82.9364 1014.06 87.4238 1012L90.752 1018.28ZM83.5244 1029.17C81.0462 1026.37 76.0541 1025.29 72.2647 1028.31L72.2637 1028.31C63.7815 1035.09 74.3451 1046.72 82.5098 1040C85.2929 1037.7 86.7021 1032.75 83.5244 1029.17Z" fill="white" />
-              </svg>
-            </div>
-          </div>
+          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('plan')} />
+          <SideStrip color="#3B9DA2" />
         </div>
       )}
 
@@ -591,7 +752,7 @@ function OnboardingContent() {
           )}
 
           <div className="flex gap-3">
-            <button onClick={() => setStep('template')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
+            <button onClick={() => goToStep('template')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
               ← Volver
             </button>
             <button
