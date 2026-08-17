@@ -14,21 +14,25 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowRight, Check, ExternalLink, Loader2 } from 'lucide-react'
+import { ArrowRight, Check, ExternalLink, Loader2, Wallet } from 'lucide-react'
 import Navbar from '@/components/Navbar'
+import Pricing from '@/components/Pricing'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
+import { priceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
 
-type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'escalar' | 'plan'
+type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'escalar' | 'plan' | 'pago'
 
-// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04, 05, 06) para que
-// se pueda compartir/guardar un link a un paso puntual y para que el botón
-// "atrás" del navegador vuelva al paso anterior en vez de salir de
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Cada paso tiene su propia dirección (?paso=01, 02, 03, 04, 05, 06, 07) para
+// que se pueda compartir/guardar un link a un paso puntual y para que el
+// botón "atrás" del navegador vuelva al paso anterior en vez de salir de
 // /onboarding. Sigue siendo la misma página/estado de siempre (no son rutas
 // separadas) — solo se sincroniza la URL con `router.push` cada vez que
 // cambia el paso.
-const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar', 'plan']
+const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar', 'plan', 'pago']
 function stepParam(step: Step): string {
   return String(STEP_ORDER.indexOf(step) + 1).padStart(2, '0')
 }
@@ -268,7 +272,14 @@ function OnboardingContent() {
   const [dniCuit, setDniCuit] = useState('')
   const [celular, setCelular] = useState('')
   const [template, setTemplate] = useState('minimalista')
-  const [plan, setPlan] = useState('standard')
+  const [plan, setPlan] = useState<PlanId>('standard')
+  const [billingTerm, setBillingTerm] = useState<BillingTerm>(1)
+  // La tienda se crea al elegir un plan en el paso "Plan" (antes de pasar a
+  // "Pago") — este flag evita volver a crearla si el usuario va para atrás y
+  // elige otro plan (el 2do POST a /api/create-tenant fallaría con 409,
+  // nombre ya en uso). El plan/plazo elegido se manda recién al suscribir.
+  const [tenantReady, setTenantReady] = useState(false)
+  const [payerEmail, setPayerEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [slideIndex, setSlideIndex] = useState(0)
@@ -300,6 +311,10 @@ function OnboardingContent() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) window.location.href = '/registro'
+      // Precarga el email de pago con el de la cuenta — igual que
+      // PlanSelector.tsx en /perfil/plan. No tiene por qué ser el mismo con
+      // el que se paga en Mercado Pago, así que sigue siendo editable.
+      if (user?.email) setPayerEmail(user.email)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -310,11 +325,6 @@ function OnboardingContent() {
     const t = setInterval(() => setSlideIndex(i => (i + 1) % ONBOARDING_SLIDES.length), 3500)
     return () => clearInterval(t)
   }, [step])
-
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    window.location.href = '/'
-  }
 
   function handleNombreSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -341,71 +351,101 @@ function OnboardingContent() {
     goToStep('template')
   }
 
-  async function handleFinalSubmit() {
+  // POST a /api/create-tenant, factorizado para poder usarse tanto desde el
+  // botón directo de "prueba gratis" (handleFinalSubmit, que redirige a
+  // /perfil) como desde el selector de plan real (handleSelectPlan, que en
+  // cambio sigue al paso "Pago" sin salir de /onboarding). Devuelve
+  // true/false para que cada llamador decida qué hacer después.
+  async function createTenant(planId: PlanId): Promise<boolean> {
     setSaving(true)
     setError(null)
     const res = await fetch('/api/create-tenant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), domain: domain.trim() || null, template, plan }),
+      body: JSON.stringify({ name: name.trim(), domain: domain.trim() || null, template, plan: planId }),
     })
     const json = await res.json().catch(() => ({}))
+    setSaving(false)
     if (!res.ok || json.error) {
       setError(json.error ?? 'Error al crear la tienda. Probá de nuevo.')
-      setSaving(false)
       // 409 = nombre ya en uso — hay que volver al paso 1 para que lo cambien,
-      // no tiene sentido dejarlos varados en el paso de plan viendo el error.
+      // no tiene sentido dejarlos varados viendo el error.
       if (res.status === 409) goToStep('nombre')
-      return
+      return false
     }
+    return true
+  }
 
+  async function handleFinalSubmit() {
+    const ok = await createTenant(plan)
+    if (!ok) return
     // Tienda creada — quedarse en gounuri.com (Mi cuenta), no saltar a Panel
     // Admin de una. La sesión ya está en las cookies de este mismo dominio,
     // no hace falta ningún handoff para esto.
     window.location.href = '/perfil'
   }
 
-  const pasos: { id: Step; label: string }[] = [
-    { id: 'nombre', label: '1. Tu tienda' },
-    { id: 'template', label: '2. Diseño' },
-    { id: 'configurar', label: '3. Configuración' },
-    { id: 'productos', label: '4. Productos' },
-    { id: 'escalar', label: '5. Escalá' },
-    { id: 'plan', label: '6. Plan' },
-  ]
-  const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
+  // Tarjeta de plan elegida en el paso "Plan" (Pricing en mode="select"):
+  // crea la tienda con ese plan/plazo (si todavía no existe — ver comentario
+  // de `tenantReady`) y sigue al paso "Pago" para suscribir de verdad vía
+  // Mercado Pago, en vez de crear directo con prueba gratis.
+  async function handleSelectPlan(planId: PlanId, term: BillingTerm) {
+    setPlan(planId)
+    setBillingTerm(term)
+    if (tenantReady) { goToStep('pago'); return }
+    const ok = await createTenant(planId)
+    if (!ok) return
+    setTenantReady(true)
+    goToStep('pago')
+  }
+
+  // Paso "Pago": inicia la suscripción real en Mercado Pago (Preapproval) —
+  // mismo endpoint que usa /perfil/plan — y redirige al checkout de MP.
+  async function handlePagar() {
+    if (!EMAIL_RE.test(payerEmail.trim())) {
+      setError('Ingresá el email de tu cuenta de Mercado Pago.')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/billing/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, payerEmail: payerEmail.trim(), months: billingTerm }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json.init_point) throw new Error(json.error ?? 'No se pudo iniciar el pago. Probá de nuevo.')
+      window.location.href = json.init_point
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo iniciar el pago. Probá de nuevo.')
+      setSaving(false)
+    }
+  }
+
   const templateElegido = TEMPLATES.find(t => t.slug === template) ?? TEMPLATES[0]
+  const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
+
+  // Cálculos del paso "Pago" (diseño Figma "Pago con Tarjeta") — mismas
+  // fórmulas que ya usan Pricing.tsx/PlanSelector.tsx (priceForTerm ya
+  // aplica el descuento por plazo), para no duplicar la lógica de precios.
+  const pagoTotal = priceForTerm(plan, billingTerm)
+  const pagoSinDescuento = planElegido.precioARS * billingTerm
+  const pagoDescuentoMonto = pagoSinDescuento - pagoTotal
+  const pagoDescuentoPct = TERM_DISCOUNTS[billingTerm] * 100
+  const pagoTermLabel = billingTerm === 1 ? 'mensual' : billingTerm === 6 ? 'semestral' : 'anual'
+  const pagoInicio = new Date()
+  const pagoFin = new Date(pagoInicio)
+  pagoFin.setMonth(pagoFin.getMonth() + billingTerm)
+  const fmtFecha = (d: Date) => d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {/* Header — en los pasos 1 a 4.5 usamos el navbar real del sitio
-          (igual al diseño de Figma "Registracion 1" a "5"); en el paso de
-          plan seguimos con la barra liviana con el indicador de paso, que
-          todavía no tiene diseño de Figma. */}
-      {step === 'nombre' || step === 'template' || step === 'configurar' || step === 'productos' || step === 'escalar' ? (
-        <Navbar />
-      ) : (
-        <div className="border-b border-zinc-200 bg-white px-6 py-4">
-          <div className="mx-auto flex max-w-5xl items-center justify-between">
-            <span className="text-lg font-semibold tracking-tight text-zinc-900">
-              gounuri<span className="text-zinc-400">.com</span>
-            </span>
-            <div className="flex items-center gap-6">
-              <div className="hidden items-center gap-2 text-xs sm:flex">
-                {pasos.map((p, i) => (
-                  <span key={p.id} className="flex items-center gap-2">
-                    {i > 0 && <span className="text-zinc-200">→</span>}
-                    <span className={step === p.id ? 'font-medium text-zinc-900' : 'text-zinc-400'}>{p.label}</span>
-                  </span>
-                ))}
-              </div>
-              <button onClick={handleLogout} className="text-xs text-zinc-400 transition-colors hover:text-zinc-600">
-                Cerrar sesión
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Header — navbar real del sitio en todos los pasos (diseño Figma
+          "Registracion 1" a "6"/"Pago con Tarjeta"). Ya no queda ningún paso
+          usando la barra liviana de antes (esa era solo para cuando el paso
+          de Plan todavía no tenía diseño de Figma). */}
+      <Navbar />
 
       {/* ── PASO 1: Nombre (diseño Figma "Registracion 1A/1B/1C") ── */}
       {step === 'nombre' && (
@@ -799,73 +839,144 @@ function OnboardingContent() {
         </div>
       )}
 
-      {/* ── PASO 5: Plan ── */}
+      {/* ── PASO 6: Plan (diseño Figma "Planes para cada etapa", node
+          1015:133 — el usuario confirmó que es una repetición del bloque de
+          precios que ya existe en la landing, así que se reusa Pricing.tsx
+          tal cual en vez de reconstruirlo: mode="select" cambia únicamente
+          el CTA de cada tarjeta, de un <a> a /api/ir-a-plan a un
+          onSelect(planId, term) que crea la tienda con ese plan/plazo y
+          sigue al paso "Pago" sin salir de /onboarding. ── */}
       {step === 'plan' && (
-        <div className="mx-auto max-w-5xl px-6 py-12">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">Paso 6 de 6</p>
-          <h1 className="text-2xl font-semibold text-zinc-900">Elegí tu plan</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Probás el plan que elijas <strong>gratis durante {TRIAL_DAYS} días</strong>, sin tarjeta.
-            Después lo activás desde el panel.
-          </p>
-
-          <div className="mb-8 mt-8 grid gap-5 lg:grid-cols-3">
-            {PLANES.map(p => (
-              <button
-                type="button"
-                key={p.id}
-                onClick={() => setPlan(p.id)}
-                className={`relative flex flex-col rounded-xl border-2 bg-white p-6 text-left transition-all ${
-                  plan === p.id ? 'border-zinc-900 ring-2 ring-zinc-300' : 'border-zinc-200 hover:border-zinc-400'
-                }`}
-              >
-                {p.destacado && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white">
-                    Recomendado
-                  </span>
-                )}
-                {plan === p.id && (
-                  <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900">
-                    <Check size={13} className="text-white" />
-                  </div>
-                )}
-                <h3 className="text-base font-semibold text-zinc-900">{p.nombre}</h3>
-                <p className="mt-0.5 text-xs text-zinc-500">{p.descripcion}</p>
-                <p className="mt-4">
-                  <span className="text-2xl font-bold tracking-tight text-zinc-900">{formatPrecio(p.precioARS)}</span>
-                  <span className="ml-1 text-xs text-zinc-500">/ mes</span>
-                </p>
-                <ul className="mt-4 space-y-2">
-                  {p.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-zinc-600">
-                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-900" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            ))}
-          </div>
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <button
+            type="button"
+            onClick={() => goToStep('escalar')}
+            className="mb-6 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+          >
+            ← Volver
+          </button>
 
           {error && (
-            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           )}
 
-          <div className="flex gap-3">
-            <button onClick={() => goToStep('escalar')} className="rounded-lg border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100">
-              ← Volver
-            </button>
-            <button
-              onClick={handleFinalSubmit}
-              disabled={saving}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-zinc-900 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60"
-            >
-              {saving && <Loader2 size={15} className="animate-spin" />}
-              {saving
-                ? 'Creando tu tienda...'
-                : `Crear mi tienda — ${TRIAL_DAYS} días gratis del plan ${planElegido.nombre} →`}
-            </button>
+          {saving && (
+            <div className="mb-6 flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600">
+              <Loader2 size={15} className="animate-spin" /> Creando tu tienda...
+            </div>
+          )}
+
+          <Pricing mode="select" onSelect={handleSelectPlan} />
+        </div>
+      )}
+
+      {/* ── PASO 7: Pago (diseño Figma "Pago con Tarjeta", node 1002:61) —
+          el diseño de Figma muestra campos de tarjeta (número, vencimiento,
+          CVC), pero el backend real de gounuri.com sólo tiene implementado
+          el cobro vía Mercado Pago Preapproval (mismo flujo que
+          /perfil/plan): se ingresa el email de la cuenta de Mercado Pago y
+          se redirige al checkout hospedado por MP. Se decidió con el
+          usuario (elección explícita: "Conectar con Mercado Pago real")
+          construir este paso conectado al pago real en vez de armar un
+          formulario de tarjeta visual que no procesaría nada de verdad. Los
+          cálculos (subtotal, descuento por plazo, total) usan
+          priceForTerm() de @/lib/plans, la misma fuente que ya usan
+          Pricing.tsx y PlanSelector.tsx. */}
+      {step === 'pago' && (
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          {/* Panel izquierdo — formulario de pago */}
+          <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-16 sm:py-16 lg:w-[45.5%] lg:px-24">
+            <h1 className="text-3xl font-extrabold leading-tight text-zinc-900">Pagar con Mercado Pago</h1>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-500">
+              gounuri.com no ve ni almacena los datos de tu tarjeta. Ingresá el
+              email de tu cuenta de Mercado Pago y te vamos a redirigir a su
+              checkout seguro para completar el pago.
+            </p>
+
+            <div className="mt-8 space-y-5">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                  Email de tu cuenta de Mercado Pago <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                  value={payerEmail}
+                  onChange={e => setPayerEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => goToStep('plan')}
+                  className="rounded-2xl border border-zinc-300 px-6 py-3.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+                >
+                  ← Volver
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePagar}
+                  disabled={saving}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-medium text-white transition-colors hover:brightness-110 disabled:opacity-60"
+                  style={{ background: '#454b53' }}
+                >
+                  {saving && <Loader2 size={15} className="animate-spin" />}
+                  {saving ? 'Redirigiendo a Mercado Pago...' : 'Pagar'}
+                </button>
+              </div>
+            </div>
           </div>
+
+          {/* Panel derecho — resumen "Activar Plan" */}
+          <div className="hidden w-full flex-col justify-center bg-[#f2f2f2] px-14 py-16 lg:flex lg:w-[45.6%]">
+            <div className="flex items-center gap-2 text-zinc-500">
+              <Wallet size={18} />
+              <span className="text-sm font-medium">Activar Plan</span>
+            </div>
+
+            <p className="mt-4 text-4xl font-extrabold text-zinc-900">{formatPrecio(pagoTotal)}</p>
+            <p className="mt-1 text-sm text-zinc-600">
+              Plan {planElegido.nombre} / suscripción {pagoTermLabel}
+            </p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Periodo : {fmtFecha(pagoInicio)} - {fmtFecha(pagoFin)}
+            </p>
+
+            <div className="mt-8 space-y-3 text-sm">
+              <div className="flex items-center justify-between text-zinc-600">
+                <span>
+                  {formatPrecio(planElegido.precioARS)} x {billingTerm} {billingTerm === 1 ? 'mes' : 'meses'}
+                </span>
+                <span>{formatPrecio(pagoSinDescuento)}</span>
+              </div>
+              {pagoDescuentoMonto > 0 && (
+                <div className="flex items-center justify-between text-zinc-600">
+                  <span>Descuento pago {pagoTermLabel} {pagoDescuentoPct}%</span>
+                  <span>-{formatPrecio(pagoDescuentoMonto)}</span>
+                </div>
+              )}
+              <hr className="border-zinc-300" />
+              <div className="flex items-center justify-between font-medium text-zinc-900">
+                <span>SubTotal</span>
+                <span>{formatPrecio(pagoTotal)}</span>
+              </div>
+              <hr className="border-zinc-300" />
+              <div className="flex items-center justify-between text-base font-bold text-zinc-900">
+                <span>Total a pagar</span>
+                <span>{formatPrecio(pagoTotal)}</span>
+              </div>
+            </div>
+          </div>
+
+          <SideStrip color="#C4C4C4" />
         </div>
       )}
     </main>

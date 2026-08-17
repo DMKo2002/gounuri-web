@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
-import { priceForTerm, type BillingTerm } from '@/lib/plans'
+import { priceForTerm, type BillingTerm, type PlanId } from '@/lib/plans'
 
 // Leyenda entre el selector de plazo y las tarjetas — solo texto, sin marco
 // ni fondo, las 3 frases en un renglón.
@@ -21,12 +21,25 @@ function formatARS(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-export default function Pricing() {
+// `mode="select"` es el usado desde /onboarding (paso "Elegí tu plan"): en
+// vez de los links `<a>` que mandan a /api/ir-a-plan (pensados para la
+// página de precios pública), cada tarjeta dispara `onSelect(planId, term)`
+// para que el onboarding cree la tienda con ese plan/plazo y siga al pago —
+// sin salir de /onboarding. El resto del componente (toggle, tarjetas,
+// legenda) queda idéntico en ambos modos.
+export default function Pricing({
+  mode = 'marketing',
+  onSelect,
+}: {
+  mode?: 'marketing' | 'select'
+  onSelect?: (planId: PlanId, term: BillingTerm) => void
+} = {}) {
   const [term, setTerm] = useState<BillingTerm>(1)
+  const embedded = mode === 'select'
 
   return (
-    <section id="planes" className="border-t border-zinc-200 bg-zinc-50">
-      <div className="mx-auto max-w-7xl px-6 py-24">
+    <section id={embedded ? undefined : 'planes'} className={embedded ? '' : 'border-t border-zinc-200 bg-zinc-50'}>
+      <div className={embedded ? 'mx-auto max-w-7xl' : 'mx-auto max-w-7xl px-6 py-24'}>
         <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
           Planes para cada etapa
         </h2>
@@ -161,12 +174,22 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              <a
-                href={`/api/ir-a-plan?plan=${plan.id}`}
-                className="btn-black mt-8 w-full"
-              >
-                Empezar con {plan.nombre}
-              </a>
+              {embedded ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect?.(plan.id, term)}
+                  className="btn-black mt-8 w-full"
+                >
+                  Empezar con {plan.nombre}
+                </button>
+              ) : (
+                <a
+                  href={`/api/ir-a-plan?plan=${plan.id}`}
+                  className="btn-black mt-8 w-full"
+                >
+                  Empezar con {plan.nombre}
+                </a>
+              )}
             </div>
           ))}
 
