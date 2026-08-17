@@ -37,7 +37,7 @@
 // - Reenvío pega al mismo /api/auth/reenviar-confirmacion que ya usa el
 //   botón de /login.
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Turnstile from 'react-turnstile'
@@ -54,6 +54,43 @@ import SideStrip from '@/components/SideStrip'
 // Este comentario fuerza justamente eso: un diff real de este archivo.
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA'
 
+// "Registrate" (título) estirado por letter-spacing hasta ocupar el mismo
+// ancho que "B2B Mayoristas y B2C Minoristas" (subtítulo) — pedido de Aram
+// 2026-08-17 sobre el resultado del rediseño Figma. Se mide el ancho real
+// de los dos textos en el navegador (getBoundingClientRect) en vez de
+// adivinar un tracking fijo en px: así funciona sea cual sea el tamaño de
+// pantalla/zoom y si algún día cambia el texto o la tipografía. Se
+// recalcula también cuando terminan de cargar las fuentes (document.fonts)
+// para no medir con la tipografía de fallback todavía.
+function StretchedTitle({ title, subtitle }: { title: string; subtitle: string }) {
+  const tituloRef = useRef<HTMLHeadingElement>(null)
+  const subtituloRef = useRef<HTMLParagraphElement>(null)
+
+  useEffect(() => {
+    function ajustar() {
+      const tEl = tituloRef.current
+      const sEl = subtituloRef.current
+      if (!tEl || !sEl || title.length <= 1) return
+      tEl.style.letterSpacing = '0px'
+      const anchoTitulo = tEl.getBoundingClientRect().width
+      const anchoSubtitulo = sEl.getBoundingClientRect().width
+      const extra = (anchoSubtitulo - anchoTitulo) / (title.length - 1)
+      tEl.style.letterSpacing = `${Math.max(extra, 0)}px`
+    }
+    ajustar()
+    window.addEventListener('resize', ajustar)
+    document.fonts?.ready?.then(ajustar).catch(() => {})
+    return () => window.removeEventListener('resize', ajustar)
+  }, [title, subtitle])
+
+  return (
+    <div className="text-left">
+      <h2 ref={tituloRef} className="text-[3.6rem] font-extrabold">{title}</h2>
+      <p ref={subtituloRef} className="mt-1 text-xl font-medium">{subtitle}</p>
+    </div>
+  )
+}
+
 // ── Panel derecho: misma foto ("Paris street", ya usada en el onboarding
 //    Paso 5 "Escalá con tus Ventas") con el título superpuesto que trae el
 //    Figma de esta pantalla ("Registrate"), + la franja lateral roja — el
@@ -67,10 +104,7 @@ function PhotoPanel() {
           style={{ backgroundImage: "url('/img/onboarding/onboarding-05-escalar.jpg')" }}
         />
         <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
-          <div className="text-left">
-            <h2 className="text-[3.6rem] font-extrabold">Registrate</h2>
-            <p className="mt-1 text-xl font-medium">B2B Mayoristas y B2C Minoristas</p>
-          </div>
+          <StretchedTitle title="Registrate" subtitle="B2B Mayoristas y B2C Minoristas" />
         </div>
       </div>
       <SideStrip color="#FE4648" />
