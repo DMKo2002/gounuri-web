@@ -27,6 +27,11 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Cuenta que existe pero nunca confirmó el mail (Supabase: "Email not
+  // confirmed") — antes no había forma de reintentar desde acá sin volver a
+  // llenar /registro entero. Ver /api/auth/reenviar-confirmacion.
+  const [sinConfirmar, setSinConfirmar] = useState(false)
+  const [reenvio, setReenvio] = useState<'idle' | 'enviando' | 'enviado'>('idle')
 
   useEffect(() => {
     const saved = localStorage.getItem(REMEMBER_KEY)
@@ -36,12 +41,17 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setSinConfirmar(false)
+    setReenvio('idle')
     setLoading(true)
     try {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password })
       setLoading(false)
       if (err) {
         setError(friendlyAuthError(err))
+        if (typeof (err as { message?: unknown }).message === 'string' && (err as { message: string }).message.includes('Email not confirmed')) {
+          setSinConfirmar(true)
+        }
         return
       }
       if (remember) localStorage.setItem(REMEMBER_KEY, email)
@@ -52,6 +62,21 @@ export default function LoginPage() {
       setLoading(false)
       setError(friendlyAuthError(err))
     }
+  }
+
+  async function handleReenviar() {
+    setReenvio('enviando')
+    try {
+      await fetch('/api/auth/reenviar-confirmacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+    } catch {
+      // el mensaje de abajo es genérico igual — no hace falta distinguir
+      // un error de red acá, "reintentá en unos minutos" ya lo cubre
+    }
+    setReenvio('enviado')
   }
 
   return (
@@ -68,7 +93,23 @@ export default function LoginPage() {
             <p className="mt-1 text-sm text-zinc-500">Usá las mismas credenciales que en tu Panel Admin.</p>
 
             {error && (
-              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+                {sinConfirmar && (
+                  reenvio === 'enviado' ? (
+                    <p className="mt-1.5 text-red-600">Listo, revisá tu casilla (y spam) en unos minutos.</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleReenviar}
+                      disabled={reenvio === 'enviando'}
+                      className="mt-1.5 block font-medium underline underline-offset-2 disabled:opacity-60"
+                    >
+                      {reenvio === 'enviando' ? 'Enviando...' : 'Reenviar mail de confirmación'}
+                    </button>
+                  )
+                )}
+              </div>
             )}
 
             <div className="mt-5">

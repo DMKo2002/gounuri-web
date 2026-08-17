@@ -33,42 +33,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { sendEmail, emailConfirmacionRegistro, emailCuentaVinculada } from '@/lib/email'
-
-// Genera un magic link sobre una cuenta de Auth YA EXISTENTE (a diferencia
-// de generateLink(type:'signup'), no crea un auth.users nuevo) y arma
-// nuestra propia URL de /auth/verificar a partir del hashed_token — mismo
-// patrón que el link de confirmación del signup normal, pero sirve tanto
-// para "reenviar confirmación" (misma persona, mismo registro) como para
-// "enganchar cuenta existente" (identidad de Auth compartida con una
-// tienda de un tenant, ver comentario 2026-08-17(a) arriba).
-async function generarLinkDeAcceso(
-  service: ReturnType<typeof createServiceClient>,
-  normalizedEmail: string,
-  siteUrl: string,
-): Promise<{ userId: string; confirmationUrl: string } | null> {
-  const { data, error } = await service.auth.admin.generateLink({
-    type: 'magiclink',
-    email: normalizedEmail,
-    options: { redirectTo: `${siteUrl}/auth/verificar` },
-  })
-
-  if (error || !data?.user) {
-    console.error('[registro] no se pudo generar magic link:', error?.message)
-    return null
-  }
-
-  const hashedToken = data.properties?.hashed_token
-  const confirmationUrl = hashedToken
-    ? `${siteUrl}/auth/verificar?token_hash=${encodeURIComponent(hashedToken)}&type=magiclink`
-    : data.properties?.action_link
-
-  if (!confirmationUrl) {
-    console.error('[registro] magic link sin hashed_token ni action_link para', normalizedEmail)
-    return null
-  }
-
-  return { userId: data.user.id, confirmationUrl }
-}
+import { generarLinkDeAcceso } from '@/lib/auth-links'
 
 // Caso "el email ya existe en auth.users, pero no es dueño de tienda
 // todavía" — ver comentario 2026-08-17(a) arriba. No tocamos la contraseña
