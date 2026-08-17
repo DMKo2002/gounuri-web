@@ -112,6 +112,29 @@ export function emailConfirmacionRegistro({
   </td></tr>`)
 }
 
+// ── Cuenta ya existente (compradora en alguna tienda) enganchada para
+//    también poder crear su propia tienda — ver /api/auth/registro,
+//    vincularCuentaExistente() ───────────────────────────────────────────────
+
+export function emailCuentaVinculada({
+  confirmationUrl,
+}: {
+  confirmationUrl: string
+}): string {
+  return layout(`
+  <tr><td style="padding:40px 40px 32px;">
+    <p style="margin:0 0 18px;font-size:12px;color:#999;letter-spacing:0.1em;text-transform:uppercase;">Cuenta vinculada</p>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">¡Hola!</h1>
+    <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7;">
+      Ya tenías una cuenta en <strong>gounuri</strong> con este email — la habilitamos para que también puedas crear y administrar tu propia tienda. Vas a seguir iniciando sesión con la misma contraseña de siempre.
+    </p>
+    ${ctaButton(confirmationUrl, 'Ir a crear mi tienda')}
+    <p style="margin:28px 0 0;font-size:12px;color:#bbb;line-height:1.6;">
+      Si no fuiste vos quien hizo esta solicitud, podés ignorar este email — tu cuenta no cambia hasta que confirmes.<br>El link es válido por 24 horas.
+    </p>
+  </td></tr>`)
+}
+
 // ── Bienvenida con datos de la tienda creada ────────────────────────────────
 
 export function emailBienvenidaTienda({

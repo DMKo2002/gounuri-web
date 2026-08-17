@@ -12,10 +12,75 @@
 // de customers y de users) la crea sola el trigger
 // handle_new_gounuri_account() apenas se crea el auth.users — no hace falta
 // insertarla a mano acá.
+//
+// 2026-08-17: auth.users es una sola base de Auth compartida entre
+// gounuri.com y TODAS las tiendas de los tenants — si alguien ya compró en
+// alguna tienda con este mail, generateLink(type:'signup') falla con
+// "already registered" aunque nunca haya sido dueño de tienda (gounuri_
+// accounts, chequeado arriba, sigue vacío para ese mail). Para esos casos,
+// en vez de bloquear, vincularCuentaExistente() engancha un perfil de
+// gounuri_accounts a esa misma cuenta de Auth ya existente.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { sendEmail, emailConfirmacionRegistro } from '@/lib/email'
+import { sendEmail, emailConfirmacionRegistro, emailCuentaVinculada } from '@/lib/email'
+
+// Enganche de identidad para el caso "el email ya existe en auth.users, pero
+// no es dueño de tienda todavía" (ver comentario en el llamador). Usa
+// generateLink(type: 'magiclink') sobre la cuenta YA EXISTENTE — a
+// diferencia de type: 'signup', esto no crea un auth.users nuevo, devuelve
+// el user existente y un hashed_token propio que sirve para probar
+// propiedad del mail, sin pedirle ni tocarle la contraseña actual.
+async function vincularCuentaExistente(
+  service: ReturnType<typeof createServiceClient>,
+  normalizedEmail: string,
+  siteUrl: string,
+): Promise<NextResponse> {
+  const { data: magicData, error: magicError } = await service.auth.admin.generateLink({
+    type: 'magiclink',
+    email: normalizedEmail,
+    options: { redirectTo: `${siteUrl}/auth/verificar` },
+  })
+
+  if (magicError || !magicData?.user) {
+    console.error('[registro] no se pudo generar magic link para cuenta existente:', magicError?.message)
+    return NextResponse.json(
+      { error: 'Ya existe una cuenta con ese email. Iniciá sesión, o escribinos si el problema persiste.' },
+      { status: 409 },
+    )
+  }
+
+  // Misma fila mínima que insertaría el trigger handle_new_gounuri_account()
+  // si el auth.users se hubiera creado recién (acá no se crea uno nuevo,
+  // así que el trigger no corre — hay que insertarla a mano). upsert +
+  // ignoreDuplicates por las dudas de una doble confirmación en paralelo.
+  const { error: insertError } = await service
+    .from('gounuri_accounts')
+    .upsert({ auth_user_id: magicData.user.id, email: normalizedEmail }, { onConflict: 'auth_user_id', ignoreDuplicates: true })
+
+  if (insertError) {
+    console.error('[registro] error vinculando gounuri_accounts a cuenta existente:', insertError.message)
+    return NextResponse.json({ error: 'Error al vincular la cuenta. Intentá de nuevo.' }, { status: 500 })
+  }
+
+  const hashedToken = magicData.properties?.hashed_token
+  const confirmationUrl = hashedToken
+    ? `${siteUrl}/auth/verificar?token_hash=${encodeURIComponent(hashedToken)}&type=magiclink`
+    : magicData.properties?.action_link
+
+  if (confirmationUrl) {
+    const emailResult = await sendEmail({
+      to: normalizedEmail,
+      subject: 'Ya podés crear tu tienda en gounuri',
+      html: emailCuentaVinculada({ confirmationUrl }),
+    }).catch(e => { console.error('[email cuenta-vinculada] error:', e); return { ok: false } })
+    console.log(`[registro] email cuenta-vinculada a ${normalizedEmail}: ${emailResult.ok ? 'ENVIADO OK' : 'FALLO'}`)
+  } else {
+    console.error('[registro] magic link sin hashed_token ni action_link para', normalizedEmail)
+  }
+
+  return NextResponse.json({ ok: true })
+}
 
 async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY
@@ -74,10 +139,24 @@ export async function POST(req: NextRequest) {
 
     if (linkError) {
       const msg = linkError.message ?? ''
-      if (msg.includes('already registered') || msg.includes('email_exists') || msg.includes('already been registered')) {
-        return NextResponse.json({ error: 'Ya existe una cuenta con ese email — puede ser de una compra anterior en alguna tienda de Gounuri. Iniciá sesión, o escribinos si el problema persiste.' }, { status: 409 })
+      const yaExisteEnAuth = msg.includes('already registered') || msg.includes('email_exists') || msg.includes('already been registered')
+      if (!yaExisteEnAuth) {
+        return NextResponse.json({ error: linkError.message }, { status: 400 })
       }
-      return NextResponse.json({ error: linkError.message }, { status: 400 })
+
+      // El email ya tiene una cuenta de Auth, pero recién arriba confirmamos
+      // que NO tiene fila en gounuri_accounts — o sea que esta identidad es
+      // de alguien que compró en alguna tienda de un tenant (auth.users es
+      // una sola base compartida entre gounuri.com y todas las tiendas; ver
+      // conversación 2026-08-17), no un dueño de tienda repitiendo el
+      // registro. En vez de bloquearlo, enganchamos un perfil de
+      // gounuri_accounts a esa MISMA cuenta de Auth (mismo login de
+      // siempre) en vez de crear una cuenta nueva — así puede ser cliente
+      // de una tienda y dueño de la suya con el mismo mail. No tocamos su
+      // contraseña actual (la que puso en este form se descarta sin usar):
+      // probamos que es dueño del mail con un magic link, igual de seguro
+      // que el link de confirmación del signup normal.
+      return await vincularCuentaExistente(service, normalizedEmail, siteUrl)
     }
     if (!linkData?.user) {
       return NextResponse.json({ error: 'Error al crear la cuenta. Intentá de nuevo.' }, { status: 500 })
