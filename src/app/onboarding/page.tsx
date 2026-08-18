@@ -305,6 +305,20 @@ function OnboardingContent() {
   const [direccion, setDireccion] = useState('')
   const [direccionDespacho, setDireccionDespacho] = useState('')
 
+  // Ver comentario en el useEffect que lo consulta (/api/mi-estado-onboarding)
+  const [isPlaceholderPaid, setIsPlaceholderPaid] = useState(false)
+  const [finalizando, setFinalizando] = useState(false)
+
+  // Pantalla "Confirmando tu pago..." (2026-08-18) — a dónde vuelve MP
+  // (back_url) después de pagar desde /api/ir-a-plan sin tener tienda
+  // todavía. El tenant recién lo crea el webhook de Panel Admin cuando
+  // confirma 'authorized', y eso puede tardar unos segundos más que el
+  // redirect del navegador — este estado sondea /api/mi-estado-onboarding
+  // hasta que aparezca. Ver el useEffect de más abajo.
+  const [confirmandoPago, setConfirmandoPago] = useState(() => searchParams.get('paso') === 'confirmando')
+  const [confirmandoTimeout, setConfirmandoTimeout] = useState(false)
+  const [pollAttempt, setPollAttempt] = useState(0)
+
   // Cambia de paso y refleja el nuevo paso en la URL (`?paso=01/02/03/04`)
   // con `router.push`, para que quede como una entrada de historial propia
   // — el botón "atrás" del navegador vuelve al paso anterior en vez de
@@ -350,6 +364,64 @@ function OnboardingContent() {
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ¿Ya tiene una tienda placeholder pagada? (eligió un plan desde la
+  // landing sin tener tienda todavía — ver /api/ir-a-plan — y ya completó el
+  // pago). En ese caso el paso "Escalá con tus Ventas" no debe volver a
+  // ofrecer prueba gratis / elegir plan: solo tiene que completar
+  // nombre/template/contacto acá y listo, sin pasar de nuevo por Plan/Pago.
+  useEffect(() => {
+    fetch('/api/mi-estado-onboarding')
+      .then(res => res.json())
+      .then(json => {
+        if (json?.isPlaceholder) {
+          setIsPlaceholderPaid(true)
+          if (json.plan) setPlan(json.plan)
+        }
+      })
+      .catch(e => console.error('[onboarding] no se pudo consultar el estado de la tienda', e))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sondeo de la pantalla "Confirmando tu pago..." — solo corre mientras
+  // confirmandoPago esté prendido (?paso=confirmando). Reintenta cada 1.5s
+  // hasta 20 veces (~30s); si el webhook todavía no creó el tenant para
+  // entonces, se corta y se ofrece un botón para reintentar a mano
+  // (pollAttempt fuerza que el effect vuelva a correr).
+  useEffect(() => {
+    if (!confirmandoPago) return
+    let cancelled = false
+    let tries = 0
+    const MAX_TRIES = 20
+
+    function poll() {
+      fetch('/api/mi-estado-onboarding')
+        .then(res => res.json())
+        .then(json => {
+          if (cancelled) return
+          if (json?.isPlaceholder) {
+            setIsPlaceholderPaid(true)
+            if (json.plan) setPlan(json.plan)
+            setConfirmandoPago(false)
+            goToStep('nombre')
+            return
+          }
+          tries++
+          if (tries >= MAX_TRIES) { setConfirmandoTimeout(true); return }
+          setTimeout(poll, 1500)
+        })
+        .catch(e => {
+          console.error('[onboarding] error consultando confirmación de pago', e)
+          if (cancelled) return
+          tries++
+          if (tries >= MAX_TRIES) { setConfirmandoTimeout(true); return }
+          setTimeout(poll, 1500)
+        })
+    }
+    poll()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmandoPago, pollAttempt])
 
   // Carrusel de fondo del paso 1 (mismo timing que el Hero de gounuri.com)
   useEffect(() => {
@@ -428,6 +500,39 @@ function OnboardingContent() {
     window.location.href = '/perfil'
   }
 
+  // Para quien ya pagó un plan desde la landing sin tener tienda todavía
+  // (isPlaceholderPaid, ver /api/mi-estado-onboarding): en vez de crear una
+  // tienda nueva o volver a pedir plan/pago, completa con nombre/template/
+  // contacto real el tenant placeholder que ya existe.
+  async function handleFinalizarTienda() {
+    if (!name.trim()) { setError('El nombre de la tienda es obligatorio.'); goToStep('nombre'); return }
+    setFinalizando(true)
+    setError(null)
+    const res = await fetch('/api/finalizar-tienda', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name.trim(),
+        domain: domain.trim() || null,
+        template,
+        whatsapp: whatsapp.trim() || null,
+        instagram: instagram.trim() || null,
+        facebook: facebook.trim() || null,
+        tiktok: tiktok.trim() || null,
+        direccion: direccion.trim() || null,
+        direccionDespacho: direccionDespacho.trim() || null,
+      }),
+    })
+    const json = await res.json().catch(() => ({}))
+    setFinalizando(false)
+    if (!res.ok || json.error) {
+      setError(json.error ?? 'Error al completar la tienda. Probá de nuevo.')
+      if (res.status === 409) goToStep('nombre')
+      return
+    }
+    window.location.href = '/perfil'
+  }
+
   // Tarjeta de plan elegida en el paso "Plan" (Pricing en mode="select"):
   // crea la tienda con ese plan/plazo (si todavía no existe — ver comentario
   // de `tenantReady`) y sigue al paso "Pago" para suscribir de verdad vía
@@ -481,6 +586,41 @@ function OnboardingContent() {
   const pagoFin = new Date(pagoInicio)
   pagoFin.setMonth(pagoFin.getMonth() + billingTerm)
   const fmtFecha = (d: Date) => d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  // Pantalla "Confirmando tu pago..." — reemplaza todo el resto mientras
+  // espera al webhook (ver el useEffect de sondeo más arriba). Return
+  // temprano a propósito: ningún paso normal (nombre/template/etc.) tiene
+  // sentido mostrar acá, el tenant todavía ni existe.
+  if (confirmandoPago) {
+    return (
+      <main className="min-h-screen bg-zinc-50">
+        <Navbar />
+        <div className="flex min-h-[calc(100vh-72px)] flex-col items-center justify-center px-6 text-center">
+          {confirmandoTimeout ? (
+            <>
+              <p className="mb-2 text-xl font-bold text-zinc-900">Todavía estamos confirmando tu pago</p>
+              <p className="mb-6 max-w-sm text-sm text-zinc-500">
+                Puede demorar un poco más de lo esperado. Probá de nuevo en unos segundos — si ya pagaste, no hace falta que vuelvas a hacerlo.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setConfirmandoTimeout(false); setPollAttempt(a => a + 1) }}
+                className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
+              >
+                Reintentar
+              </button>
+            </>
+          ) : (
+            <>
+              <Loader2 size={32} className="mb-4 animate-spin text-zinc-400" />
+              <p className="text-xl font-bold text-zinc-900">Confirmando tu pago...</p>
+              <p className="mt-2 max-w-sm text-sm text-zinc-500">Esto toma solo unos segundos. No cierres esta ventana.</p>
+            </>
+          )}
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -930,22 +1070,40 @@ function OnboardingContent() {
             <p className="mt-1 text-base font-medium text-zinc-500 lg:hidden">B2B Mayoristas y B2C Minoristas</p>
 
             <div className="mt-10 w-full space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
-              <button
-                type="button"
-                onClick={handleFinalSubmit}
-                disabled={saving}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
-              >
-                {saving && <Loader2 size={15} className="animate-spin" />}
-                {saving ? 'Creando tu tienda...' : `Crear mi tienda - Probar Gratis ${TRIAL_DAYS} días`}
-              </button>
-              <button
-                type="button"
-                onClick={() => goToStep('plan')}
-                className="flex w-full items-center justify-center rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-              >
-                Crear mi tienda
-              </button>
+              {isPlaceholderPaid ? (
+                // Ya eligió y pagó un plan desde la landing (/api/ir-a-plan)
+                // antes de llegar acá — no tiene sentido ofrecerle de nuevo
+                // prueba gratis ni elegir plan, solo falta completar la
+                // tienda con lo que ya cargó en los pasos anteriores.
+                <button
+                  type="button"
+                  onClick={handleFinalizarTienda}
+                  disabled={finalizando}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
+                >
+                  {finalizando && <Loader2 size={15} className="animate-spin" />}
+                  {finalizando ? 'Creando tu tienda...' : 'Finalizar mi tienda'}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    disabled={saving}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
+                  >
+                    {saving && <Loader2 size={15} className="animate-spin" />}
+                    {saving ? 'Creando tu tienda...' : `Crear mi tienda - Probar Gratis ${TRIAL_DAYS} días`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goToStep('plan')}
+                    className="flex w-full items-center justify-center rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                  >
+                    Crear mi tienda
+                  </button>
+                </>
+              )}
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
               )}

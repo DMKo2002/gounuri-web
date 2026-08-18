@@ -29,6 +29,48 @@ export function buildExternalReference(tenantId: string, planId: PlanId): string
   return `${tenantId}:${planId}`
 }
 
+// "new:userId:planId:months" — pedido 2026-08-18: "selecciona el plan - paga
+// - recién con el pago queda generado la tienda - onboarding". Se usa cuando
+// alguien elige un plan pago desde la landing SIN tener tienda todavía (ver
+// /api/ir-a-plan) — no existe tenantId para meter en el external_reference
+// porque a propósito no se crea ningún tenant hasta que el webhook de
+// Panel Admin confirme 'authorized' (así no quedan tiendas "(pendiente)"
+// huérfanas de gente que arrancó a pagar y no terminó). Debe coincidir
+// exactamente con panel-admin/src/lib/billing.ts (ese archivo es el que
+// efectivamente lo parsea en el webhook).
+export function buildSignupExternalReference(userId: string, planId: PlanId, months: BillingTerm): string {
+  return `new:${userId}:${planId}:${months}`
+}
+
+async function postPreapproval(opts: {
+  reason: string
+  externalReference: string
+  payerEmail: string
+  backUrl: string
+  months: BillingTerm
+  amount: number
+}): Promise<Preapproval> {
+  const res = await fetch(`${MP_API}/preapproval`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      reason: opts.reason,
+      external_reference: opts.externalReference,
+      payer_email: opts.payerEmail,
+      back_url: opts.backUrl,
+      auto_recurring: {
+        frequency: opts.months,
+        frequency_type: 'months',
+        transaction_amount: opts.amount,
+        currency_id: 'ARS',
+      },
+      status: 'pending',
+    }),
+  })
+  if (!res.ok) throw new Error(`[billing] MP preapproval falló (${res.status}): ${await res.text()}`)
+  return res.json()
+}
+
 export async function createPreapproval(opts: {
   tenantId: string
   planId: PlanId
@@ -44,25 +86,43 @@ export async function createPreapproval(opts: {
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`
 
-  const res = await fetch(`${MP_API}/preapproval`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      reason,
-      external_reference: buildExternalReference(opts.tenantId, opts.planId),
-      payer_email: opts.payerEmail,
-      back_url: opts.backUrl,
-      auto_recurring: {
-        frequency: months,
-        frequency_type: 'months',
-        transaction_amount: amount,
-        currency_id: 'ARS',
-      },
-      status: 'pending',
-    }),
+  return postPreapproval({
+    reason,
+    externalReference: buildExternalReference(opts.tenantId, opts.planId),
+    payerEmail: opts.payerEmail,
+    backUrl: opts.backUrl,
+    months,
+    amount,
   })
-  if (!res.ok) throw new Error(`[billing] MP preapproval falló (${res.status}): ${await res.text()}`)
-  return res.json()
+}
+
+// Igual que createPreapproval pero para alguien que todavía NO tiene tienda
+// (llega desde la landing, ver /api/ir-a-plan). No hay tenantId — el
+// external_reference lleva el userId y recién se crea el tenant cuando el
+// webhook confirma el pago.
+export async function createSignupPreapproval(opts: {
+  userId: string
+  planId: PlanId
+  payerEmail: string
+  backUrl: string
+  months?: BillingTerm
+}): Promise<Preapproval> {
+  const plan = PLANES.find(p => p.id === opts.planId)
+  if (!plan) throw new Error(`[billing] plan desconocido: ${opts.planId}`)
+  const months = opts.months ?? 1
+  const amount = priceForTerm(opts.planId, months)
+  const reason = months === 1
+    ? `Gounuri — Plan ${plan.nombre}`
+    : `Gounuri — Plan ${plan.nombre} (${months} meses)`
+
+  return postPreapproval({
+    reason,
+    externalReference: buildSignupExternalReference(opts.userId, opts.planId, months),
+    payerEmail: opts.payerEmail,
+    backUrl: opts.backUrl,
+    months,
+    amount,
+  })
 }
 
 export function billingEnabled(): boolean {

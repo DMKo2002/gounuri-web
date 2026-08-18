@@ -184,7 +184,7 @@ export default function Pricing({
                 </button>
               ) : (
                 <a
-                  href={`/api/ir-a-plan?plan=${plan.id}`}
+                  href={`/api/ir-a-plan?plan=${plan.id}&months=${term}`}
                   className="btn-black mt-8 w-full"
                 >
                   Empezar con {plan.nombre}
