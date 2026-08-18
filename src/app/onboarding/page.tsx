@@ -124,7 +124,7 @@ function RoadmapPanel({
             <span
               className={
                 active
-                  ? 'text-right text-3xl font-extrabold leading-tight text-zinc-900'
+                  ? 'w-[230px] max-w-[230px] text-right text-3xl font-extrabold leading-tight text-zinc-900'
                   : 'text-right text-base font-bold text-zinc-300'
               }
             >
@@ -628,7 +628,12 @@ function OnboardingContent() {
               el Figma. Ancho en % siguiendo la misma proporción del lienzo
               (1184 de 1728). */}
           <div className="w-full overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
+                vez de `transform: scale()` porque zoom sí reduce el tamaño
+                real de la caja (el grid recalcula el layout), mientras que
+                scale solo lo dibuja más chico y deja el hueco del tamaño
+                original. */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" style={{ zoom: 0.8 }}>
               {TEMPLATES.map(t => (
                 <TemplateCard
                   key={t.slug}
