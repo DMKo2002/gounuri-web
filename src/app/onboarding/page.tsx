@@ -433,82 +433,85 @@ function OnboardingContent() {
               Empezamos a crear<br />tu tienda.
             </h1>
 
-            {/* Bloque de 4 campos centrado respecto al botón "Siguiente": el
-                botón usa top-1/2 -translate-y-1/2 sobre el panel de imagen,
-                que tiene el mismo alto (son hermanos flex de la misma fila).
-                Usamos la misma técnica acá, desacoplada del título y del
-                logo, para que ambos queden a la misma altura exacta. En
+            {/* Bloque de 4 campos centrado en el espacio en blanco que queda
+                entre el título y el logo — flex-1 + justify-center en vez de
+                position absolute + top-1/2 (que dependía de calcular bien el
+                alto exacto del panel y no quedaba centrado en todas las
+                pantallas). Con flexbox se recalcula solo con cualquier alto
+                de pantalla, sin importar cuánto contenido tenga el form. En
                 mobile/tablet (sin botón circular) el form sigue en el flujo
                 normal, debajo del título. */}
-            <form
-              id="onb-paso1-form"
-              onSubmit={handleNombreSubmit}
-              className="mt-10 max-w-md space-y-5 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2"
-            >
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                  Nombre de la Tienda <span className="text-red-400">*</span>
-                </label>
-                <input
-                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder="Ej: Moda Caro, Iruda, Connors..."
-                  autoFocus
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                  DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
-                </label>
-                <input
-                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  value={dniCuit}
-                  onChange={e => setDniCuit(e.target.value)}
-                  placeholder="Sin puntos"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                  WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
-                </label>
-                <div className="flex items-center gap-2 rounded-2xl bg-[#f0f0f1] px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
-                  <span className="text-sm text-zinc-900">+54</span>
+            <div className="flex flex-1 flex-col justify-center py-8 lg:py-12">
+              <form
+                id="onb-paso1-form"
+                onSubmit={handleNombreSubmit}
+                className="w-full max-w-md space-y-5"
+              >
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    Nombre de la Tienda <span className="text-red-400">*</span>
+                  </label>
                   <input
-                    className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
-                    value={celular}
-                    onChange={e => setCelular(e.target.value)}
-                    placeholder="11 1234 5678"
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Ej: Moda Caro, Iruda, Connors..."
+                    autoFocus
+                    required
                   />
                 </div>
-              </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={dniCuit}
+                    onChange={e => setDniCuit(e.target.value)}
+                    placeholder="Sin puntos"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <div className="flex items-center gap-2 rounded-2xl bg-[#f0f0f1] px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
+                    <span className="text-sm text-zinc-900">+54</span>
+                    <input
+                      className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
+                      value={celular}
+                      onChange={e => setCelular(e.target.value)}
+                      placeholder="11 1234 5678"
+                    />
+                  </div>
+                </div>
 
-              {/* No está en el diseño de Figma, pero ya existía y create-tenant
-                  lo usa — lo dejamos como cuarto campo opcional para no
-                  perder la función de dominio propio durante el onboarding. */}
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                  Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
-                </label>
-                <input
-                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  value={domain}
-                  onChange={e => setDomain(e.target.value)}
-                  placeholder="Ej: mitienda.com — lo podés configurar después"
-                />
-              </div>
+                {/* No está en el diseño de Figma, pero ya existía y create-tenant
+                    lo usa — lo dejamos como cuarto campo opcional para no
+                    perder la función de dominio propio durante el onboarding. */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
+                  </label>
+                  <input
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={domain}
+                    onChange={e => setDomain(e.target.value)}
+                    placeholder="Ej: mitienda.com — lo podés configurar después"
+                  />
+                </div>
 
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
-              )}
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
+                )}
 
-              {/* Botón visible en mobile/tablet, donde no hay panel de imagen
-                  para alojar el botón circular de "Siguiente". */}
-              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden">
-                Continuar <ArrowRight size={16} />
-              </button>
-            </form>
+                {/* Botón visible en mobile/tablet, donde no hay panel de imagen
+                    para alojar el botón circular de "Siguiente". */}
+                <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden">
+                  Continuar <ArrowRight size={16} />
+                </button>
+              </form>
+            </div>
 
             {/* Logo fijo abajo a la izquierda — posición absoluta en vez de
                 empujado por flujo normal, así no se mueve si el form cambia
