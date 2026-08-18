@@ -18,7 +18,16 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
 
-  const { name, domain, template, plan } = await req.json()
+  const {
+    name, domain, template, plan,
+    // Contacto y Redes, cargados en el paso "Configurá tu Tienda" del
+    // onboarding (src/app/onboarding/page.tsx) — se insertan más abajo en
+    // store_config con los mismos nombres de columna que usa la pantalla
+    // real de Contacto y Redes del Panel Admin
+    // (panel-admin/src/app/dashboard/contacto/page.tsx), para que ya estén
+    // cargados cuando el dueño entra por primera vez a su panel.
+    whatsapp, instagram, facebook, tiktok, direccion, direccionDespacho,
+  } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
 
   const service = createServiceClient()
@@ -97,6 +106,18 @@ export async function POST(req: Request) {
       mp_enabled: true,
       transfer_enabled: true,
       pickup_enabled: true,
+      // Ver comentario más arriba: mismos nombres de columna que
+      // panel-admin/src/app/dashboard/contacto/page.tsx. "direccion" es la
+      // que aparece en el pie de la tienda (pickup_address) y
+      // "direccionDespacho" la que aparece en los PDFs (store_address) —
+      // el nombre de columna real quedó así del lado del Panel Admin, no es
+      // un error de este endpoint.
+      whatsapp_number: whatsapp?.trim?.() || null,
+      instagram_url: instagram?.trim?.() || null,
+      facebook_url: facebook?.trim?.() || null,
+      tiktok_url: tiktok?.trim?.() || null,
+      pickup_address: direccion?.trim?.() || null,
+      store_address: direccionDespacho?.trim?.() || null,
     })
 
   if (configError) return NextResponse.json({ error: configError.message }, { status: 500 })

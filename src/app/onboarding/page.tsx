@@ -288,6 +288,22 @@ function OnboardingContent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [slideIndex, setSlideIndex] = useState(0)
+  // Paso "Configurá tu Tienda" (2026-08-18): se partió en 2 pantallas dentro
+  // del mismo Step/roadmap — 0 = formulario de Contacto y Redes, 1 =
+  // recomendaciones (informativa, como antes). Los campos de contacto se
+  // guardan literalmente con los mismos nombres de columna que usa la
+  // pantalla de Contacto y Redes real del Panel Admin (store_config:
+  // whatsapp_number/instagram_url/facebook_url/tiktok_url/pickup_address/
+  // store_address — ver panel-admin/src/app/dashboard/contacto/page.tsx),
+  // y se mandan en el POST a /api/create-tenant para que quede precargado
+  // ahí mismo desde el momento en que se crea la tienda.
+  const [configStep, setConfigStep] = useState<0 | 1>(0)
+  const [whatsapp, setWhatsapp] = useState('')
+  const [instagram, setInstagram] = useState('')
+  const [facebook, setFacebook] = useState('')
+  const [tiktok, setTiktok] = useState('')
+  const [direccion, setDireccion] = useState('')
+  const [direccionDespacho, setDireccionDespacho] = useState('')
 
   // Cambia de paso y refleja el nuevo paso en la URL (`?paso=01/02/03/04`)
   // con `router.push`, para que quede como una entrada de historial propia
@@ -299,6 +315,17 @@ function OnboardingContent() {
   function goToStep(next: Step) {
     setStepState(next)
     router.push(`/onboarding?paso=${stepParam(next)}`, { scroll: false })
+  }
+
+  // Igual que goToStep, pero para los clicks en los puntos del roadmap
+  // (RoadmapPanel.onStepClick): si el destino es "configurar", siempre
+  // vuelve a la 1ra de sus 2 sub-pantallas (el formulario de Contacto y
+  // Redes) — si no, saltar al punto del roadmap dejaría a alguien que ya
+  // había avanzado a la sub-pantalla de recomendaciones sin forma simple de
+  // volver a ver/editar el formulario.
+  function handleStepClick(target: Step) {
+    if (target === 'configurar') setConfigStep(0)
+    goToStep(target)
   }
 
   // Si se entra sin `?paso=` (por ejemplo /onboarding a secas, o con
@@ -367,7 +394,18 @@ function OnboardingContent() {
     const res = await fetch('/api/create-tenant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), domain: domain.trim() || null, template, plan: planId }),
+      body: JSON.stringify({
+        name: name.trim(),
+        domain: domain.trim() || null,
+        template,
+        plan: planId,
+        whatsapp: whatsapp.trim() || null,
+        instagram: instagram.trim() || null,
+        facebook: facebook.trim() || null,
+        tiktok: tiktok.trim() || null,
+        direccion: direccion.trim() || null,
+        direccionDespacho: direccionDespacho.trim() || null,
+      }),
     })
     const json = await res.json().catch(() => ({}))
     setSaving(false)
@@ -648,110 +686,173 @@ function OnboardingContent() {
                 para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => goToStep('configurar')}
+              onClick={() => { setConfigStep(0); goToStep('configurar') }}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
             >
               Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} onStepClick={goToStep} compactButton triangleOpacity={0.5} />
+          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => { setConfigStep(0); goToStep('configurar') }} onStepClick={handleStepClick} compactButton triangleOpacity={0.5} />
           <SideStrip color="#B9C96F" />
         </div>
       )}
 
-      {/* ── PASO 2.5: Configurar tu tienda (diseño Figma "Registracion 3") —
-          pantalla informativa, sin datos propios que guardar todavía (los
-          campos de Contacto y Redes son un preview de lo que va a poder
-          cargar más adelante desde el Panel Admin/perfil). ── */}
+      {/* ── PASO 2.5: Configurá tu tienda — partido en 2 sub-pantallas
+          (pedido 2026-08-18, mismo punto del roadmap para las dos):
+          0. Contacto y Redes — formulario real (ya no disabled/preview),
+             mismos campos/labels/placeholders que la pantalla de Contacto y
+             Redes del Panel Admin. Se manda en el POST a /api/create-tenant
+             y ahí se inserta en store_config, así que cuando el dueño entra
+             por primera vez a su panel ya lo encuentra cargado.
+          1. Recomendaciones — informativa, igual que antes (Cobranzas,
+             Envíos, Catálogo, Apariencia + Para Escalar). ── */}
       {step === 'configurar' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
           <div className="w-full overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
-            <div className="max-w-3xl space-y-8 text-black">
-              <section>
-                <h2 className="text-2xl font-bold">General</h2>
-                <p className="mt-3 leading-relaxed">
-                  Podés activar <strong className="font-bold">modo sin stock</strong>, si preferís operar sin especificar el stock de cada producto publicado.
-                  <br />
-                  También podés definir el <strong className="font-bold">monto mínimo de pedido</strong> y{' '}
-                  <strong className="font-bold">la cantidad mínima de unidades para la venta mayorista</strong>.
-                  <br />
-                  Tu tienda está preparada para <strong className="font-bold">precios escalonados</strong> por volumen o según el segmento de clientes.
-                </p>
-              </section>
+            {configStep === 0 ? (
+              <div className="max-w-3xl space-y-8 text-black">
+                <h1 className="text-2xl font-bold">Te invitamos a completar algunos datos de tu tienda.</h1>
 
-              <section>
-                <h2 className="text-2xl font-bold">Contacto y Redes</h2>
-                <div className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">WhatsApp</label>
-                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
+                <section>
+                  <h2 className="text-2xl font-bold">Contacto y Redes</h2>
+                  <div className="mt-4 max-w-xl space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-sm font-semibold text-zinc-700">Contacto y redes sociales</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">WhatsApp</label>
+                        <input
+                          value={whatsapp}
+                          onChange={e => setWhatsapp(e.target.value)}
+                          placeholder="5491112345678 (sin + ni espacios)"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">También es el número al que llegan los avisos de WhatsApp — configurables en Notificaciones.</p>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">Instagram</label>
+                        <input
+                          value={instagram}
+                          onChange={e => setInstagram(e.target.value)}
+                          placeholder="https://instagram.com/tutienda"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">Facebook</label>
+                        <input
+                          value={facebook}
+                          onChange={e => setFacebook(e.target.value)}
+                          placeholder="https://facebook.com/tutienda"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">TikTok</label>
+                        <input
+                          value={tiktok}
+                          onChange={e => setTiktok(e.target.value)}
+                          placeholder="https://tiktok.com/@tutienda"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">Dirección</label>
+                        <input
+                          value={direccion}
+                          onChange={e => setDireccion(e.target.value)}
+                          placeholder="Av. Corrientes 1234, CABA"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">Aparece en el pie de tu tienda (home, catálogo, contacto y páginas legales).</p>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">Dirección de despacho (aparece en PDFs)</label>
+                        <input
+                          value={direccionDespacho}
+                          onChange={e => setDireccionDespacho(e.target.value)}
+                          placeholder="Av. Corrientes 1234, CABA"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Dirección</label>
-                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Instagram</label>
-                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-zinc-500">Facebook</label>
-                    <input disabled className="w-full rounded-[10px] border-none bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm" />
-                  </div>
-                </div>
-                <p className="mt-4 leading-relaxed">
-                  Para campañas de publicidad en Meta, Google Ads o TikTok, podés instalar los píxeles de seguimiento simplemente ingresando el Meta Pixel ID, Google Ads ID o TikTok Pixel ID.
-                </p>
-              </section>
+                </section>
+              </div>
+            ) : (
+              <div className="max-w-3xl space-y-8 text-black">
+                <button
+                  type="button"
+                  onClick={() => setConfigStep(0)}
+                  className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+                >
+                  ← Volver
+                </button>
 
-              <section>
-                <h2 className="text-2xl font-bold">Cobranzas &amp; Finanzas</h2>
-                <p className="mt-3 leading-relaxed">Tu tienda ofrece 3 formas de cobro:</p>
-                <ul className="ml-6 list-disc leading-relaxed">
-                  <li>Mercado Pago</li>
-                  <li>Transferencia bancaria</li>
-                  <li>Efectivo en el local</li>
-                </ul>
-                <p className="mt-3 leading-relaxed">
-                  <strong className="font-bold italic">Debés habilitar al menos una forma de cobro</strong> para que tus clientes puedan finalizar la compra.
-                </p>
-              </section>
+                <h1 className="text-2xl font-bold">Te recomendamos algunas configuraciones importantes que no pueden faltar en tu tienda.</h1>
 
-              <section>
-                <h2 className="text-2xl font-bold">Envíos</h2>
-                <p className="mt-3 leading-relaxed">
-                  Podés habilitar distintos tipos de envío según las necesidades de tu tienda, como envío a domicilio, retiro en local u otras modalidades disponibles.
-                </p>
-              </section>
+                <section>
+                  <h2 className="text-2xl font-bold">Cobranzas &amp; Finanzas</h2>
+                  <p className="mt-3 leading-relaxed">Tu tienda ofrece 3 formas de cobro:</p>
+                  <ul className="ml-6 list-disc leading-relaxed">
+                    <li>Mercado Pago</li>
+                    <li>Transferencia bancaria</li>
+                    <li>Efectivo en el local</li>
+                  </ul>
+                  <p className="mt-3 leading-relaxed">
+                    <strong className="font-bold italic">Debés habilitar al menos una forma de cobro</strong> para que tus clientes puedan finalizar la compra.
+                  </p>
+                </section>
 
-              <section>
-                <h2 className="text-2xl font-bold">Catálogo</h2>
-                <p className="mt-3 leading-relaxed">
-                  Esta sección es para definir las <strong className="font-bold">variantes</strong> y <strong className="font-bold">atributos</strong> de tus productos, como talle, color, tamaño u otras características, y establecer el <strong className="font-bold">formato</strong> y las dimensiones recomendadas para las imágenes de producto.
-                </p>
-              </section>
+                <section>
+                  <h2 className="text-2xl font-bold">Envíos</h2>
+                  <p className="mt-3 leading-relaxed">
+                    Podés habilitar distintos tipos de envío según las necesidades de tu tienda, como envío a domicilio, retiro en local u otras modalidades disponibles.
+                  </p>
+                </section>
 
-              <section>
-                <h2 className="text-2xl font-bold">Apariencia</h2>
-                <p className="mt-3 leading-relaxed">
-                  Podés personalizar tu landing page a tu gusto, cambiando imágenes, logotipo y otros elementos visuales con solo <strong className="font-bold">arrastrar y soltar</strong> para adaptarlos a la identidad de tu marca.
-                </p>
-              </section>
-            </div>
+                <section>
+                  <h2 className="text-2xl font-bold">Catálogo</h2>
+                  <p className="mt-3 leading-relaxed">
+                    Esta sección es para definir las <strong className="font-bold">variantes</strong> y <strong className="font-bold">atributos</strong> de tus productos, como talle, color, tamaño u otras características, y establecer el <strong className="font-bold">formato</strong> y las dimensiones recomendadas para las imágenes de producto.
+                  </p>
+                </section>
+
+                <section>
+                  <h2 className="text-2xl font-bold">Apariencia</h2>
+                  <p className="mt-3 leading-relaxed">
+                    Podés personalizar tu landing page a tu gusto, cambiando imágenes, logotipo y otros elementos visuales con solo <strong className="font-bold">arrastrar y soltar</strong> para adaptarlos a la identidad de tu marca.
+                  </p>
+                </section>
+
+                <section>
+                  <h2 className="text-2xl font-bold">Para Escalar</h2>
+                  <p className="mt-3 leading-relaxed">
+                    Para campañas publicitarias en Meta, Google Ads o TikTok, podés instalar los píxeles de seguimiento ingresando el Meta Pixel ID, Google Ads ID o TikTok Pixel ID. También podés vincular Google Analytics ingresando tu Measurement ID.
+                  </p>
+                </section>
+              </div>
+            )}
 
             {/* Botón visible en mobile/tablet, donde no hay panel derecho
                 para alojar el botón circular de "Siguiente". */}
             <button
               type="button"
-              onClick={() => goToStep('productos')}
+              onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
               className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
             >
               Continuar <ArrowRight size={16} />
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('productos')} onStepClick={goToStep} />
+          <RoadmapPanel
+            activeIndex={2}
+            color="#3B9DA2"
+            onNext={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
+            onStepClick={handleStepClick}
+            compactButton
+            triangleOpacity={0.5}
+          />
           <SideStrip color="#3B9DA2" />
         </div>
       )}
@@ -780,7 +881,7 @@ function OnboardingContent() {
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} onStepClick={goToStep} />
+          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} onStepClick={handleStepClick} />
           <SideStrip color="#C9B67C" />
         </div>
       )}
