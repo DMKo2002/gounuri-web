@@ -717,20 +717,29 @@ function OnboardingContent() {
              Envíos, Catálogo, Apariencia + Para Escalar). ── */}
       {step === 'configurar' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          <div className="w-full overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+          <div className="flex w-full flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+            {/* Centrado en Y respecto al panel completo (mismo truco que el
+                paso 1 y el paso 2: flex-1 + justify-center) — pedido
+                2026-08-18: el formulario quedaba muy arriba, tiene que
+                quedar centrado respecto al botón "Siguiente". */}
+            <div className="flex flex-1 flex-col justify-center">
             {configStep === 0 ? (
               // Centrado respecto al lienzo gris completo y con ancho fluido
               // (mx-auto + max-w, no un ancho fijo pegado a la izquierda) —
               // pedido 2026-08-18: "pensá que es para ancho total del lienzo,
               // para que escale y se adapte a distintos dispositivos". La
               // tarjeta interna pasa de max-w-xl a w-full para ocupar todo
-              // este contenedor ya centrado, en vez de quedar angosta.
+              // este contenedor ya centrado, en vez de quedar angosta. El
+              // fondo de la tarjeta pasa de blanco al mismo gris del lienzo
+              // (#f2f2f2) — pedido 2026-08-18 — los inputs individuales
+              // siguen en blanco para que se sigan distinguiendo como
+              // campos editables.
               <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
                 <h1 className="text-2xl font-bold">Te invitamos a completar algunos datos de tu tienda.</h1>
 
                 <section>
                   <h2 className="text-2xl font-bold">Contacto y Redes</h2>
-                  <div className="mt-4 w-full space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+                  <div className="mt-4 w-full space-y-4 rounded-xl border border-zinc-200 bg-[#f2f2f2] p-5 shadow-sm">
                     <h3 className="text-sm font-semibold text-zinc-700">Contacto y redes sociales</h3>
                     <div className="space-y-3">
                       <div>
@@ -794,7 +803,9 @@ function OnboardingContent() {
                 </section>
               </div>
             ) : (
-              <div className="max-w-3xl space-y-8 text-black">
+              // Centrado en X respecto al lienzo, igual que la pantalla 1
+              // (pedido 2026-08-18) — antes quedaba pegado a la izquierda.
+              <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
                 <button
                   type="button"
                   onClick={() => setConfigStep(0)}
@@ -847,6 +858,7 @@ function OnboardingContent() {
                 </section>
               </div>
             )}
+            </div>
 
             {/* Botón visible en mobile/tablet, donde no hay panel derecho
                 para alojar el botón circular de "Siguiente". */}
