@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createPreapproval, billingEnabled } from '@/lib/billing'
 import { isPlanId, isBillingTerm } from '@/lib/plans'
+import { PLACEHOLDER_TENANT_NAME } from '@/lib/site'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -40,13 +41,20 @@ export async function POST(req: Request) {
   if (!userRow?.tenant_id) return NextResponse.json({ error: 'Tienda no encontrada' }, { status: 404 })
   if (userRow.role === 'staff') return NextResponse.json({ error: 'Solo el dueño de la tienda puede cambiar el plan' }, { status: 403 })
 
+  // Si todavía es el tenant placeholder de /api/ir-a-plan (eligió un plan
+  // desde la landing sin tener tienda aún), después de pagar tiene que ir a
+  // completar su tienda real en /onboarding en vez de volver a /perfil/plan
+  // — ahí no hay nada que "ver" todavía. Pedido 2026-08-18.
+  const { data: _tenantRows } = await service.from('tenants').select('name').eq('id', userRow.tenant_id).limit(1)
+  const isPlaceholderTenant = _tenantRows?.[0]?.name === PLACEHOLDER_TENANT_NAME
+
   try {
     const origin = new URL(req.url).origin
     const preapproval = await createPreapproval({
       tenantId: userRow.tenant_id,
       planId: plan,
       payerEmail,
-      backUrl: `${origin}/perfil/plan?sub=pendiente`,
+      backUrl: isPlaceholderTenant ? `${origin}/onboarding` : `${origin}/perfil/plan?sub=pendiente`,
       months,
     })
     // Guardar el id ya mismo — el webhook confirma la activación después

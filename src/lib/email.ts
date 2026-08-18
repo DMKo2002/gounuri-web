@@ -145,6 +145,7 @@ export function emailBienvenidaTienda({
   loginEmail,
   planNombre,
   trialDays,
+  paid = false,
 }: {
   nombre: string
   storeName: string
@@ -153,13 +154,20 @@ export function emailBienvenidaTienda({
   loginEmail: string
   planNombre: string
   trialDays: number
+  // Quien eligió y pagó un plan desde la landing antes de completar la
+  // tienda (ver /api/finalizar-tienda) ya tiene el plan activo — no tiene
+  // sentido hablarle de "días gratis". Default false = copy de siempre
+  // (trial), para no cambiar nada en los llamadores existentes.
+  paid?: boolean
 }): string {
   return layout(`
   <tr><td style="padding:40px 40px 8px;">
     <p style="margin:0 0 18px;font-size:12px;color:#999;letter-spacing:0.1em;text-transform:uppercase;">¡Ya está lista!</p>
     <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">Bienvenido/a, ${nombre}</h1>
     <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7;">
-      Tu tienda <strong>${storeName}</strong> ya está creada, con <strong>${trialDays} días gratis</strong> del plan ${planNombre} para probarla sin tarjeta.
+      ${paid
+        ? `Tu tienda <strong>${storeName}</strong> ya está creada, con el plan ${planNombre} activo.`
+        : `Tu tienda <strong>${storeName}</strong> ya está creada, con <strong>${trialDays} días gratis</strong> del plan ${planNombre} para probarla sin tarjeta.`}
     </p>
   </td></tr>
 

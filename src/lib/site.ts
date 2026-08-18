@@ -13,6 +13,17 @@ export const LOGIN_URL = '/login'
 
 export const TRIAL_DAYS = 7
 
+// ── Tienda placeholder (2026-08-18) ─────────────────────────────────────────
+// Cuando alguien elige un plan pago desde la página de precios pública sin
+// tener tienda todavía (/api/ir-a-plan), se crea un tenant mínimo con este
+// nombre exacto como "sentinel" — así se puede pagar ya mismo reusando
+// /perfil/plan (que no necesita nombre/template real, ver
+// /api/finalizar-tienda) y recién completar el nombre/template/dominio real
+// en /onboarding después de pagar. Cualquier endpoint que vaya a modificar
+// nombre/slug/template de un tenant existente debe chequear este sentinel
+// antes de tocar nada, para no pisar jamás una tienda ya en uso real.
+export const PLACEHOLDER_TENANT_NAME = '(pendiente)'
+
 export type Plan = {
   id: 'mini' | 'standard' | 'premium'
   nombre: string
