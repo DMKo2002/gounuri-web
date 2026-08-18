@@ -60,6 +60,14 @@ const ROADMAP_STEPS = [
   'Cargá tus productos',
   'Escalá con tus Ventas',
 ]
+// Mismo orden que ROADMAP_STEPS de arriba — a qué Step navega cada punto
+// del roadmap al hacer click (pedido 2026-08-18: "linkear los puntos a las
+// páginas de onboarding"). Solo se habilitan los puntos ya alcanzados (índice
+// <= activeIndex, ver RoadmapPanel) — los pasos futuros quedan deshabilitados
+// a propósito: goToStep no persiste lo ya cargado en pasos anteriores, así
+// que saltar hacia adelante mostraría un paso sin los datos de los que se
+// saltearon.
+const ROADMAP_STEP_TARGETS: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar']
 // Separación real entre puntos en el asset "Puntos secuenciales.svg"
 // (círculos en y=9.5, 142.5, 275.5, 408.5, 541.5 → 133px parejos).
 const ROADMAP_ROW_GAP = 133
@@ -72,11 +80,14 @@ const ROADMAP_ROW_GAP = 133
 //    "Configurá tu Tienda", etc. — cada asset de Figma trae su propio
 //    color). ────────────────────────────────────────────────────────────
 function RoadmapPanel({
-  activeIndex, color, onNext, compactButton = false, triangleOpacity = 1,
+  activeIndex, color, onNext, onStepClick, compactButton = false, triangleOpacity = 1,
 }: {
   activeIndex: number
   color: string
   onNext: () => void
+  /** Navega al hacer click en cualquiera de los puntos del roadmap (no solo
+      el botón "Siguiente") — pedido 2026-08-18. */
+  onStepClick: (step: Step) => void
   /** Pedido puntual para paso=02 ("Seleccioná un Template"): botón
       "Siguiente" al 75% de su tamaño normal — no cambia el resto de los
       pasos que reusan este mismo componente. */
@@ -95,11 +106,19 @@ function RoadmapPanel({
           "Siguiente" — y los demás se calculan a partir de ahí. */}
       {ROADMAP_STEPS.map((label, i) => {
         const active = i === activeIndex
+        // Solo los pasos ya alcanzados (el actual incluido) son clickeables
+        // — los futuros quedan deshabilitados, ver comentario en
+        // ROADMAP_STEP_TARGETS más arriba.
+        const reached = i <= activeIndex
         const offset = (i - activeIndex) * ROADMAP_ROW_GAP
         return (
-          <div
+          <button
             key={label}
-            className="absolute right-8 flex items-center gap-4 xl:right-10"
+            type="button"
+            onClick={() => onStepClick(ROADMAP_STEP_TARGETS[i])}
+            disabled={!reached}
+            aria-label={`Ir a "${label}"`}
+            className={`absolute right-8 flex items-center gap-4 border-0 bg-transparent p-0 text-left transition-opacity xl:right-10 ${reached ? 'cursor-pointer hover:opacity-70' : 'cursor-default'}`}
             style={{ top: `calc(50% + ${offset}px)`, transform: 'translateY(-50%)' }}
           >
             <span
@@ -124,7 +143,7 @@ function RoadmapPanel({
                 />
               )}
             </span>
-          </div>
+          </button>
         )
       })}
 
@@ -631,7 +650,7 @@ function OnboardingContent() {
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} compactButton triangleOpacity={0.5} />
+          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} onStepClick={goToStep} compactButton triangleOpacity={0.5} />
           <SideStrip color="#B9C96F" />
         </div>
       )}
@@ -727,7 +746,7 @@ function OnboardingContent() {
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('productos')} />
+          <RoadmapPanel activeIndex={2} color="#3B9DA2" onNext={() => goToStep('productos')} onStepClick={goToStep} />
           <SideStrip color="#3B9DA2" />
         </div>
       )}
@@ -756,7 +775,7 @@ function OnboardingContent() {
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} />
+          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} onStepClick={goToStep} />
           <SideStrip color="#C9B67C" />
         </div>
       )}
