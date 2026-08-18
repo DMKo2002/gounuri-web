@@ -665,32 +665,40 @@ function OnboardingContent() {
               captura y textos que /templates), fondo gris clarito como en
               el Figma. Ancho en % siguiendo la misma proporción del lienzo
               (1184 de 1728). */}
-          <div className="w-full overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
-            {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
-                vez de `transform: scale()` porque zoom sí reduce el tamaño
-                real de la caja (el grid recalcula el layout), mientras que
-                scale solo lo dibuja más chico y deja el hueco del tamaño
-                original. */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" style={{ zoom: 0.8 }}>
-              {TEMPLATES.map(t => (
-                <TemplateCard
-                  key={t.slug}
-                  {...t}
-                  selected={template === t.slug}
-                  onSelect={() => setTemplate(t.slug)}
-                />
-              ))}
-            </div>
+          <div className="flex w-full flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+            {/* Grilla centrada en Y respecto al panel completo (pedido
+                2026-08-18) — mismo truco que el "sandwiche" del paso 1:
+                flex-1 + justify-center en vez de padding fijo, así el
+                centro de las tarjetas queda alineado con el botón
+                "Siguiente" (que sí está centrado en top-1/2) sea cual sea
+                el alto de pantalla. */}
+            <div className="flex flex-1 flex-col justify-center">
+              {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
+                  vez de `transform: scale()` porque zoom sí reduce el tamaño
+                  real de la caja (el grid recalcula el layout), mientras que
+                  scale solo lo dibuja más chico y deja el hueco del tamaño
+                  original. */}
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" style={{ zoom: 0.8 }}>
+                {TEMPLATES.map(t => (
+                  <TemplateCard
+                    key={t.slug}
+                    {...t}
+                    selected={template === t.slug}
+                    onSelect={() => setTemplate(t.slug)}
+                  />
+                ))}
+              </div>
 
-            {/* Botón visible en mobile/tablet, donde no hay panel derecho
-                para alojar el botón circular de "Siguiente". */}
-            <button
-              type="button"
-              onClick={() => { setConfigStep(0); goToStep('configurar') }}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
-            >
-              Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
-            </button>
+              {/* Botón visible en mobile/tablet, donde no hay panel derecho
+                  para alojar el botón circular de "Siguiente". */}
+              <button
+                type="button"
+                onClick={() => { setConfigStep(0); goToStep('configurar') }}
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
+              >
+                Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
 
           <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => { setConfigStep(0); goToStep('configurar') }} onStepClick={handleStepClick} compactButton triangleOpacity={0.5} />
@@ -711,12 +719,18 @@ function OnboardingContent() {
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
           <div className="w-full overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
             {configStep === 0 ? (
-              <div className="max-w-3xl space-y-8 text-black">
+              // Centrado respecto al lienzo gris completo y con ancho fluido
+              // (mx-auto + max-w, no un ancho fijo pegado a la izquierda) —
+              // pedido 2026-08-18: "pensá que es para ancho total del lienzo,
+              // para que escale y se adapte a distintos dispositivos". La
+              // tarjeta interna pasa de max-w-xl a w-full para ocupar todo
+              // este contenedor ya centrado, en vez de quedar angosta.
+              <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
                 <h1 className="text-2xl font-bold">Te invitamos a completar algunos datos de tu tienda.</h1>
 
                 <section>
                   <h2 className="text-2xl font-bold">Contacto y Redes</h2>
-                  <div className="mt-4 max-w-xl space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+                  <div className="mt-4 w-full space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
                     <h3 className="text-sm font-semibold text-zinc-700">Contacto y redes sociales</h3>
                     <div className="space-y-3">
                       <div>
