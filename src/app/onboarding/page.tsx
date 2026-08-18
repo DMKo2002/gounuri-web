@@ -71,7 +71,20 @@ const ROADMAP_ROW_GAP = 133
 //    por pantalla (verde oliva en "Seleccioná un Template", turquesa en
 //    "Configurá tu Tienda", etc. — cada asset de Figma trae su propio
 //    color). ────────────────────────────────────────────────────────────
-function RoadmapPanel({ activeIndex, color, onNext }: { activeIndex: number; color: string; onNext: () => void }) {
+function RoadmapPanel({
+  activeIndex, color, onNext, compactButton = false, triangleOpacity = 1,
+}: {
+  activeIndex: number
+  color: string
+  onNext: () => void
+  /** Pedido puntual para paso=02 ("Seleccioná un Template"): botón
+      "Siguiente" al 75% de su tamaño normal — no cambia el resto de los
+      pasos que reusan este mismo componente. */
+  compactButton?: boolean
+  /** Pedido puntual para paso=02: opacidad del triángulo (no del círculo
+      de fondo) al 50%. */
+  triangleOpacity?: number
+}) {
   return (
     <div className="relative hidden lg:block lg:w-[22.8%]">
       {/* Puntos posicionados por altura fija (no por flujo/flex), para que
@@ -119,11 +132,11 @@ function RoadmapPanel({ activeIndex, color, onNext }: { activeIndex: number; col
         type="button"
         onClick={onNext}
         aria-label="Continuar"
-        className="absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:brightness-110 hover:scale-105"
+        className={`absolute left-0 top-1/2 z-10 h-[76px] w-[76px] -translate-x-1/2 -translate-y-1/2 rounded-full transition hover:brightness-110 hover:scale-105 ${compactButton ? 'scale-75' : ''}`}
         style={{ background: color }}
       >
         <svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-lg">
-          <path d="M49 38L32.5 47.5263L32.5 28.4737L49 38Z" fill="white" />
+          <path d="M49 38L32.5 47.5263L32.5 28.4737L49 38Z" fill="white" fillOpacity={triangleOpacity} />
         </svg>
       </button>
     </div>
@@ -618,7 +631,7 @@ function OnboardingContent() {
             </button>
           </div>
 
-          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} />
+          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => goToStep('configurar')} compactButton triangleOpacity={0.5} />
           <SideStrip color="#B9C96F" />
         </div>
       )}
