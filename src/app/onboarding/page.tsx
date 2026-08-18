@@ -445,7 +445,7 @@ function OnboardingContent() {
               <form
                 id="onb-paso1-form"
                 onSubmit={handleNombreSubmit}
-                className="w-full max-w-md space-y-5"
+                className="w-full space-y-5"
               >
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-zinc-500">
