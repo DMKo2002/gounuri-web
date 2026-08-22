@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantUsage } from '@/lib/usage'
+import { billingEnabled } from '@/lib/billing'
 import PlanSelector from './PlanSelector'
 import UsageBars from './UsageBars'
 
@@ -56,7 +57,7 @@ export default async function PlanPage() {
         </div>
 
         <div className="mt-8">
-          <PlanSelector currentPlan={currentPlan} trialing={trialing} />
+          <PlanSelector currentPlan={currentPlan} trialing={trialing} billingEnabled={billingEnabled()} />
         </div>
       </div>
     </main>

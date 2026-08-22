@@ -5,6 +5,14 @@
 // que entrar al Panel Admin. Solo Mercado Pago (Preapproval) — la "tarjeta
 // directa" sigue apagada en el Panel Admin (ver comentario en UpgradePlans.tsx)
 // y no se portó acá todavía.
+//
+// Pago manual por transferencia (2026-08-21): mientras BILLING_ENABLED esté
+// apagado (ver @/lib/billing), el checkout automático de Mercado Pago queda
+// oculto y "elegir plan" pasa a mandar un mail a info@gounuri.com para
+// coordinar la transferencia a mano — es temporal, hasta que se desarrolle
+// el pago por débito automático. Todo el flujo de Mercado Pago sigue intacto
+// acá abajo: alcanza con volver a poner BILLING_ENABLED=true para que
+// vuelva a aparecer solo.
 
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -18,8 +26,17 @@ function formatARS(n: number) {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const TERM_LABEL: Record<BillingTerm, string> = { 1: 'mensual', 6: 'semestral', 12: 'anual' }
 
-export default function PlanSelector({ currentPlan, trialing }: { currentPlan: string; trialing: boolean }) {
+export default function PlanSelector({
+  currentPlan,
+  trialing,
+  billingEnabled,
+}: {
+  currentPlan: string
+  trialing: boolean
+  billingEnabled: boolean
+}) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [payerEmail, setPayerEmail] = useState('')
@@ -47,7 +64,24 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
+  function requestManualPlan(planId: PlanId) {
+    const card = PLANES.find(p => p.id === planId)
+    const nombrePlan = card?.nombre ?? planId
+    const subject = `Cambio de plan — ${nombrePlan} (${TERM_LABEL[term]})`
+    const body = [
+      `Hola, quiero pasar mi tienda al plan ${nombrePlan} (${TERM_LABEL[term]}).`,
+      '',
+      'Nombre de la tienda:',
+      'Nombre y apellido:',
+    ].join('\n')
+    window.location.href = `mailto:info@gounuri.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
   async function subscribe(planId: PlanId) {
+    if (!billingEnabled) {
+      requestManualPlan(planId)
+      return
+    }
     if (!EMAIL_RE.test(payerEmail.trim())) {
       setError('Ingresá el email de la cuenta de Mercado Pago con la que vas a pagar.')
       return
@@ -73,22 +107,26 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
     <div ref={sectionRef}>
       <h2 className="text-lg font-semibold text-zinc-900">Cambiar de plan</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.
+        {billingEnabled
+          ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
+          : 'Por ahora coordinamos el pago por transferencia bancaria. Elegí el plan y te escribimos para coordinar.'}
       </p>
 
-      <div className="mt-4">
-        <label className="block text-sm font-bold text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
-        <input
-          type="email"
-          className="max-w-sm w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-          value={payerEmail}
-          onChange={e => setPayerEmail(e.target.value)}
-          placeholder="tu@email.com"
-        />
-        <p className="mt-1 text-xs text-zinc-400">
-          Asegurate de ingresar el email asociado a tu cuenta de Mercado Pago. De lo contrario, la suscripción no podrá concretarse.
-        </p>
-      </div>
+      {billingEnabled && (
+        <div className="mt-4">
+          <label className="block text-sm font-bold text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
+          <input
+            type="email"
+            className="max-w-sm w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
+            value={payerEmail}
+            onChange={e => setPayerEmail(e.target.value)}
+            placeholder="tu@email.com"
+          />
+          <p className="mt-1 text-xs text-zinc-400">
+            Asegurate de ingresar el email asociado a tu cuenta de Mercado Pago. De lo contrario, la suscripción no podrá concretarse.
+          </p>
+        </div>
+      )}
 
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento inline (misma geometría del archivo original) para poder
@@ -227,7 +265,9 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
                   ? 'Tu plan actual'
                   : trialing && card.id === currentPlan
                     ? `Activar ${card.nombre}`
-                    : `Pasar a ${card.nombre}`}
+                    : billingEnabled
+                      ? `Pasar a ${card.nombre}`
+                      : `Solicitar ${card.nombre}`}
               </button>
             </div>
           )
@@ -235,9 +275,18 @@ export default function PlanSelector({ currentPlan, trialing }: { currentPlan: s
       </div>
 
       <div className="mt-10 space-y-1 text-center text-xs text-zinc-400">
-        <p>El pago se procesa con MercadoPago. Vas a cargar tu medio de pago en el sitio seguro de MP — nunca guardamos los datos de tu tarjeta.</p>
-        <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago.</p>
-        <p>No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
+        {billingEnabled ? (
+          <>
+            <p>El pago se procesa con MercadoPago. Vas a cargar tu medio de pago en el sitio seguro de MP — nunca guardamos los datos de tu tarjeta.</p>
+            <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago.</p>
+            <p>No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
+          </>
+        ) : (
+          <>
+            <p>Al elegir un plan se abre un mail a info@gounuri.com con el plan y el plazo que elegiste.</p>
+            <p>Te vamos a responder con el CBU/alias para coordinar la transferencia y activar el plan.</p>
+          </>
+        )}
       </div>
     </div>
   )
