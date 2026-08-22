@@ -354,19 +354,23 @@ export default function PlanSelector({
 
 function CopyRow({ label, value, copied, onCopy }: { label: string; value: string; copied: boolean; onCopy: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2">
-      <div className="min-w-0">
+    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</p>
-        <p className="truncate text-sm font-medium text-zinc-900">{value}</p>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-zinc-600 hover:text-zinc-900 transition-colors"
+        >
+          {copied ? <CopyCheck size={13} className="text-emerald-600" /> : <Copy size={13} />}
+          {copied ? 'Copiado' : 'Copiar'}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onCopy}
-        className="flex shrink-0 items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 transition-colors"
-      >
-        {copied ? <CopyCheck size={13} className="text-emerald-600" /> : <Copy size={13} />}
-        {copied ? 'Copiado' : 'Copiar'}
-      </button>
+      {/* CBU son 22 dígitos seguidos, sin espacios — break-all + fuente
+          monoespaciada para que entre y se lea bien en el ancho angosto de
+          la card, en vez de truncar con "..." (dato que hay que poder leer
+          entero, no solo copiar). */}
+      <p className="mt-0.5 break-all font-mono text-sm font-medium text-zinc-900">{value}</p>
     </div>
   )
 }
