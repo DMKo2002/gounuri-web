@@ -18,10 +18,12 @@ import { ArrowRight, Check, ExternalLink, Loader2, Wallet } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Pricing from '@/components/Pricing'
 import SideStrip from '@/components/SideStrip'
+import TransferPaymentBlock from '@/components/TransferPaymentBlock'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 import { priceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
+import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 
 type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'escalar' | 'plan' | 'pago'
 
@@ -309,6 +311,13 @@ function OnboardingContent() {
   const [isPlaceholderPaid, setIsPlaceholderPaid] = useState(false)
   const [finalizando, setFinalizando] = useState(false)
 
+  // Métodos de pago habilitados desde superadmin (2026-08-22) — ver paso
+  // "Pago" más abajo: si Mercado Pago está apagado, se ofrece transferencia
+  // en su lugar (mismo componente que /perfil/plan/PlanSelector.tsx). null
+  // mientras carga, para no mostrar el formulario de MP de entrada y que
+  // "salte" apenas llega la respuesta.
+  const [paymentSettings, setPaymentSettings] = useState<PlatformPaymentSettings | null>(null)
+
   // Pantalla "Confirmando tu pago..." (2026-08-18) — a dónde vuelve MP
   // (back_url) después de pagar desde /api/ir-a-plan sin tener tienda
   // todavía. El tenant recién lo crea el webhook de Panel Admin cuando
@@ -380,6 +389,14 @@ function OnboardingContent() {
         }
       })
       .catch(e => console.error('[onboarding] no se pudo consultar el estado de la tienda', e))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/billing/payment-settings')
+      .then(res => res.json())
+      .then(json => { if (json && !json.error) setPaymentSettings(json) })
+      .catch(e => console.error('[onboarding] no se pudieron consultar los métodos de pago', e))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1182,30 +1199,40 @@ function OnboardingContent() {
           Pricing.tsx y PlanSelector.tsx. */}
       {step === 'pago' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          {/* Panel izquierdo — formulario de pago */}
+          {/* Panel izquierdo — formulario de pago. Métodos configurables desde
+              superadmin (2026-08-22, ver @/lib/platformBilling): si Mercado
+              Pago está apagado se ofrece transferencia en su lugar (mismo
+              componente que /perfil/plan/PlanSelector.tsx), y si los dos
+              están prendidos se muestran ambos. paymentSettings es null
+              mientras carga — no se pinta ningún método todavía para no
+              mostrar de entrada un formulario de MP que capaz ni corresponde. */}
           <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-16 sm:py-16 lg:w-[45.5%] lg:px-24">
-            <h1 className="text-3xl font-extrabold leading-tight text-zinc-900">Pagar con Mercado Pago</h1>
+            <h1 className="text-3xl font-extrabold leading-tight text-zinc-900">
+              {paymentSettings?.mercadopagoEnabled ? 'Pagar con Mercado Pago' : 'Activá tu plan'}
+            </h1>
             <p className="mt-3 text-sm leading-relaxed text-zinc-500">
-              gounuri.com no ve ni almacena los datos de tu tarjeta. Ingresá el
-              email de tu cuenta de Mercado Pago y te vamos a redirigir a su
-              checkout seguro para completar el pago.
+              {paymentSettings?.mercadopagoEnabled
+                ? 'gounuri.com no ve ni almacena los datos de tu tarjeta. Ingresá el email de tu cuenta de Mercado Pago y te vamos a redirigir a su checkout seguro para completar el pago.'
+                : 'Coordinamos el pago por transferencia bancaria — por WhatsApp o por mail.'}
             </p>
 
             <div className="mt-8 space-y-5">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                  Email de tu cuenta de Mercado Pago <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
-                  value={payerEmail}
-                  onChange={e => setPayerEmail(e.target.value)}
-                  placeholder="tu@email.com"
-                  autoFocus
-                  required
-                />
-              </div>
+              {paymentSettings?.mercadopagoEnabled && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
+                    Email de tu cuenta de Mercado Pago <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full rounded-2xl border-none bg-[#f0f0f1] px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    value={payerEmail}
+                    onChange={e => setPayerEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    autoFocus
+                    required
+                  />
+                </div>
+              )}
 
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
@@ -1215,21 +1242,53 @@ function OnboardingContent() {
                 <button
                   type="button"
                   onClick={() => goToStep('plan')}
-                  className="rounded-2xl border border-zinc-300 px-6 py-3.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100"
+                  className={`rounded-2xl border border-zinc-300 px-6 py-3.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 ${paymentSettings?.mercadopagoEnabled ? '' : 'flex-1'}`}
                 >
                   ← Volver
                 </button>
-                <button
-                  type="button"
-                  onClick={handlePagar}
-                  disabled={saving}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-medium text-white transition-colors hover:brightness-110 disabled:opacity-60"
-                  style={{ background: '#454b53' }}
-                >
-                  {saving && <Loader2 size={15} className="animate-spin" />}
-                  {saving ? 'Redirigiendo a Mercado Pago...' : 'Pagar'}
-                </button>
+                {paymentSettings?.mercadopagoEnabled && (
+                  <button
+                    type="button"
+                    onClick={handlePagar}
+                    disabled={saving}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-medium text-white transition-colors hover:brightness-110 disabled:opacity-60"
+                    style={{ background: '#454b53' }}
+                  >
+                    {saving && <Loader2 size={15} className="animate-spin" />}
+                    {saving ? 'Redirigiendo a Mercado Pago...' : 'Pagar'}
+                  </button>
+                )}
               </div>
+
+              {paymentSettings && paymentSettings.manualTransferEnabled && (
+                <div>
+                  {paymentSettings.mercadopagoEnabled && (
+                    <div className="my-2 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-zinc-200" />
+                      <span className="text-xs text-zinc-400">o por transferencia</span>
+                      <div className="h-px flex-1 bg-zinc-200" />
+                    </div>
+                  )}
+                  <TransferPaymentBlock
+                    paymentSettings={paymentSettings}
+                    planId={plan}
+                    planNombre={planElegido.nombre}
+                    term={billingTerm}
+                    monto={pagoTotal}
+                    accion="activar mi tienda nueva"
+                  />
+                </div>
+              )}
+
+              {paymentSettings && !paymentSettings.mercadopagoEnabled && !paymentSettings.manualTransferEnabled && (
+                <p className="text-sm text-zinc-500">
+                  Todavía no tenemos un método de pago habilitado — escribinos a{' '}
+                  <a href={`mailto:${paymentSettings.contactEmail}`} className="font-medium text-zinc-900 underline">
+                    {paymentSettings.contactEmail}
+                  </a>{' '}
+                  y lo coordinamos.
+                </p>
+              )}
             </div>
           </div>
 

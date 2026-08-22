@@ -17,18 +17,18 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Check, Copy, CopyCheck, Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
 import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
+import TransferPaymentBlock from '@/components/TransferPaymentBlock'
 
 function formatARS(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const TERM_LABEL: Record<BillingTerm, string> = { 1: 'mensual', 6: 'semestral', 12: 'anual' }
 
 export default function PlanSelector({
   currentPlan,
@@ -44,7 +44,6 @@ export default function PlanSelector({
   const [payerEmail, setPayerEmail] = useState('')
   const [term, setTerm] = useState<BillingTerm>(1)
   const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
-  const [copied, setCopied] = useState<'cbu' | 'alias' | null>(null)
 
   const searchParams = useSearchParams()
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -67,48 +66,6 @@ export default function PlanSelector({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
-
-  function planMessage(planId: PlanId) {
-    const card = PLANES.find(p => p.id === planId)
-    const nombrePlan = card?.nombre ?? planId
-    const monto = formatARS(priceForTerm(planId, term))
-    return { nombrePlan, texto: `plan ${nombrePlan} (${TERM_LABEL[term]}) — ${monto}` }
-  }
-
-  function whatsappLink(planId: PlanId) {
-    const num = (paymentSettings.whatsappNumber ?? '541131351972').replace(/\D/g, '')
-    const { texto } = planMessage(planId)
-    const msg = `Hola! Quiero pasar mi tienda al ${texto}.`
-    return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`
-  }
-
-  function mailLink(planId: PlanId) {
-    const { nombrePlan, texto } = planMessage(planId)
-    const subject = `Cambio de plan — ${nombrePlan} (${TERM_LABEL[term]})`
-    const body = [`Hola, quiero pasar mi tienda al ${texto}.`, '', 'Nombre de la tienda:', 'Nombre y apellido:'].join('\n')
-    return `mailto:${paymentSettings.contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  }
-
-  // Aviso server-side a GOUNURI (2026-08-22) — no espera respuesta ni bloquea
-  // el click, el <a> navega igual al wa.me/mailto aunque este POST falle.
-  function notifyManualIntent(planId: PlanId, via: 'whatsapp' | 'mail') {
-    fetch('/api/billing/notify-manual-intent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: planId, months: term, via }),
-    }).catch(() => {})
-  }
-
-  async function copyToClipboard(text: string, which: 'cbu' | 'alias') {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(which)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // API de clipboard puede fallar (permiso, contexto no seguro, etc.) —
-      // no rompe nada, el CBU/alias ya está visible para copiar a mano.
-    }
-  }
 
   async function subscribeMp(planId: PlanId) {
     if (!EMAIL_RE.test(payerEmail.trim())) {
@@ -312,42 +269,15 @@ export default function PlanSelector({
                   )}
 
                   {paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
-                    <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left text-sm space-y-3">
-                      <p className="text-zinc-700">
-                        Transferí <strong>{formatARS(priceForTerm(card.id, term))}</strong> ({TERM_LABEL[term]}) y avisanos para activar el plan.
-                      </p>
-
-                      {(paymentSettings.transferCbu || paymentSettings.transferAlias) ? (
-                        <div className="space-y-2">
-                          {paymentSettings.transferCbu && (
-                            <CopyRow label="CBU" value={paymentSettings.transferCbu} copied={copied === 'cbu'} onCopy={() => copyToClipboard(paymentSettings.transferCbu!, 'cbu')} />
-                          )}
-                          {paymentSettings.transferAlias && (
-                            <CopyRow label="Alias" value={paymentSettings.transferAlias} copied={copied === 'alias'} onCopy={() => copyToClipboard(paymentSettings.transferAlias!, 'alias')} />
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-zinc-500">Todavía no cargamos el CBU/alias acá — escribinos y te lo pasamos.</p>
-                      )}
-
-                      <div className="flex gap-2 pt-1">
-                        <a
-                          href={whatsappLink(card.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => notifyManualIntent(card.id, 'whatsapp')}
-                          className="btn-black flex-1 !px-3 !py-2 text-center text-xs"
-                        >
-                          Escribir por WhatsApp
-                        </a>
-                        <a
-                          href={mailLink(card.id)}
-                          onClick={() => notifyManualIntent(card.id, 'mail')}
-                          className="btn-outline flex-1 !px-3 !py-2 text-center text-xs"
-                        >
-                          Escribir por mail
-                        </a>
-                      </div>
+                    <div className="mt-3">
+                      <TransferPaymentBlock
+                        paymentSettings={paymentSettings}
+                        planId={card.id}
+                        planNombre={card.nombre}
+                        term={term}
+                        monto={priceForTerm(card.id, term)}
+                        accion="pasar mi tienda"
+                      />
                     </div>
                   )}
                 </div>
@@ -368,29 +298,6 @@ export default function PlanSelector({
           <p>Con transferencia, el plan se activa a mano una vez que confirmemos el pago — normalmente el mismo día.</p>
         )}
       </div>
-    </div>
-  )
-}
-
-function CopyRow({ label, value, copied, onCopy }: { label: string; value: string; copied: boolean; onCopy: () => void }) {
-  return (
-    <div className="rounded-md border border-zinc-200 bg-white px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</p>
-        <button
-          type="button"
-          onClick={onCopy}
-          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-zinc-600 hover:text-zinc-900 transition-colors"
-        >
-          {copied ? <CopyCheck size={13} className="text-emerald-600" /> : <Copy size={13} />}
-          {copied ? 'Copiado' : 'Copiar'}
-        </button>
-      </div>
-      {/* CBU son 22 dígitos seguidos, sin espacios — break-all + fuente
-          monoespaciada para que entre y se lea bien en el ancho angosto de
-          la card, en vez de truncar con "..." (dato que hay que poder leer
-          entero, no solo copiar). */}
-      <p className="mt-0.5 break-all font-mono text-sm font-medium text-zinc-900">{value}</p>
     </div>
   )
 }
