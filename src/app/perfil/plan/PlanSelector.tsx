@@ -89,6 +89,16 @@ export default function PlanSelector({
     return `mailto:${paymentSettings.contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
 
+  // Aviso server-side a GOUNURI (2026-08-22) — no espera respuesta ni bloquea
+  // el click, el <a> navega igual al wa.me/mailto aunque este POST falle.
+  function notifyManualIntent(planId: PlanId, via: 'whatsapp' | 'mail') {
+    fetch('/api/billing/notify-manual-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: planId, months: term, via }),
+    }).catch(() => {})
+  }
+
   async function copyToClipboard(text: string, which: 'cbu' | 'alias') {
     try {
       await navigator.clipboard.writeText(text)
@@ -321,10 +331,20 @@ export default function PlanSelector({
                       )}
 
                       <div className="flex gap-2 pt-1">
-                        <a href={whatsappLink(card.id)} target="_blank" rel="noopener noreferrer" className="btn-black flex-1 !px-3 !py-2 text-center text-xs">
+                        <a
+                          href={whatsappLink(card.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => notifyManualIntent(card.id, 'whatsapp')}
+                          className="btn-black flex-1 !px-3 !py-2 text-center text-xs"
+                        >
                           Escribir por WhatsApp
                         </a>
-                        <a href={mailLink(card.id)} className="btn-outline flex-1 !px-3 !py-2 text-center text-xs">
+                        <a
+                          href={mailLink(card.id)}
+                          onClick={() => notifyManualIntent(card.id, 'mail')}
+                          className="btn-outline flex-1 !px-3 !py-2 text-center text-xs"
+                        >
                           Escribir por mail
                         </a>
                       </div>
