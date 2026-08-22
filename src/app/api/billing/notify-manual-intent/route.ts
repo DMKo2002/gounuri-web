@@ -39,6 +39,19 @@ export async function POST(req: Request) {
   const nombrePlan = card?.nombre ?? plan
   const monto = priceForTerm(plan, term)
 
+  // "Pago a confirmar" (2026-08-22) — deja rastro en el tenant de que
+  // declaró intención de pago, para que /superadmin lo pueda filtrar/mostrar
+  // en vez de que esto viva solo en un mail. Se limpia en
+  // /api/superadmin/mark-plan-paid cuando se confirma que la plata llegó.
+  // Best-effort: si falla, no debe romper el click del botón.
+  await service.from('tenants').update({
+    manual_payment_pending_at: new Date().toISOString(),
+    manual_payment_pending_plan: plan,
+    manual_payment_pending_term: term,
+  }).eq('id', tenantId).then(({ error }) => {
+    if (error) console.error('[notify-manual-intent] error marcando pago pendiente:', error)
+  })
+
   const settings = await getPlatformPaymentSettings(service)
   await sendEmail({
     to: settings.contactEmail,
