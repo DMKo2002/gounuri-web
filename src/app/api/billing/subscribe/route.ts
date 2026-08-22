@@ -10,15 +10,23 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { createPreapproval, billingEnabled } from '@/lib/billing'
+import { createPreapproval } from '@/lib/billing'
+import { getPlatformPaymentSettings } from '@/lib/platformBilling'
 import { isPlanId, isBillingTerm } from '@/lib/plans'
 import { PLACEHOLDER_TENANT_NAME } from '@/lib/site'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: Request) {
-  if (!billingEnabled()) {
-    return NextResponse.json({ error: 'La facturación todavía no está habilitada' }, { status: 403 })
+  const service = createServiceClient()
+
+  // Gate movido de BILLING_ENABLED (env var) a platform_billing_settings
+  // (2026-08-22, editable desde Panel Admin /superadmin/pagos) — así el botón
+  // que ve el tenant en /perfil/plan y lo que este endpoint realmente permite
+  // nunca quedan desincronizados.
+  const paymentSettings = await getPlatformPaymentSettings(service)
+  if (!paymentSettings.mercadopagoEnabled) {
+    return NextResponse.json({ error: 'El pago con Mercado Pago todavía no está habilitado' }, { status: 403 })
   }
 
   const supabase = await createClient()
@@ -35,7 +43,6 @@ export async function POST(req: Request) {
     ? payerEmailInput.trim()
     : user.email
 
-  const service = createServiceClient()
   const { data: _rows } = await service.from('users').select('tenant_id, role').eq('id', user.id).limit(1)
   const userRow = _rows?.[0]
   if (!userRow?.tenant_id) return NextResponse.json({ error: 'Tienda no encontrada' }, { status: 404 })

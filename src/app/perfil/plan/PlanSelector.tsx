@@ -6,20 +6,22 @@
 // directa" sigue apagada en el Panel Admin (ver comentario en UpgradePlans.tsx)
 // y no se portó acá todavía.
 //
-// Pago manual por transferencia (2026-08-21): mientras BILLING_ENABLED esté
-// apagado (ver @/lib/billing), el checkout automático de Mercado Pago queda
-// oculto y "elegir plan" pasa a mandar un mail a info@gounuri.com para
-// coordinar la transferencia a mano — es temporal, hasta que se desarrolle
-// el pago por débito automático. Todo el flujo de Mercado Pago sigue intacto
-// acá abajo: alcanza con volver a poner BILLING_ENABLED=true para que
-// vuelva a aparecer solo.
+// Métodos de pago configurables desde superadmin (2026-08-22): en vez de un
+// solo interruptor BILLING_ENABLED, ahora paymentSettings (ver
+// @/lib/platformBilling, editable en Panel Admin /superadmin/pagos) dice qué
+// métodos están activos — transferencia y/o Mercado Pago, pueden estar los
+// dos prendidos a la vez. Con transferencia, cada card despliega un panel
+// con el monto calculado, CBU/alias (con botón de copiar) y accesos directos
+// a WhatsApp y mail para coordinar el pago. El flujo de Mercado Pago
+// (Preapproval) sigue intacto acá abajo tal cual estaba.
 
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Check, Loader2 } from 'lucide-react'
+import { Check, Copy, CopyCheck, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
 import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
+import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 
 function formatARS(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
@@ -31,16 +33,18 @@ const TERM_LABEL: Record<BillingTerm, string> = { 1: 'mensual', 6: 'semestral', 
 export default function PlanSelector({
   currentPlan,
   trialing,
-  billingEnabled,
+  paymentSettings,
 }: {
   currentPlan: string
   trialing: boolean
-  billingEnabled: boolean
+  paymentSettings: PlatformPaymentSettings
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [payerEmail, setPayerEmail] = useState('')
   const [term, setTerm] = useState<BillingTerm>(1)
+  const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
+  const [copied, setCopied] = useState<'cbu' | 'alias' | null>(null)
 
   const searchParams = useSearchParams()
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -64,24 +68,39 @@ export default function PlanSelector({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
-  function requestManualPlan(planId: PlanId) {
+  function planMessage(planId: PlanId) {
     const card = PLANES.find(p => p.id === planId)
     const nombrePlan = card?.nombre ?? planId
-    const subject = `Cambio de plan — ${nombrePlan} (${TERM_LABEL[term]})`
-    const body = [
-      `Hola, quiero pasar mi tienda al plan ${nombrePlan} (${TERM_LABEL[term]}).`,
-      '',
-      'Nombre de la tienda:',
-      'Nombre y apellido:',
-    ].join('\n')
-    window.location.href = `mailto:info@gounuri.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    const monto = formatARS(priceForTerm(planId, term))
+    return { nombrePlan, texto: `plan ${nombrePlan} (${TERM_LABEL[term]}) — ${monto}` }
   }
 
-  async function subscribe(planId: PlanId) {
-    if (!billingEnabled) {
-      requestManualPlan(planId)
-      return
+  function whatsappLink(planId: PlanId) {
+    const num = (paymentSettings.whatsappNumber ?? '541131351972').replace(/\D/g, '')
+    const { texto } = planMessage(planId)
+    const msg = `Hola! Quiero pasar mi tienda al ${texto}.`
+    return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`
+  }
+
+  function mailLink(planId: PlanId) {
+    const { nombrePlan, texto } = planMessage(planId)
+    const subject = `Cambio de plan — ${nombrePlan} (${TERM_LABEL[term]})`
+    const body = [`Hola, quiero pasar mi tienda al ${texto}.`, '', 'Nombre de la tienda:', 'Nombre y apellido:'].join('\n')
+    return `mailto:${paymentSettings.contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
+  async function copyToClipboard(text: string, which: 'cbu' | 'alias') {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(which)
+      setTimeout(() => setCopied(null), 1500)
+    } catch {
+      // API de clipboard puede fallar (permiso, contexto no seguro, etc.) —
+      // no rompe nada, el CBU/alias ya está visible para copiar a mano.
     }
+  }
+
+  async function subscribeMp(planId: PlanId) {
     if (!EMAIL_RE.test(payerEmail.trim())) {
       setError('Ingresá el email de la cuenta de Mercado Pago con la que vas a pagar.')
       return
@@ -107,12 +126,14 @@ export default function PlanSelector({
     <div ref={sectionRef}>
       <h2 className="text-lg font-semibold text-zinc-900">Cambiar de plan</h2>
       <p className="mt-1 text-sm text-zinc-500">
-        {billingEnabled
-          ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
-          : 'Por ahora coordinamos el pago por transferencia bancaria. Elegí el plan y te escribimos para coordinar.'}
+        {paymentSettings.mercadopagoEnabled && paymentSettings.manualTransferEnabled
+          ? 'Elegí un plan y pagá con Mercado Pago (débito automático) o por transferencia bancaria.'
+          : paymentSettings.mercadopagoEnabled
+            ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
+            : 'Elegí un plan y coordinamos el pago por transferencia bancaria — por WhatsApp o por mail.'}
       </p>
 
-      {billingEnabled && (
+      {paymentSettings.mercadopagoEnabled && (
         <div className="mt-4">
           <label className="block text-sm font-bold text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
           <input
@@ -123,7 +144,7 @@ export default function PlanSelector({
             placeholder="tu@email.com"
           />
           <p className="mt-1 text-xs text-zinc-400">
-            Asegurate de ingresar el email asociado a tu cuenta de Mercado Pago. De lo contrario, la suscripción no podrá concretarse.
+            Solo hace falta si pagás con Mercado Pago. Asegurate de ingresar el email asociado a tu cuenta — de lo contrario, la suscripción no podrá concretarse.
           </p>
         </div>
       )}
@@ -255,39 +276,97 @@ export default function PlanSelector({
                 ))}
               </ul>
 
-              <button
-                onClick={() => subscribe(card.id)}
-                disabled={esActual || loading !== null}
-                className="btn-black mt-8 w-full disabled:opacity-50"
-              >
-                {loading === card.id && <Loader2 size={15} className="animate-spin" />}
-                {esActual
-                  ? 'Tu plan actual'
-                  : trialing && card.id === currentPlan
-                    ? `Activar ${card.nombre}`
-                    : billingEnabled
-                      ? `Pasar a ${card.nombre}`
-                      : `Solicitar ${card.nombre}`}
-              </button>
+              {esActual ? (
+                <button disabled className="btn-black mt-8 w-full opacity-50">
+                  Tu plan actual
+                </button>
+              ) : (
+                <div className="mt-8 space-y-2">
+                  {paymentSettings.mercadopagoEnabled && (
+                    <button
+                      onClick={() => subscribeMp(card.id)}
+                      disabled={loading !== null}
+                      className="btn-black w-full disabled:opacity-50"
+                    >
+                      {loading === card.id && <Loader2 size={15} className="animate-spin" />}
+                      {trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
+                    </button>
+                  )}
+                  {paymentSettings.manualTransferEnabled && (
+                    <button
+                      onClick={() => setExpandedPlan(p => (p === card.id ? null : card.id))}
+                      className="btn-outline w-full"
+                    >
+                      {expandedPlan === card.id ? 'Ocultar datos de transferencia' : 'Pagar por transferencia'}
+                    </button>
+                  )}
+
+                  {paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
+                    <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left text-sm space-y-3">
+                      <p className="text-zinc-700">
+                        Transferí <strong>{formatARS(priceForTerm(card.id, term))}</strong> ({TERM_LABEL[term]}) y avisanos para activar el plan.
+                      </p>
+
+                      {(paymentSettings.transferCbu || paymentSettings.transferAlias) ? (
+                        <div className="space-y-2">
+                          {paymentSettings.transferCbu && (
+                            <CopyRow label="CBU" value={paymentSettings.transferCbu} copied={copied === 'cbu'} onCopy={() => copyToClipboard(paymentSettings.transferCbu!, 'cbu')} />
+                          )}
+                          {paymentSettings.transferAlias && (
+                            <CopyRow label="Alias" value={paymentSettings.transferAlias} copied={copied === 'alias'} onCopy={() => copyToClipboard(paymentSettings.transferAlias!, 'alias')} />
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-zinc-500">Todavía no cargamos el CBU/alias acá — escribinos y te lo pasamos.</p>
+                      )}
+
+                      <div className="flex gap-2 pt-1">
+                        <a href={whatsappLink(card.id)} target="_blank" rel="noopener noreferrer" className="btn-black flex-1 !px-3 !py-2 text-center text-xs">
+                          Escribir por WhatsApp
+                        </a>
+                        <a href={mailLink(card.id)} className="btn-outline flex-1 !px-3 !py-2 text-center text-xs">
+                          Escribir por mail
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )
         })}
       </div>
 
       <div className="mt-10 space-y-1 text-center text-xs text-zinc-400">
-        {billingEnabled ? (
+        {paymentSettings.mercadopagoEnabled && (
           <>
-            <p>El pago se procesa con MercadoPago. Vas a cargar tu medio de pago en el sitio seguro de MP — nunca guardamos los datos de tu tarjeta.</p>
-            <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago.</p>
-            <p>No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
-          </>
-        ) : (
-          <>
-            <p>Al elegir un plan se abre un mail a info@gounuri.com con el plan y el plazo que elegiste.</p>
-            <p>Te vamos a responder con el CBU/alias para coordinar la transferencia y activar el plan.</p>
+            <p>El pago con Mercado Pago se procesa en su sitio seguro — nunca guardamos los datos de tu tarjeta.</p>
+            <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago. No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
           </>
         )}
+        {paymentSettings.manualTransferEnabled && (
+          <p>Con transferencia, el plan se activa a mano una vez que confirmemos el pago — normalmente el mismo día.</p>
+        )}
       </div>
+    </div>
+  )
+}
+
+function CopyRow({ label, value, copied, onCopy }: { label: string; value: string; copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-white px-3 py-2">
+      <div className="min-w-0">
+        <p className="text-[11px] uppercase tracking-wide text-zinc-400">{label}</p>
+        <p className="truncate text-sm font-medium text-zinc-900">{value}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onCopy}
+        className="flex shrink-0 items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 transition-colors"
+      >
+        {copied ? <CopyCheck size={13} className="text-emerald-600" /> : <Copy size={13} />}
+        {copied ? 'Copiado' : 'Copiar'}
+      </button>
     </div>
   )
 }

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getTenantUsage } from '@/lib/usage'
-import { billingEnabled } from '@/lib/billing'
+import { getPlatformPaymentSettings } from '@/lib/platformBilling'
 import PlanSelector from './PlanSelector'
 import UsageBars from './UsageBars'
 
@@ -36,6 +36,7 @@ export default async function PlanPage() {
   const currentPlan = tenant.plan ?? 'standard'
 
   const usage = await getTenantUsage(service, tenantId, currentPlan)
+  const paymentSettings = await getPlatformPaymentSettings(service)
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -57,7 +58,7 @@ export default async function PlanPage() {
         </div>
 
         <div className="mt-8">
-          <PlanSelector currentPlan={currentPlan} trialing={trialing} billingEnabled={billingEnabled()} />
+          <PlanSelector currentPlan={currentPlan} trialing={trialing} paymentSettings={paymentSettings} />
         </div>
       </div>
     </main>
