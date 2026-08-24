@@ -97,7 +97,9 @@ export default function Footer() {
       <div className="footer-bottom">
         <p>
           &copy; {new Date().getFullYear()} GOUNURI.COM{' '}
-          <Link href="/terminos">POLITICA, TERMINO Y CONDICIONES</Link>
+          <Link href="/terminos">TERMINOS Y CONDICIONES</Link>
+          {' · '}
+          <Link href="/privacidad">POLITICA DE PRIVACIDAD</Link>
         </p>
       </div>
     </footer>

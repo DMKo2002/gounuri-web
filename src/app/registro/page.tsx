@@ -97,6 +97,14 @@ function RegistroForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [enviado, setEnviado] = useState(false)
+  // 2026-08-24: antes la aceptación de términos era solo un texto pasivo
+  // debajo del botón ("al crear la cuenta, aceptás...") — nunca bloqueaba
+  // nada, y ni siquiera se veía antes de tocar "Continuar con Google" (ese
+  // botón está más arriba en la pantalla). Ahora es un checkbox real, sin
+  // tildar por defecto, que bloquea las dos formas de crear cuenta hasta
+  // que el usuario lo tilda a propósito — evidencia de consentimiento
+  // mucho más sólida (clickwrap) que el texto de siempre (browsewrap).
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   // Recuadro de "el link ya no es válido" (?confirmacion=error) — reenvío
   // independiente del form de arriba, con su propio email.
@@ -121,6 +129,10 @@ function RegistroForm() {
     }
     if (!turnstileToken) {
       setError('Completá la verificación de seguridad.')
+      return
+    }
+    if (!acceptedTerms) {
+      setError('Tenés que aceptar las políticas, términos y condiciones para crear tu cuenta.')
       return
     }
 
@@ -243,8 +255,28 @@ function RegistroForm() {
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           )}
 
-          <div className="mt-5">
-            <OAuthButtons />
+          <label className="mt-5 flex items-start gap-2 text-xs text-zinc-500">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={e => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 rounded border-zinc-300"
+            />
+            <span>
+              Leí y acepto los{' '}
+              <Link href="/terminos" target="_blank" className="underline underline-offset-2 hover:text-zinc-700">
+                términos y condiciones
+              </Link>{' '}
+              y la{' '}
+              <Link href="/privacidad" target="_blank" className="underline underline-offset-2 hover:text-zinc-700">
+                política de privacidad
+              </Link>{' '}
+              de Gounuri.
+            </span>
+          </label>
+
+          <div className="mt-4">
+            <OAuthButtons disabled={!acceptedTerms} />
           </div>
 
           <div className="my-5 flex items-center gap-3">
@@ -298,7 +330,7 @@ function RegistroForm() {
 
           <button
             type="submit"
-            disabled={loading || !turnstileToken}
+            disabled={loading || !turnstileToken || !acceptedTerms}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-50"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
@@ -311,14 +343,6 @@ function RegistroForm() {
           <Link href={LOGIN_URL} className="font-medium text-zinc-900 underline underline-offset-2">
             Ingresá acá
           </Link>
-        </p>
-
-        <p className="mt-6 text-center text-xs text-zinc-400">
-          Al crear la cuenta, aceptás las{' '}
-          <Link href="/terminos" className="underline underline-offset-2 hover:text-zinc-600">
-            políticas, términos y condiciones
-          </Link>{' '}
-          de Gounuri.
         </p>
       </>
     )
