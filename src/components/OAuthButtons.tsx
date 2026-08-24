@@ -11,6 +11,13 @@
 // El alta de la fila en gounuri_accounts para estas cuentas la hace el
 // trigger handle_new_gounuri_account() en la base (no pasa por
 // /api/auth/registro, que es solo para el flujo por mail).
+//
+// 2026-08-24: prop `disabled` opcional — /registro lo usa para bloquear
+// estos botones hasta que el checkbox de "acepto los términos" esté
+// tildado (antes se podía crear cuenta por Google/Facebook sin haber visto
+// ningún aviso de términos, ya que ese texto vivía debajo del form de
+// mail/contraseña, después de estos botones). /login no pasa la prop —
+// sigue sin gating, como siempre.
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -34,12 +41,13 @@ function IconFacebook() {
   )
 }
 
-export default function OAuthButtons() {
+export default function OAuthButtons({ disabled = false }: { disabled?: boolean }) {
   const supabase = createClient()
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'facebook' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleOAuth(provider: 'google' | 'facebook') {
+    if (disabled) return
     setError(null)
     setLoadingProvider(provider)
     const { error: err } = await supabase.auth.signInWithOAuth({
@@ -59,7 +67,7 @@ export default function OAuthButtons() {
       <button
         type="button"
         onClick={() => handleOAuth('google')}
-        disabled={loadingProvider !== null}
+        disabled={disabled || loadingProvider !== null}
         className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
       >
         <IconGoogle />
@@ -68,7 +76,7 @@ export default function OAuthButtons() {
       <button
         type="button"
         onClick={() => handleOAuth('facebook')}
-        disabled={loadingProvider !== null}
+        disabled={disabled || loadingProvider !== null}
         className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 bg-white py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-50"
       >
         <IconFacebook />
