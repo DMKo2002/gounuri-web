@@ -146,6 +146,7 @@ export function emailBienvenidaTienda({
   planNombre,
   trialDays,
   paid = false,
+  faqUrl = 'https://www.gounuri.com/faq',
 }: {
   nombre: string
   storeName: string
@@ -159,6 +160,11 @@ export function emailBienvenidaTienda({
   // sentido hablarle de "días gratis". Default false = copy de siempre
   // (trial), para no cambiar nada en los llamadores existentes.
   paid?: boolean
+  // 2026-08-24: pedido de Aram/David — sumar acceso directo al FAQ nuevo
+  // (dominio, footer vacío, productos, plan, etc. — ver
+  // src/app/faq/page.tsx) desde el primer mail que recibe el tenant, para
+  // que la primera pantalla vacía del panel no sea su única guía.
+  faqUrl?: string
 }): string {
   return layout(`
   <tr><td style="padding:40px 40px 8px;">
@@ -192,6 +198,13 @@ export function emailBienvenidaTienda({
     ${ctaButton(`${panelUrl}/dashboard`, 'Ir a mi panel')}
     <p style="margin:20px 0 0;font-size:13px;color:#888;line-height:1.6;">
       Desde tu panel administrás productos, pedidos, diseño y todo lo demás de tu tienda.
+    </p>
+    <p style="margin:20px 0 0;font-size:13px;color:#888;line-height:1.6;">
+      <a href="https://www.gounuri.com" style="color:#101010;text-decoration:underline;font-weight:600;">Conocé gounuri.com</a>
+      &nbsp;·&nbsp;
+      <a href="${faqUrl}" style="color:#101010;text-decoration:underline;font-weight:600;">Preguntas frecuentes</a>
+      <br/>
+      <span style="color:#bbb;">¿Por qué mi tienda está vacía? ¿Por qué no funciona mi dominio? Está todo ahí.</span>
     </p>
   </td></tr>`)
 }

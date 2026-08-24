@@ -47,6 +47,7 @@ export default function Footer() {
         <div className="footer-links">
           <div className="footer-col">
             <p className="footer-col-title">AYUDA</p>
+            <Link href="/faq">Preguntas frecuentes</Link>
             <a href="mailto:soporte@gounuri.com">soporte@gounuri.com</a>
             <a href="mailto:info@gounuri.com">info@gounuri.com</a>
             <a href="tel:+541125792002">+5411 25792002</a>
