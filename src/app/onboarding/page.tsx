@@ -679,7 +679,7 @@ function OnboardingContent() {
                     Nombre de la Tienda <span className="text-red-400">*</span>
                   </label>
                   <input
-                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-300"
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="Ej: Moda Caro, Iruda, Connors..."
@@ -692,7 +692,7 @@ function OnboardingContent() {
                     DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
                   </label>
                   <input
-                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-300"
                     value={dniCuit}
                     onChange={e => setDniCuit(e.target.value)}
                     placeholder="Sin puntos"
@@ -702,7 +702,7 @@ function OnboardingContent() {
                   <label className="mb-1.5 block text-xs font-medium text-zinc-500">
                     WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
                   </label>
-                  <div className="flex items-center gap-2 rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 focus-within:ring-2 focus-within:ring-zinc-900">
+                  <div className="flex items-center gap-2 rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 focus-within:ring-1 focus-within:ring-zinc-300">
                     <span className="text-sm text-zinc-900">+54</span>
                     <input
                       className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
@@ -721,7 +721,7 @@ function OnboardingContent() {
                     Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
                   </label>
                   <input
-                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-300"
                     value={domain}
                     onChange={e => setDomain(e.target.value)}
                     placeholder="Ej: mitienda.com — lo podés configurar después"
@@ -741,7 +741,7 @@ function OnboardingContent() {
                     componente "Button" node 1038:230) — mismo patrón que
                     el botón "Ingresar a mi tienda" de NavAuth.tsx (texto y
                     tilde vectorizados, no HTML). */}
-                <div className="hidden justify-end lg:flex">
+                <div className="hidden justify-end lg:flex lg:mt-4">
                   <button type="submit" aria-label="Siguiente" className="transition hover:brightness-110">
                     <svg width="162" height="31" viewBox="0 0 162 31" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect width="162" height="31" rx="7" fill="black" />
