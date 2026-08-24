@@ -140,6 +140,11 @@ export default function LoginPage() {
               className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
             />
 
+            <div className="mt-3 text-right">
+              <Link href="/recuperar" className="text-xs font-medium text-zinc-500 underline underline-offset-2 hover:text-zinc-900">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <label className="mt-3 flex items-center gap-2 text-xs text-zinc-600">
               <input
                 type="checkbox"

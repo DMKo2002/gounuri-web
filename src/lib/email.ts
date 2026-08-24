@@ -195,3 +195,24 @@ export function emailBienvenidaTienda({
     </p>
   </td></tr>`)
 }
+
+// ── Restablecer contraseña (ver /api/auth/recuperar) ────────────────────────
+
+export function emailRecuperarPassword({
+  recoveryUrl,
+}: {
+  recoveryUrl: string
+}): string {
+  return layout(`
+  <tr><td style="padding:40px 40px 32px;">
+    <p style="margin:0 0 18px;font-size:12px;color:#999;letter-spacing:0.1em;text-transform:uppercase;">Restablecer contraseña</p>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">¡Hola!</h1>
+    <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.7;">
+      Recibimos un pedido para restablecer la contraseña de tu cuenta de <strong>gounuri</strong>. Hacé click para elegir una nueva:
+    </p>
+    ${ctaButton(recoveryUrl, 'Crear nueva contraseña')}
+    <p style="margin:28px 0 0;font-size:12px;color:#bbb;line-height:1.6;">
+      Si no pediste esto, podés ignorar este email — tu contraseña no cambia.<br>El link es válido por 1 hora.
+    </p>
+  </td></tr>`)
+}
