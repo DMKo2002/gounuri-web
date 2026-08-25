@@ -125,6 +125,22 @@ export async function createSignupPreapproval(opts: {
   })
 }
 
+// Cancela un preapproval en MP — usado por "dar de baja" desde
+// /perfil/plan (ver /api/billing/cancel, portado de Panel Admin el
+// 2026-08-25 — hasta esa fecha esta función no existía acá, PlanSelector.tsx
+// le pegaba a una ruta que no existía y tiraba 404 en vez de JSON).
+// Una vez cancelado, MP no permite reactivarlo — para volver hace falta un
+// preapproval nuevo con una autorización nueva.
+export async function cancelPreapproval(id: string): Promise<Preapproval> {
+  const res = await fetch(`${MP_API}/preapproval/${id}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'cancelled' }),
+  })
+  if (!res.ok) throw new Error(`[billing] MP cancelar preapproval falló (${res.status}): ${await res.text()}`)
+  return res.json()
+}
+
 export function billingEnabled(): boolean {
   return process.env.BILLING_ENABLED === 'true'
 }
