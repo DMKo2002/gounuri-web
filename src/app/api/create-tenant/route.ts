@@ -27,15 +27,28 @@ export async function POST(req: Request) {
     // (panel-admin/src/app/dashboard/contacto/page.tsx), para que ya estén
     // cargados cuando el dueño entra por primera vez a su panel.
     whatsapp, instagram, facebook, tiktok, direccion, direccionDespacho,
+    // Paso "pagos" del onboarding (Figma "Registracion 4", 2026-08-25) —
+    // mismas columnas que usa Panel Admin > Pagos y Finanzas
+    // (panel-admin/src/app/dashboard/pagos/page.tsx: mp_enabled/
+    // transfer_enabled/cash_enabled). Antes acá mp_enabled/transfer_enabled
+    // quedaban hardcodeados en `true` sin que el dueño hubiera elegido nada
+    // — ahora reflejan lo que tildó de verdad en ese paso.
+    mpEnabled, transferEnabled, cashEnabled,
   } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
 
   const service = createServiceClient()
 
-  // Si ya tiene tenant, no crear otro (evita duplicados por doble submit)
+  // Si ya tiene tenant, no crear otro (evita duplicados por doble submit) —
+  // igual busca slug/domain para poder devolver storeUrl como en el camino
+  // normal (el llamador de /onboarding lo necesita para redirigir).
   const { data: _existing } = await service.from('users').select('tenant_id').eq('id', user.id).limit(1)
   if (_existing?.[0]?.tenant_id) {
-    return NextResponse.json({ ok: true, tenantId: _existing[0].tenant_id, existing: true })
+    const existingId = _existing[0].tenant_id
+    const { data: _existingTenant } = await service.from('tenants').select('slug, domain').eq('id', existingId).limit(1)
+    const et = _existingTenant?.[0]
+    const existingStoreUrl = et ? (et.domain ? `https://${et.domain}` : `https://${et.slug}.gounuri.com`) : null
+    return NextResponse.json({ ok: true, tenantId: existingId, existing: true, storeUrl: existingStoreUrl })
   }
 
   // El slug es literalmente {slug}.gounuri.com \u2014 antes ac\u00e1 se le pegaba
@@ -103,8 +116,9 @@ export async function POST(req: Request) {
         { key: 'talle', label: 'Talle', type: 'select', options: ['XS','S','M','L','XL','XXL'] },
         { key: 'color', label: 'Color', type: 'text' },
       ],
-      mp_enabled: true,
-      transfer_enabled: true,
+      mp_enabled: Boolean(mpEnabled),
+      transfer_enabled: Boolean(transferEnabled),
+      cash_enabled: Boolean(cashEnabled),
       pickup_enabled: true,
       // Ver comentario más arriba: mismos nombres de columna que
       // panel-admin/src/app/dashboard/contacto/page.tsx. "direccion" es la
@@ -192,5 +206,12 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, tenantId: tenant.id })
+  // storeUrl: para que /onboarding pueda redirigir directo a la tienda
+  // recién creada al terminar "Probar Gratis" (pedido 2026-08-25: "el boton
+  // probar gratis... lleva a mi tienda"), sin tener que rearmar el slug del
+  // lado del cliente (que podría diferir del nombre tal cual lo escribió el
+  // dueño — ver la normalización más arriba).
+  const storeUrl = tenant.domain ? `https://${tenant.domain}` : `https://${slug}.gounuri.com`
+
+  return NextResponse.json({ ok: true, tenantId: tenant.id, storeUrl })
 }

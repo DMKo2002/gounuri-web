@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     name, domain, template,
     // Mismos nombres/columnas que /api/create-tenant — ver ese archivo.
     whatsapp, instagram, facebook, tiktok, direccion, direccionDespacho,
+    mpEnabled, transferEnabled, cashEnabled,
   } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
 
@@ -94,8 +95,9 @@ export async function POST(req: Request) {
           { key: 'talle', label: 'Talle', type: 'select', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
           { key: 'color', label: 'Color', type: 'text' },
         ],
-        mp_enabled: true,
-        transfer_enabled: true,
+        mp_enabled: Boolean(mpEnabled),
+        transfer_enabled: Boolean(transferEnabled),
+        cash_enabled: Boolean(cashEnabled),
         pickup_enabled: true,
         whatsapp_number: whatsapp?.trim?.() || null,
         instagram_url: instagram?.trim?.() || null,
@@ -115,6 +117,9 @@ export async function POST(req: Request) {
         tiktok_url: tiktok?.trim?.() || null,
         pickup_address: direccion?.trim?.() || null,
         store_address: direccionDespacho?.trim?.() || null,
+        mp_enabled: Boolean(mpEnabled),
+        transfer_enabled: Boolean(transferEnabled),
+        cash_enabled: Boolean(cashEnabled),
       })
       .eq('tenant_id', tenantId)
   }

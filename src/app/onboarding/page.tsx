@@ -14,7 +14,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowRight, Check, ExternalLink, Loader2, Wallet } from 'lucide-react'
+import { ArrowRight, Check, ExternalLink, Loader2, Wallet, XCircle } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Pricing from '@/components/Pricing'
 import SideStrip from '@/components/SideStrip'
@@ -25,7 +25,7 @@ import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 import { priceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 
-type Step = 'nombre' | 'template' | 'configurar' | 'productos' | 'escalar' | 'plan' | 'pago'
+type Step = 'nombre' | 'template' | 'configurar' | 'pagos' | 'escalar' | 'plan' | 'pago'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -35,7 +35,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // /onboarding. Sigue siendo la misma página/estado de siempre (no son rutas
 // separadas) — solo se sincroniza la URL con `router.push` cada vez que
 // cambia el paso.
-const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar', 'plan', 'pago']
+const STEP_ORDER: Step[] = ['nombre', 'template', 'configurar', 'pagos', 'escalar', 'plan', 'pago']
 function stepParam(step: Step): string {
   return String(STEP_ORDER.indexOf(step) + 1).padStart(2, '0')
 }
@@ -59,7 +59,7 @@ const ROADMAP_STEPS = [
   'Bienvenido',
   'Seleccioná un Template',
   'Configurá tu Tienda',
-  'Cargá tus productos',
+  'Preparar pagos',
   'Escalá con tus Ventas',
 ]
 // Mismo orden que ROADMAP_STEPS de arriba — a qué Step navega cada punto
@@ -69,7 +69,7 @@ const ROADMAP_STEPS = [
 // a propósito: goToStep no persiste lo ya cargado en pasos anteriores, así
 // que saltar hacia adelante mostraría un paso sin los datos de los que se
 // saltearon.
-const ROADMAP_STEP_TARGETS: Step[] = ['nombre', 'template', 'configurar', 'productos', 'escalar']
+const ROADMAP_STEP_TARGETS: Step[] = ['nombre', 'template', 'configurar', 'pagos', 'escalar']
 // Separación real entre puntos en el asset "Puntos secuenciales.svg"
 // (círculos en y=9.5, 142.5, 275.5, 408.5, 541.5 → 133px parejos).
 const ROADMAP_ROW_GAP = 133
@@ -249,6 +249,73 @@ function TemplateCard({
   )
 }
 
+// ── Paso "pagos" (Figma "Registracion 4", node 1040:445) — switches de
+//    método de cobro. Toggle/ToggleRow adaptados del mismo componente que
+//    usa Panel Admin (panel-admin/src/components/Toggle.tsx) — mismo
+//    markup, pero en bg-zinc-900 (no hay token "primary" en este proyecto,
+//    acá el color de marca es directamente zinc-900/negro) y sin la
+//    dependencia de `clsx` (este archivo no la usa en ningún otro lado). ──
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1 ${
+        checked ? 'bg-zinc-900' : 'bg-zinc-200'
+      }`}
+    >
+      <span
+        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-4' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  )
+}
+
+function ToggleRow({
+  label, desc, checked, onChange,
+}: {
+  label: string
+  desc: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm text-zinc-800">{label}</p>
+        <p className="mt-0.5 text-xs text-zinc-400">{desc}</p>
+      </div>
+      <Toggle checked={checked} onChange={onChange} />
+    </div>
+  )
+}
+
+// Tarjeta blanca por método de cobro (Figma: 3 tarjetas separadas, no una
+// sola tarjeta gris como la de "Contacto y redes sociales" del paso
+// anterior) — `estado` es el badge opcional de la esquina superior derecha
+// (solo lo usa MercadoPago, "No conectado").
+function PagoCard({
+  titulo, estado, children,
+}: {
+  titulo: string
+  estado?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <div className="w-full space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-700">{titulo}</h3>
+        {estado}
+      </div>
+      {children}
+    </div>
+  )
+}
+
 // ── Página ────────────────────────────────────────────────────────────────────
 // useSearchParams() (para precargar el nombre de tienda que viene del link de
 // /auth/verificar) exige un boundary de Suspense en Next 14 App Router o el
@@ -290,22 +357,36 @@ function OnboardingContent() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [slideIndex, setSlideIndex] = useState(0)
-  // Paso "Configurá tu Tienda" (2026-08-18): se partió en 2 pantallas dentro
-  // del mismo Step/roadmap — 0 = formulario de Contacto y Redes, 1 =
-  // recomendaciones (informativa, como antes). Los campos de contacto se
+  // Paso "Configurá tu Tienda" (2026-08-18): un único formulario de Contacto
+  // y Redes (la 2da sub-pantalla de "recomendaciones" informativa se sacó
+  // el 2026-08-25 — ver comentario del paso "pagos" más abajo, que la
+  // reemplaza junto con "Cargá tus productos"). Los campos de contacto se
   // guardan literalmente con los mismos nombres de columna que usa la
   // pantalla de Contacto y Redes real del Panel Admin (store_config:
   // whatsapp_number/instagram_url/facebook_url/tiktok_url/pickup_address/
   // store_address — ver panel-admin/src/app/dashboard/contacto/page.tsx),
   // y se mandan en el POST a /api/create-tenant para que quede precargado
   // ahí mismo desde el momento en que se crea la tienda.
-  const [configStep, setConfigStep] = useState<0 | 1>(0)
   const [whatsapp, setWhatsapp] = useState('')
   const [instagram, setInstagram] = useState('')
   const [facebook, setFacebook] = useState('')
   const [tiktok, setTiktok] = useState('')
   const [direccion, setDireccion] = useState('')
   const [direccionDespacho, setDireccionDespacho] = useState('')
+
+  // Paso "pagos" (Figma "Registracion 4", node 1040:445 — reemplaza a
+  // "Recomendaciones" y "Cargá tus productos", sacados el 2026-08-25):
+  // switches reales de métodos de cobro, mismas columnas que usa Panel
+  // Admin > Pagos y Finanzas (store_config: mp_enabled/transfer_enabled/
+  // cash_enabled — ver panel-admin/src/app/dashboard/pagos/page.tsx). Se
+  // mandan en el mismo POST a /api/create-tenant que whatsapp/instagram/etc,
+  // así que ya quedan cargados cuando el dueño entra por primera vez a su
+  // panel. Arrancan en false (igual que el Figma): el dueño tiene que elegir
+  // a propósito qué método de cobro activar, no queda ninguno prendido por
+  // default sin que lo haya decidido.
+  const [mpEnabled, setMpEnabled] = useState(false)
+  const [transferEnabled, setTransferEnabled] = useState(false)
+  const [cashEnabled, setCashEnabled] = useState(false)
 
   // Ver comentario en el useEffect que lo consulta (/api/mi-estado-onboarding)
   const [isPlaceholderPaid, setIsPlaceholderPaid] = useState(false)
@@ -341,13 +422,8 @@ function OnboardingContent() {
   }
 
   // Igual que goToStep, pero para los clicks en los puntos del roadmap
-  // (RoadmapPanel.onStepClick): si el destino es "configurar", siempre
-  // vuelve a la 1ra de sus 2 sub-pantallas (el formulario de Contacto y
-  // Redes) — si no, saltar al punto del roadmap dejaría a alguien que ya
-  // había avanzado a la sub-pantalla de recomendaciones sin forma simple de
-  // volver a ver/editar el formulario.
+  // (RoadmapPanel.onStepClick).
   function handleStepClick(target: Step) {
-    if (target === 'configurar') setConfigStep(0)
     goToStep(target)
   }
 
@@ -473,11 +549,15 @@ function OnboardingContent() {
   }
 
   // POST a /api/create-tenant, factorizado para poder usarse tanto desde el
-  // botón directo de "prueba gratis" (handleFinalSubmit, que redirige a
-  // /perfil) como desde el selector de plan real (handleSelectPlan, que en
-  // cambio sigue al paso "Pago" sin salir de /onboarding). Devuelve
-  // true/false para que cada llamador decida qué hacer después.
-  async function createTenant(planId: PlanId): Promise<boolean> {
+  // botón directo de "prueba gratis" (handleFinalSubmit, que redirige
+  // directo a la tienda recién creada) como desde el selector de plan real
+  // (handleSelectPlan, que en cambio sigue al paso "Pago" sin salir de
+  // /onboarding). Devuelve la URL de la tienda (string) si se creó bien, o
+  // null si falló — así cada llamador decide qué hacer después sin tener
+  // que rearmar la URL por su cuenta (el slug real puede diferir del
+  // nombre tal cual lo escribió el dueño, ver normalización en el propio
+  // endpoint).
+  async function createTenant(planId: PlanId): Promise<string | null> {
     setSaving(true)
     setError(null)
     const res = await fetch('/api/create-tenant', {
@@ -494,6 +574,12 @@ function OnboardingContent() {
         tiktok: tiktok.trim() || null,
         direccion: direccion.trim() || null,
         direccionDespacho: direccionDespacho.trim() || null,
+        // Paso "pagos" (Figma "Registracion 4") — mismas columnas que Panel
+        // Admin > Pagos y Finanzas (store_config: mp_enabled/
+        // transfer_enabled/cash_enabled).
+        mpEnabled,
+        transferEnabled,
+        cashEnabled,
       }),
     })
     const json = await res.json().catch(() => ({}))
@@ -503,18 +589,18 @@ function OnboardingContent() {
       // 409 = nombre ya en uso — hay que volver al paso 1 para que lo cambien,
       // no tiene sentido dejarlos varados viendo el error.
       if (res.status === 409) goToStep('nombre')
-      return false
+      return null
     }
-    return true
+    return json.storeUrl ?? null
   }
 
   async function handleFinalSubmit() {
-    const ok = await createTenant(plan)
-    if (!ok) return
-    // Tienda creada — quedarse en gounuri.com (Mi cuenta), no saltar a Panel
-    // Admin de una. La sesión ya está en las cookies de este mismo dominio,
-    // no hace falta ningún handoff para esto.
-    window.location.href = '/perfil'
+    const storeUrl = await createTenant(plan)
+    if (!storeUrl) return
+    // Tienda creada — va directo a la tienda recién creada (pedido
+    // 2026-08-25: "el boton probar gratis... lleva a mi tienda"), no a
+    // /perfil ("Mi cuenta") como antes.
+    window.location.href = storeUrl
   }
 
   // Para quien ya pagó un plan desde la landing sin tener tienda todavía
@@ -538,6 +624,9 @@ function OnboardingContent() {
         tiktok: tiktok.trim() || null,
         direccion: direccion.trim() || null,
         direccionDespacho: direccionDespacho.trim() || null,
+        mpEnabled,
+        transferEnabled,
+        cashEnabled,
       }),
     })
     const json = await res.json().catch(() => ({}))
@@ -558,8 +647,8 @@ function OnboardingContent() {
     setPlan(planId)
     setBillingTerm(term)
     if (tenantReady) { goToStep('pago'); return }
-    const ok = await createTenant(planId)
-    if (!ok) return
+    const storeUrl = await createTenant(planId)
+    if (!storeUrl) return
     setTenantReady(true)
     goToStep('pago')
   }
@@ -858,7 +947,7 @@ function OnboardingContent() {
                     saca de este paso) — mismo patrón que el paso 1. */}
                 <button
                   type="button"
-                  onClick={() => { setConfigStep(0); goToStep('configurar') }}
+                  onClick={() => goToStep('configurar')}
                   className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
                 >
                   Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
@@ -896,17 +985,18 @@ function OnboardingContent() {
                 ancho, así que el resultado queda centrado respecto a toda
                 la pantalla, franja incluida. */}
             <div className="flex flex-1 flex-col justify-center">
-            {configStep === 0 ? (
-              // Centrado respecto al lienzo gris completo y con ancho fluido
-              // (mx-auto + max-w, no un ancho fijo pegado a la izquierda) —
-              // pedido 2026-08-18: "pensá que es para ancho total del lienzo,
-              // para que escale y se adapte a distintos dispositivos". La
-              // tarjeta interna pasa de max-w-xl a w-full para ocupar todo
-              // este contenedor ya centrado, en vez de quedar angosta. El
-              // fondo de la tarjeta pasa de blanco al mismo gris del lienzo
-              // (#f2f2f2) — pedido 2026-08-18 — los inputs individuales
-              // siguen en blanco para que se sigan distinguiendo como
-              // campos editables.
+              {/* Centrado respecto al lienzo gris completo y con ancho fluido
+                  (mx-auto + max-w, no un ancho fijo pegado a la izquierda) —
+                  pedido 2026-08-18: "pensá que es para ancho total del lienzo,
+                  para que escale y se adapte a distintos dispositivos". La
+                  tarjeta interna pasa de max-w-xl a w-full para ocupar todo
+                  este contenedor ya centrado, en vez de quedar angosta. El
+                  fondo de la tarjeta pasa de blanco al mismo gris del lienzo
+                  (#f2f2f2) — pedido 2026-08-18 — los inputs individuales
+                  siguen en blanco para que se sigan distinguiendo como
+                  campos editables. Única sub-pantalla de este paso desde
+                  2026-08-25 (antes había una 2da de "recomendaciones",
+                  sacada). */}
               <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
                 <div className="pl-5">
                   {/* Título y bajada según el Figma "Registracion 3" (pedido
@@ -991,62 +1081,6 @@ function OnboardingContent() {
                   </div>
                 </section>
               </div>
-            ) : (
-              // Centrado en X respecto al lienzo, igual que la pantalla 1
-              // (pedido 2026-08-18) — antes quedaba pegado a la izquierda.
-              <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
-                <button
-                  type="button"
-                  onClick={() => setConfigStep(0)}
-                  className="text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
-                >
-                  ← Volver
-                </button>
-
-                <h1 className="text-2xl font-bold">Te recomendamos algunas configuraciones importantes que no pueden faltar en tu tienda.</h1>
-
-                <section>
-                  <h2 className="text-2xl font-bold">Cobranzas &amp; Finanzas</h2>
-                  <p className="mt-3 leading-relaxed">Tu tienda ofrece 3 formas de cobro:</p>
-                  <ul className="ml-6 list-disc leading-relaxed">
-                    <li>Mercado Pago</li>
-                    <li>Transferencia bancaria</li>
-                    <li>Efectivo en el local</li>
-                  </ul>
-                  <p className="mt-3 leading-relaxed">
-                    <strong className="font-bold italic">Debés habilitar al menos una forma de cobro</strong> para que tus clientes puedan finalizar la compra.
-                  </p>
-                </section>
-
-                <section>
-                  <h2 className="text-2xl font-bold">Envíos</h2>
-                  <p className="mt-3 leading-relaxed">
-                    Podés habilitar distintos tipos de envío según las necesidades de tu tienda, como envío a domicilio, retiro en local u otras modalidades disponibles.
-                  </p>
-                </section>
-
-                <section>
-                  <h2 className="text-2xl font-bold">Catálogo</h2>
-                  <p className="mt-3 leading-relaxed">
-                    Esta sección es para definir las <strong className="font-bold">variantes</strong> y <strong className="font-bold">atributos</strong> de tus productos, como talle, color, tamaño u otras características, y establecer el <strong className="font-bold">formato</strong> y las dimensiones recomendadas para las imágenes de producto.
-                  </p>
-                </section>
-
-                <section>
-                  <h2 className="text-2xl font-bold">Apariencia</h2>
-                  <p className="mt-3 leading-relaxed">
-                    Podés personalizar tu landing page a tu gusto, cambiando imágenes, logotipo y otros elementos visuales con solo <strong className="font-bold">arrastrar y soltar</strong> para adaptarlos a la identidad de tu marca.
-                  </p>
-                </section>
-
-                <section>
-                  <h2 className="text-2xl font-bold">Para Escalar</h2>
-                  <p className="mt-3 leading-relaxed">
-                    Para campañas publicitarias en Meta, Google Ads o TikTok, podés instalar los píxeles de seguimiento ingresando el Meta Pixel ID, Google Ads ID o TikTok Pixel ID. También podés vincular Google Analytics ingresando tu Measurement ID.
-                  </p>
-                </section>
-              </div>
-            )}
 
             {/* Botón "Continuar" simple para todos los tamaños de pantalla —
                 ya no el botón circular SVG del panel de roadmap, que se
@@ -1070,11 +1104,13 @@ function OnboardingContent() {
                 botón quede alineado con el borde de los CAMPOS, no con el
                 borde exterior de la tarjeta — se veía más ancho que el
                 formulario (pedido 2026-08-25, con captura: "achicar el
-                ancho del boton"). */}
+                ancho del boton"). Ya no hay 2da sub-pantalla de
+                "recomendaciones" (sacada 2026-08-25), así que este botón
+                pasa directo al paso "pagos". */}
             <div className="mx-auto mt-3 w-full max-w-3xl px-5">
               <button
                 type="button"
-                onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
+                onClick={() => goToStep('pagos')}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar <ArrowRight size={16} />
@@ -1087,31 +1123,86 @@ function OnboardingContent() {
         </div>
       )}
 
-      {/* ── PASO 3.5: Cargá tus productos (diseño Figma "Registracion 4") —
-          pantalla informativa (imagen ilustrativa de la tienda en
-          tablet/celular), todavía sin carga real de productos — esa carga
-          en sí se hace después, desde el Panel Admin. ── */}
-      {step === 'productos' && (
-        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-[#f2f2f2]">
-          <div className="relative w-full lg:w-[68.5%]">
-            {/* eslint-disable-next-line @next/next/no-img-element -- imagen ilustrativa exportada de Figma, no dato dinámico */}
-            <img
-              src="/img/onboarding/onboarding-04-productos.jpg"
-              alt="Vista previa de tu tienda en tablet y celular"
-              className="h-full w-full object-cover object-center"
-            />
-            {/* Botón visible en mobile/tablet, donde no hay panel derecho
-                para alojar el botón circular de "Siguiente". */}
-            <button
-              type="button"
-              onClick={() => goToStep('escalar')}
-              className="absolute inset-x-6 bottom-6 flex items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 sm:inset-x-10 lg:hidden"
-            >
-              Continuar <ArrowRight size={16} />
-            </button>
+      {/* ── PASO 3.5: Preparar pagos (diseño Figma "Registracion 4", node
+          1040:445) — reemplaza a "Recomendaciones" (2da sub-pantalla de
+          "Configurá tu Tienda") y a "Cargá tus productos", ambas sacadas
+          el 2026-08-25 por pedido puntual ("sacar estas dos paginas").
+          Switches reales de métodos de cobro (MercadoPago, Transferencia,
+          Efectivo) — mismas columnas de store_config que usa Panel Admin >
+          Pagos y Finanzas, se mandan en el mismo POST a /api/create-tenant
+          que el resto de los datos del onboarding. Mismo layout que el
+          paso "Configurá tu Tienda" de arriba (panel gris + tarjetas +
+          botón Continuar ancho de campo + SideStrip), no el diseño de
+          Figma tal cual (que trae un botón "Siguiente" chico en píldora —
+          pedido puntual 2026-08-25: "solo cambia el boton a continuar a lo
+          largo del ancho del campo", igual que el resto del onboarding). ── */}
+      {step === 'pagos' && (
+        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:px-14 lg:py-14 xl:pl-[calc(3.5rem+8.9%)]">
+            {/* Mismo truco de centrado + compensación del SideStrip que el
+                paso "Configurá tu Tienda" (ver comentarios ahí) — layout
+                idéntico, cambia solo el contenido. */}
+            <div className="flex flex-1 flex-col justify-center">
+              <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
+                <div className="pl-5">
+                  <h1 className="text-3xl font-extrabold leading-[1.15] text-zinc-900 sm:text-4xl">Prepará tu tienda para recibir pagos</h1>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Para que tu carrito empiece a funcionar, necesitás activar al menos un método de cobro. Elegí uno ahora y terminá de configurar los detalles de tu cuenta más adelante en Cobranzas y Finanzas.
+                  </p>
+                </div>
+
+                <section className="space-y-4">
+                  <PagoCard
+                    titulo="MercadoPago"
+                    estado={<span className="flex items-center gap-1.5 text-xs text-zinc-400"><XCircle size={13} /> No conectado</span>}
+                  >
+                    <ToggleRow
+                      label="Habilitar MercadoPago"
+                      desc="Los clientes podrán pagar con tarjeta, débito y QR"
+                      checked={mpEnabled}
+                      onChange={setMpEnabled}
+                    />
+                  </PagoCard>
+
+                  <PagoCard titulo="Transferencia bancaria">
+                    <ToggleRow
+                      label="Habilitar transferencia"
+                      desc="El cliente transfiere y vos confirmás el pago manualmente"
+                      checked={transferEnabled}
+                      onChange={setTransferEnabled}
+                    />
+                  </PagoCard>
+
+                  <PagoCard titulo="Efectivo en el local">
+                    <ToggleRow
+                      label="Habilitar pago en efectivo"
+                      desc="El cliente paga al retirar o recibir el pedido — vos confirmás el cobro manualmente"
+                      checked={cashEnabled}
+                      onChange={setCashEnabled}
+                    />
+                    <p className="mt-3 text-xs text-zinc-400">
+                      Usa la dirección de retiro que cargaste en Contacto y Redes — no hace falta configurar nada más acá.
+                    </p>
+                  </PagoCard>
+                </section>
+              </div>
+
+              {/* Mismo criterio de ancho/espaciado que el botón del paso
+                  "Configurá tu Tienda" (pedido 2026-08-25: "solo cambia el
+                  boton a continuar a lo largo del ancho del campo" — no el
+                  botón "Siguiente" en píldora del Figma). */}
+              <div className="mx-auto mt-3 w-full max-w-3xl px-5">
+                <button
+                  type="button"
+                  onClick={() => goToStep('escalar')}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                >
+                  Continuar <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <RoadmapPanel activeIndex={3} color="#C9B67C" onNext={() => goToStep('escalar')} onStepClick={handleStepClick} />
           <SideStrip color="#C9B67C" />
         </div>
       )}

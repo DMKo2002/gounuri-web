@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { isSuperAdmin } from '@/lib/superadmin'
 import { SignOutButton, BajaButton } from './PerfilActions'
-import SetupPopup from './SetupPopup'
 import PanelHandoffLink from '@/components/PanelHandoffLink'
 
 export const dynamic = 'force-dynamic'
@@ -71,20 +70,11 @@ export default async function PerfilPage() {
 
   const { data: _tenants } = await service
     .from('tenants')
-    .select('name, slug, domain, plan, plan_status, template, created_at, mp_preapproval_id, cbu_popup_dismissed_at')
+    .select('name, slug, domain, plan, plan_status, template, created_at, mp_preapproval_id')
     .eq('id', tenantId)
     .limit(1)
   const tenant = _tenants?.[0]
   if (!tenant) return <main className="p-8 text-zinc-500">No se encontró la tienda.</main>
-
-  const { data: _configs } = await service
-    .from('store_config')
-    .select('transfer_cbu, transfer_alias')
-    .eq('tenant_id', tenantId)
-    .limit(1)
-  const config = _configs?.[0]
-  const tieneCbu = !!(config?.transfer_cbu || config?.transfer_alias)
-  const mostrarPopup = !tieneCbu && !tenant.cbu_popup_dismissed_at
 
   const tiendaUrl = tenant.domain ? `https://${tenant.domain}` : `https://${tenant.slug}.gounuri.com`
   const planNombre = PLAN_NOMBRES[tenant.plan ?? ''] ?? 'Business'
@@ -93,7 +83,6 @@ export default async function PerfilPage() {
 
   return (
     <main className="min-h-screen bg-zinc-50">
-      {mostrarPopup && <SetupPopup show tenantId={tenantId} />}
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-6">
           <Link href="/" className="text-lg font-semibold tracking-tight text-zinc-900">
@@ -192,14 +181,17 @@ export default async function PerfilPage() {
                 Editar
               </Link>
             </Row>
+            {/* Antes editaba acá mismo en /perfil/cobros — se sacó (pedido
+                2026-08-25) junto con la pantalla de "recomendaciones" del
+                onboarding: los switches de MercadoPago/Transferencia/
+                Efectivo ya se eligen durante el onboarding (paso "pagos") y
+                el CBU/alias, credenciales de MP, etc. se terminan de
+                configurar en Panel Admin > Pagos y Finanzas. */}
             <Row label="Cómo cobrás">
-              <span className="text-zinc-500 text-xs">{tieneCbu ? 'CBU/alias cargado' : 'Sin CBU/alias'}</span>
-              <Link
-                href="/perfil/cobros"
-                className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600"
-              >
+              <span className="text-zinc-500 text-xs">MercadoPago, transferencia, efectivo</span>
+              <PanelHandoffLink className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600">
                 Editar
-              </Link>
+              </PanelHandoffLink>
             </Row>
             <Row label="Tienda creada">
               <span className="text-zinc-900">
