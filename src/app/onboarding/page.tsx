@@ -909,8 +909,12 @@ function OnboardingContent() {
                 </div>
 
                 <section>
-                  <h2 className="text-2xl font-bold">Contacto y Redes</h2>
-                  <div className="mt-4 w-full space-y-4 rounded-xl border border-zinc-200 bg-[#f2f2f2] p-5 shadow-sm">
+                  {/* Se saca el título grande "Contacto y Redes" (pedido
+                      2026-08-24) — quedaba redundante con el título de
+                      página "Datos de la tienda" de arriba; el h3 de adentro
+                      de la tarjeta ("Contacto y redes sociales") ya cumple
+                      esa función. */}
+                  <div className="w-full space-y-4 rounded-xl border border-zinc-200 bg-[#f2f2f2] p-5 shadow-sm">
                     <h3 className="text-sm font-semibold text-zinc-700">Contacto y redes sociales</h3>
                     <div className="space-y-3">
                       <div>
@@ -1036,12 +1040,13 @@ function OnboardingContent() {
                 saca de este paso (pedido 2026-08-24, mismo criterio que los
                 pasos 1 y 2). Mismo max-w-3xl + mx-auto que la tarjeta del
                 formulario de arriba (pedido 2026-08-24) para que quede del
-                mismo ancho que los campos, no del ancho completo del panel. */}
+                mismo ancho que los campos, no del ancho completo del panel.
+                mt-4 en vez de mt-8 para subirlo un poco (pedido 2026-08-24). */}
             <div className="mx-auto w-full max-w-3xl">
               <button
                 type="button"
                 onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar <ArrowRight size={16} />
               </button>
