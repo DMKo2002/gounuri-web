@@ -13,8 +13,8 @@ const LINKS = [
   { href: '/#features', label: 'FEATURES' },
   { href: '/#como-funciona', label: 'COMO FUNCIONA' },
   { href: '/templates', label: 'TEMPLATE' },
-  { href: '/demo', label: 'DEMO' },
   { href: '/#planes', label: 'PLANES' },
+  { href: '/#contacto', label: 'CONTACTO' },
   { href: '/migracion', label: 'MIGRACION' },
 ]
 

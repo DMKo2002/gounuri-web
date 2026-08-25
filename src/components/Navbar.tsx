@@ -29,7 +29,6 @@ export default function Navbar() {
         <li><a href="/#features">FEATURES</a></li>
         <li><a href="/#como-funciona">COMO FUNCIONA</a></li>
         <li><Link href="/templates">TEMPLATE</Link></li>
-        <li><Link href="/demo">DEMO</Link></li>
         <li><a href="/#planes">PLANES</a></li>
         <li><a href="/#contacto">CONTACTO</a></li>
         <li><Link href="/migracion">MIGRACION</Link></li>
