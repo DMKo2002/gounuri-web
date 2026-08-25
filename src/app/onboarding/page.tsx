@@ -898,11 +898,15 @@ function OnboardingContent() {
               // siguen en blanco para que se sigan distinguiendo como
               // campos editables.
               <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
-                <div>
+                <div className="pl-5">
                   {/* Título y bajada según el Figma "Registracion 3" (pedido
                       2026-08-24) — con acentos correctos: "Configurá",
-                      "serán", "público". */}
-                  <h1 className="text-2xl font-bold">Datos de la tienda</h1>
+                      "serán", "público". Mismo tamaño que "Seleccioná un
+                      template" del paso 2 (pedido 2026-08-25). pl-5: para
+                      que el borde izquierdo del título quede alineado con
+                      el de los campos de más abajo, que están corridos por
+                      el padding p-5 de la tarjeta (pedido 2026-08-25). */}
+                  <h1 className="text-3xl font-extrabold leading-[1.15] text-zinc-900 sm:text-4xl">Datos de la tienda</h1>
                   <p className="mt-1 text-sm text-zinc-500">
                     Configurá los datos que serán visibles para el público que visite tu sitio.
                   </p>
@@ -1041,12 +1045,15 @@ function OnboardingContent() {
                 pasos 1 y 2). Mismo max-w-3xl + mx-auto que la tarjeta del
                 formulario de arriba (pedido 2026-08-24) para que quede del
                 mismo ancho que los campos, no del ancho completo del panel.
-                mt-4 en vez de mt-8 para subirlo un poco (pedido 2026-08-24). */}
+                mt-3 (antes mt-8, luego mt-4): mismo espacio que separa cada
+                campo dentro del formulario (space-y-3), para que quede
+                equidistante en vez de con más aire que el resto (pedido
+                2026-08-25). */}
             <div className="mx-auto w-full max-w-3xl">
               <button
                 type="button"
                 onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar <ArrowRight size={16} />
               </button>
