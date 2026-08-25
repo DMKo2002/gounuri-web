@@ -1204,11 +1204,18 @@ function OnboardingContent() {
                 </section>
               </div>
 
-              {/* Mismo criterio de ancho/espaciado que el botón del paso
-                  "Configurá tu Tienda" (pedido 2026-08-25: "solo cambia el
-                  boton a continuar a lo largo del ancho del campo" — no el
-                  botón "Siguiente" en píldora del Figma). */}
-              <div className="mx-auto mt-3 w-full max-w-3xl px-5">
+              {/* Botón simple, no el "Siguiente" en píldora del Figma
+                  (pedido 2026-08-25: "solo cambia el boton a continuar a lo
+                  largo del ancho del campo"). Acá NO va el px-5 que sí lleva
+                  el botón del paso "Configurá tu Tienda": ahí el ancho a
+                  igualar era el de los INPUTS, inset por el padding propio
+                  de la única tarjeta grande de ese paso. Acá cada tarjeta de
+                  pago es su propia unidad — el borde exterior de las 3
+                  tarjetas YA coincide con el ancho del contenedor (max-w-3xl,
+                  sin padding extra), así que el botón alinea con ESE borde
+                  para no quedar angosto respecto a ellas (pedido 2026-08-25,
+                  con captura: el botón quedaba corrido para adentro). */}
+              <div className="mx-auto mt-3 w-full max-w-3xl">
                 <button
                   type="button"
                   onClick={() => goToStep('escalar')}
