@@ -184,9 +184,24 @@ function TemplateCard({
 }) {
   const url = demoUrl(slug)
 
+  // Toda la tarjeta es clickeable para seleccionar el template (pedido
+  // 2026-08-25: "puede que algún usuario no encuentre el botón de
+  // seleccionar fácilmente") — antes solo el círculo chico de la esquina
+  // inferior derecha lo hacía. El link "Ver demo" (esquina superior) sigue
+  // con su propio stopPropagation para poder abrir la demo sin seleccionar
+  // el template de paso.
+  function handleCardKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() }
+  }
+
   return (
     <div
-      className={`group flex flex-col overflow-hidden rounded-xl border-2 bg-white transition-all ${
+      onClick={onSelect}
+      onKeyDown={handleCardKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      className={`group flex cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white transition-all ${
         selected ? 'border-zinc-900 ring-2 ring-zinc-300' : 'border-zinc-200 hover:border-zinc-400'
       }`}
     >
@@ -229,7 +244,7 @@ function TemplateCard({
             cuando la descripción era larga. */}
         <button
           type="button"
-          onClick={onSelect}
+          onClick={e => { e.stopPropagation(); onSelect() }}
           title={selected ? 'Seleccionado' : 'Seleccionar'}
           aria-pressed={selected}
           className={`absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
