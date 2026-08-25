@@ -808,21 +808,30 @@ function OnboardingContent() {
         </div>
       )}
 
-      {/* ── PASO 2: Template (diseño Figma "Registracion 2") ── */}
+      {/* ── PASO 2: Template (diseño Figma "Registracion 2" actualizado,
+          pedido 2026-08-24) — la franja de dos colores pasa al lado
+          izquierdo (antes derecha), el panel de roadmap con el botón
+          circular SVG se saca del todo para este paso puntual, los 6
+          templates quedan centrados con un título arriba, y el botón para
+          continuar es el simple de siempre (no SVG), visible en todos los
+          tamaños de pantalla. ── */}
       {step === 'template' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          {/* Panel de templates — grilla 3×2 con las tarjetas reales (misma
-              captura y textos que /templates), fondo gris clarito como en
-              el Figma. Ancho en % siguiendo la misma proporción del lienzo
-              (1184 de 1728). */}
-          <div className="flex w-full flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
-            {/* Grilla centrada en Y respecto al panel completo (pedido
-                2026-08-18) — mismo truco que el "sandwiche" del paso 1:
-                flex-1 + justify-center en vez de padding fijo, así el
-                centro de las tarjetas queda alineado con el botón
-                "Siguiente" (que sí está centrado en top-1/2) sea cual sea
-                el alto de pantalla. */}
-            <div className="flex flex-1 flex-col justify-center">
+          {/* Franja de dos colores — ahora primera en el flujo (antes iba
+              al final) para que quede pegada al borde izquierdo. */}
+          <SideStrip color="#B9C96F" />
+
+          {/* Panel de templates — ocupa todo el ancho que deja la franja
+              (ya no comparte espacio con el panel de roadmap de la
+              derecha) y centra la grilla de 6 tarjetas dentro suyo. */}
+          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+            <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
+              Seleccioná un template
+            </h1>
+
+            {/* Grilla centrada en X (mx-auto + max-width) y en Y (flex-1 +
+                justify-center) respecto al panel completo. */}
+            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
               {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
                   vez de `transform: scale()` porque zoom sí reduce el tamaño
                   real de la caja (el grid recalcula el layout), mientras que
@@ -839,20 +848,18 @@ function OnboardingContent() {
                 ))}
               </div>
 
-              {/* Botón visible en mobile/tablet, donde no hay panel derecho
-                  para alojar el botón circular de "Siguiente". */}
+              {/* Botón "Continuar" simple para todos los tamaños de pantalla
+                  (ya no el botón circular SVG del panel de roadmap, que se
+                  saca de este paso) — mismo patrón que el paso 1. */}
               <button
                 type="button"
                 onClick={() => { setConfigStep(0); goToStep('configurar') }}
-                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
               </button>
             </div>
           </div>
-
-          <RoadmapPanel activeIndex={1} color="#B9C96F" onNext={() => { setConfigStep(0); goToStep('configurar') }} onStepClick={handleStepClick} compactButton triangleOpacity={0.5} />
-          <SideStrip color="#B9C96F" />
         </div>
       )}
 
