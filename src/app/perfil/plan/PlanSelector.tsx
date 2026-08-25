@@ -28,16 +28,37 @@ function formatARS(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
+function formatFecha(iso: string) {
+  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const TERM_LABEL: Record<BillingTerm, string> = { 1: 'Mensual', 6: 'Semestral', 12: 'Anual' }
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function PlanSelector({
   currentPlan,
   trialing,
   paymentSettings,
+  billingTerm,
+  nextBillingDate,
+  mpPreapprovalId,
+  billingPausedByUser,
+  legacyManualBilling,
+  paymentHistory,
 }: {
   currentPlan: string
   trialing: boolean
   paymentSettings: PlatformPaymentSettings
+  // Todo lo agregado 2026-08-25 para mostrar plazo/proximo cobro y permitir
+  // dar de baja sin pasar por Mercado Pago directamente — ver memoria de
+  // proyecto "Gounuri billing/subscriptions".
+  billingTerm: BillingTerm | null
+  nextBillingDate: string | null
+  mpPreapprovalId: string | null
+  billingPausedByUser: boolean
+  legacyManualBilling: boolean
+  paymentHistory: { id: string; amount: number; status: string; created_at: string }[]
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +69,9 @@ export default function PlanSelector({
   const searchParams = useSearchParams()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [highlightPlan, setHighlightPlan] = useState<PlanId | null>(null)
+  // "Dar de baja del servicio" — 2026-08-25, ver memoria de proyecto.
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [canceling, setCanceling] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -87,6 +111,37 @@ export default function PlanSelector({
       setError(e instanceof Error ? e.message : 'No se pudo iniciar la suscripción')
       setLoading(null)
     }
+  }
+
+  // Cancela el preapproval de Mercado Pago — el servicio sigue activo hasta
+  // nextBillingDate (ver /api/billing/cancel), no corta nada al instante.
+  async function cancelMp() {
+    setCanceling(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/billing/cancel', { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Error desconocido')
+      setShowCancelConfirm(false)
+      window.location.reload()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo dar de baja la suscripción')
+      setCanceling(false)
+    }
+  }
+
+  // Tenants pre-existentes al sistema de suscripción actual (ver memoria de
+  // proyecto "Gounuri billing/subscriptions") — no deben poder disparar
+  // ningún cobro real ni cancelar nada desde acá todavía.
+  if (legacyManualBilling) {
+    return (
+      <div ref={sectionRef}>
+        <h2 className="text-lg font-semibold text-zinc-900">Tu plan</h2>
+        <p className="mt-2 max-w-md text-sm text-zinc-500">
+          Tu plan lo gestiona el equipo de Gounuri directamente — escribinos si querés hacer algún cambio.
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -244,9 +299,45 @@ export default function PlanSelector({
               </ul>
 
               {esActual ? (
-                <button disabled className="btn-black mt-8 w-full opacity-50">
-                  Tu plan actual
-                </button>
+                mpPreapprovalId ? (
+                  <div className="mt-8 space-y-2">
+                    <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+                      <p className="font-medium text-zinc-900">Tu plan actual</p>
+                      {billingTerm && <p className="mt-1">Facturación: {TERM_LABEL[billingTerm]}</p>}
+                      {nextBillingDate && <p>Próximo cobro: {formatFecha(nextBillingDate)}</p>}
+                    </div>
+                    {showCancelConfirm ? (
+                      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <p>
+                          Vas a poder seguir usando tu tienda
+                          {nextBillingDate ? <> hasta el <strong>{formatFecha(nextBillingDate)}</strong></> : ''}.
+                          Después de esa fecha no te volvemos a cobrar y tu plan pasa a gratuito.
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <button onClick={cancelMp} disabled={canceling} className="btn-black flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50">
+                            {canceling && <Loader2 size={15} className="animate-spin" />}
+                            Sí, dar de baja
+                          </button>
+                          <button onClick={() => setShowCancelConfirm(false)} disabled={canceling} className="btn-outline flex-1">
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setShowCancelConfirm(true)} className="btn-outline w-full text-red-600 border-red-200 hover:bg-red-50">
+                        Dar de baja el servicio
+                      </button>
+                    )}
+                  </div>
+                ) : billingPausedByUser ? (
+                  <div className="mt-8 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    Diste de baja tu suscripción{nextBillingDate ? <> — seguís con acceso hasta el <strong>{formatFecha(nextBillingDate)}</strong></> : ''}.
+                  </div>
+                ) : (
+                  <button disabled className="btn-black mt-8 w-full opacity-50">
+                    Tu plan actual
+                  </button>
+                )
               ) : (
                 <div className="mt-8 space-y-2">
                   {paymentSettings.mercadopagoEnabled && (
@@ -286,6 +377,32 @@ export default function PlanSelector({
           )
         })}
       </div>
+
+      {paymentHistory.length > 0 && (
+        <div className="mt-14">
+          <h2 className="text-lg font-semibold text-zinc-900">Historial de pagos</h2>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-zinc-200">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-zinc-50 text-xs uppercase text-zinc-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Fecha</th>
+                  <th className="px-4 py-2 font-medium">Monto</th>
+                  <th className="px-4 py-2 font-medium">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentHistory.map(p => (
+                  <tr key={p.id} className="border-t border-zinc-100">
+                    <td className="px-4 py-2 text-zinc-700">{formatFecha(p.created_at)}</td>
+                    <td className="px-4 py-2 text-zinc-700">{formatARS(p.amount)}</td>
+                    <td className="px-4 py-2 text-zinc-500">{p.status === 'approved' ? 'Pagado' : p.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="mt-10 space-y-1 text-center text-xs text-zinc-400">
         {paymentSettings.mercadopagoEnabled && (

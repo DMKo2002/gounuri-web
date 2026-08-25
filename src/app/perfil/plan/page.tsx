@@ -21,7 +21,7 @@ export default async function PlanPage() {
 
   const { data: _tenants } = await service
     .from('tenants')
-    .select('name, plan, plan_status, status')
+    .select('name, plan, plan_status, status, billing_term, next_billing_date, mp_preapproval_id, billing_paused_by_user, legacy_manual_billing')
     .eq('id', tenantId)
     .limit(1)
   const tenant = _tenants?.[0]
@@ -37,6 +37,25 @@ export default async function PlanPage() {
 
   const usage = await getTenantUsage(service, tenantId, currentPlan)
   const paymentSettings = await getPlatformPaymentSettings(service)
+
+  // Historial de pagos — ver memoria de proyecto "Gounuri billing/subscriptions".
+  // Se alimenta del webhook (tópico "Pagos" de MP, todavía a activar a mano en
+  // el dashboard) + el primer cobro que se registra al autorizarse el
+  // preapproval. Si el tópico no está activo, esto puede venir vacío o
+  // incompleto — PlanSelector ya maneja el caso de lista vacía sin mostrar
+  // la sección.
+  const { data: _charges } = await service
+    .from('billing_charges')
+    .select('id, amount, status, created_at')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(12)
+  const paymentHistory = (_charges ?? []).map(c => ({
+    id: String(c.id),
+    amount: c.amount ?? 0,
+    status: c.status ?? '',
+    created_at: c.created_at,
+  }))
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -58,7 +77,17 @@ export default async function PlanPage() {
         </div>
 
         <div className="mt-8">
-          <PlanSelector currentPlan={currentPlan} trialing={trialing} paymentSettings={paymentSettings} />
+          <PlanSelector
+            currentPlan={currentPlan}
+            trialing={trialing}
+            paymentSettings={paymentSettings}
+            billingTerm={tenant.billing_term ?? null}
+            nextBillingDate={tenant.next_billing_date ?? null}
+            mpPreapprovalId={tenant.mp_preapproval_id ?? null}
+            billingPausedByUser={tenant.billing_paused_by_user ?? false}
+            legacyManualBilling={tenant.legacy_manual_billing ?? false}
+            paymentHistory={paymentHistory}
+          />
         </div>
       </div>
     </main>
