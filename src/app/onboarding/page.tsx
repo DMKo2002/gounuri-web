@@ -880,7 +880,7 @@ function OnboardingContent() {
              Envíos, Catálogo, Apariencia + Para Escalar). ── */}
       {step === 'configurar' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          <div className="flex w-full flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:w-[68.5%] lg:px-14 lg:py-14">
+          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
             {/* Centrado en Y respecto al panel completo (mismo truco que el
                 paso 1 y el paso 2: flex-1 + justify-center) — pedido
                 2026-08-18: el formulario quedaba muy arriba, tiene que
@@ -1023,25 +1023,19 @@ function OnboardingContent() {
             )}
             </div>
 
-            {/* Botón visible en mobile/tablet, donde no hay panel derecho
-                para alojar el botón circular de "Siguiente". */}
+            {/* Botón "Continuar" simple para todos los tamaños de pantalla —
+                ya no el botón circular SVG del panel de roadmap, que se
+                saca de este paso (pedido 2026-08-24, mismo criterio que los
+                pasos 1 y 2). */}
             <button
               type="button"
               onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 lg:hidden"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
             >
               Continuar <ArrowRight size={16} />
             </button>
           </div>
 
-          <RoadmapPanel
-            activeIndex={2}
-            color="#3B9DA2"
-            onNext={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-            onStepClick={handleStepClick}
-            compactButton
-            triangleOpacity={0.5}
-          />
           <SideStrip color="#3B9DA2" />
         </div>
       )}

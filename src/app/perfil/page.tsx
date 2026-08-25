@@ -173,14 +173,15 @@ export default async function PerfilPage() {
             <Row label="Dirección de la tienda">
               <span className="text-zinc-900">{tiendaUrl.replace('https://', '')}</span>
             </Row>
+            {/* Antes editaba acá mismo en /perfil/tienda — se sacó (pedido
+                2026-08-24) por ser un formulario idéntico al de "Contacto y
+                Redes" del Panel Admin, mismo dato (store_config), repetido
+                sin necesidad. Ahora manda directo al Panel Admin. */}
             <Row label="Datos de contacto">
               <span className="text-zinc-500 text-xs">WhatsApp, redes, sucursales</span>
-              <Link
-                href="/perfil/tienda"
-                className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600"
-              >
+              <PanelHandoffLink className="ml-2 text-xs font-medium text-zinc-900 underline underline-offset-2 hover:text-zinc-600">
                 Editar
-              </Link>
+              </PanelHandoffLink>
             </Row>
             <Row label="Mis datos">
               <span className="text-zinc-500 text-xs">Nombre, DNI, CUIT (opcional)</span>
