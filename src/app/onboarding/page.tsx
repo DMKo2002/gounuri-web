@@ -1037,7 +1037,6 @@ function OnboardingContent() {
                 </section>
               </div>
             )}
-            </div>
 
             {/* Botón "Continuar" simple para todos los tamaños de pantalla —
                 ya no el botón circular SVG del panel de roadmap, que se
@@ -1045,21 +1044,24 @@ function OnboardingContent() {
                 pasos 1 y 2). Mismo max-w-3xl + mx-auto que la tarjeta del
                 formulario de arriba (pedido 2026-08-24) para que quede del
                 mismo ancho que los campos, no del ancho completo del panel.
-                La tarjeta ya tiene 20px de padding interno (p-5) antes de
-                su borde, así que para que el espacio TOTAL entre el último
-                campo y el botón sea igual a los 12px que separan un campo
-                de otro (space-y-3) hace falta un margen negativo acá:
-                20px (padding de la tarjeta) - 8px (-mt-2) = 12px (pedido
-                2026-08-25: "subir mucho más... solo el mismo espacio
-                existente entre campos"). */}
-            <div className="mx-auto w-full max-w-3xl">
+                Antes este botón estaba AFUERA del div "flex-1
+                justify-center" que centra la tarjeta en vertical — quedaba
+                separado por el espacio libre que deja ese centrado, no por
+                un margen, y por eso no bajaba por más que se le achicara
+                el margin-top (pedido 2026-08-25, con captura). Moviéndolo
+                adentro, como parte del mismo bloque centrado, el espacio
+                que lo separa de la tarjeta pasa a depender solo de
+                space-y-3 (12px, el mismo que separa un campo de otro),
+                que es justo lo pedido. */}
+            <div className="mx-auto mt-3 w-full max-w-3xl">
               <button
                 type="button"
                 onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-                className="-mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar <ArrowRight size={16} />
               </button>
+            </div>
             </div>
           </div>
 
