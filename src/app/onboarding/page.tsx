@@ -612,10 +612,12 @@ function OnboardingContent() {
   async function handleFinalSubmit() {
     const storeUrl = await createTenant(plan)
     if (!storeUrl) return
-    // Tienda creada — va directo a la tienda recién creada (pedido
-    // 2026-08-25: "el boton probar gratis... lleva a mi tienda"), no a
-    // /perfil ("Mi cuenta") como antes.
-    window.location.href = storeUrl
+    // Tienda creada — vuelve a /perfil ("Mi cuenta"). Pedido 2026-08-25:
+    // "El boton probar gratis de esta pantalla me tiene que llevar a
+    // https://www.gounuri.com/perfil" — vuelta atrás sobre un cambio previo
+    // del mismo día que lo mandaba directo a la tienda (storeUrl, que el
+    // backend igual sigue devolviendo por si hace falta en otro lado).
+    window.location.href = '/perfil'
   }
 
   // Para quien ya pagó un plan desde la landing sin tener tienda todavía
