@@ -60,7 +60,11 @@ export const PLANES: Plan[] = [
   {
     id: 'mini',
     nombre: 'Mini',
-    precioARS: 9_900,
+    // TEMP TEST 2026-08-25: bajado de 9_900 a 20 para probar el cobro real
+    // de Mercado Pago con el tenant Test/TEST2 sin gastar plata de verdad.
+    // REVERTIR A 9_900 apenas termine la prueba (y mantener sincronizado con
+    // Panel Admin/src/lib/plans.ts, mismo cambio temporal hecho ahí).
+    precioARS: 20,
     descripcion: 'Para empezar a vender online sin vueltas.',
     features: [
       'Hasta 50 productos',
