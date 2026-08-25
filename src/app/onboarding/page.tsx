@@ -898,7 +898,15 @@ function OnboardingContent() {
               // siguen en blanco para que se sigan distinguiendo como
               // campos editables.
               <div className="mx-auto w-full max-w-3xl space-y-8 text-black">
-                <h1 className="text-2xl font-bold">Te invitamos a completar algunos datos de tu tienda.</h1>
+                <div>
+                  {/* Título y bajada según el Figma "Registracion 3" (pedido
+                      2026-08-24) — con acentos correctos: "Configurá",
+                      "serán", "público". */}
+                  <h1 className="text-2xl font-bold">Datos de la tienda</h1>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Configurá los datos que serán visibles para el público que visite tu sitio.
+                  </p>
+                </div>
 
                 <section>
                   <h2 className="text-2xl font-bold">Contacto y Redes</h2>
@@ -1026,14 +1034,18 @@ function OnboardingContent() {
             {/* Botón "Continuar" simple para todos los tamaños de pantalla —
                 ya no el botón circular SVG del panel de roadmap, que se
                 saca de este paso (pedido 2026-08-24, mismo criterio que los
-                pasos 1 y 2). */}
-            <button
-              type="button"
-              onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-              className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-            >
-              Continuar <ArrowRight size={16} />
-            </button>
+                pasos 1 y 2). Mismo max-w-3xl + mx-auto que la tarjeta del
+                formulario de arriba (pedido 2026-08-24) para que quede del
+                mismo ancho que los campos, no del ancho completo del panel. */}
+            <div className="mx-auto w-full max-w-3xl">
+              <button
+                type="button"
+                onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              >
+                Continuar <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
 
           <SideStrip color="#3B9DA2" />
