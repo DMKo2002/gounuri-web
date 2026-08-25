@@ -1052,8 +1052,16 @@ function OnboardingContent() {
                 adentro, como parte del mismo bloque centrado, el espacio
                 que lo separa de la tarjeta pasa a depender solo de
                 space-y-3 (12px, el mismo que separa un campo de otro),
-                que es justo lo pedido. */}
-            <div className="mx-auto mt-3 w-full max-w-3xl">
+                que es justo lo pedido. El wrapper de la tarjeta (max-w-3xl)
+                marca el ANCHO TOTAL del panel — pero la tarjeta tiene 20px
+                de padding propio (p-5) antes de sus campos, así que los
+                campos/inputs quedan 20px para adentro de ese borde. Acá
+                agregamos ese mismo px-5 al wrapper del botón para que el
+                botón quede alineado con el borde de los CAMPOS, no con el
+                borde exterior de la tarjeta — se veía más ancho que el
+                formulario (pedido 2026-08-25, con captura: "achicar el
+                ancho del boton"). */}
+            <div className="mx-auto mt-3 w-full max-w-3xl px-5">
               <button
                 type="button"
                 onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
