@@ -880,11 +880,21 @@ function OnboardingContent() {
              Envíos, Catálogo, Apariencia + Para Escalar). ── */}
       {step === 'configurar' && (
         <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#f2f2f2] px-6 py-10 sm:px-10 lg:px-14 lg:py-14 xl:pl-[calc(3.5rem+8.9%)]">
             {/* Centrado en Y respecto al panel completo (mismo truco que el
                 paso 1 y el paso 2: flex-1 + justify-center) — pedido
                 2026-08-18: el formulario quedaba muy arriba, tiene que
-                quedar centrado respecto al botón "Siguiente". */}
+                quedar centrado respecto al botón "Siguiente".
+                xl:pl-[calc(3.5rem+8.9%)]: el SideStrip de la derecha (xl:w-[8.9%])
+                le come ancho a este panel, así que un mx-auto normal centra
+                el bloque respecto al panel solo, no respecto a la pantalla
+                completa (queda corrido a la izquierda, pedido 2026-08-25
+                con captura: "alinear todo el bloque al centro"). Compensa
+                agregando ese mismo 8.9% de padding a la izquierda (además
+                del lg:px-14 de siempre = 3.5rem) — el % se calcula sobre el
+                mismo contenedor flex padre que usa el SideStrip para su
+                ancho, así que el resultado queda centrado respecto a toda
+                la pantalla, franja incluida. */}
             <div className="flex flex-1 flex-col justify-center">
             {configStep === 0 ? (
               // Centrado respecto al lienzo gris completo y con ancho fluido
