@@ -2,6 +2,7 @@ import Navbar from '@/components/Navbar'
 import Hero from '@/components/Hero'
 import Features from '@/components/Features'
 import ComoFunciona from '@/components/ComoFunciona'
+import Pricing from '@/components/Pricing'
 import CTA from '@/components/CTA'
 import Footer from '@/components/Footer'
 import { TiendaAtelier } from '@/components/tiendas/TiendaAtelier'
@@ -24,6 +25,7 @@ export default function Home() {
       <TiendaMinimalista />
       <TiendaAxis />
       <TiendaBazaar />
+      <Pricing />
       <CTA />
       <Footer />
     </main>
