@@ -24,8 +24,8 @@ export default function Home() {
       <ComoFunciona />
       <TiendaMinimalista />
       <TiendaAxis />
-      <TiendaBazaar />
       <Pricing />
+      <TiendaBazaar />
       <CTA />
       <Footer />
     </main>
