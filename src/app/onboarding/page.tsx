@@ -1045,15 +1045,18 @@ function OnboardingContent() {
                 pasos 1 y 2). Mismo max-w-3xl + mx-auto que la tarjeta del
                 formulario de arriba (pedido 2026-08-24) para que quede del
                 mismo ancho que los campos, no del ancho completo del panel.
-                mt-3 (antes mt-8, luego mt-4): mismo espacio que separa cada
-                campo dentro del formulario (space-y-3), para que quede
-                equidistante en vez de con más aire que el resto (pedido
-                2026-08-25). */}
+                La tarjeta ya tiene 20px de padding interno (p-5) antes de
+                su borde, así que para que el espacio TOTAL entre el último
+                campo y el botón sea igual a los 12px que separan un campo
+                de otro (space-y-3) hace falta un margen negativo acá:
+                20px (padding de la tarjeta) - 8px (-mt-2) = 12px (pedido
+                2026-08-25: "subir mucho más... solo el mismo espacio
+                existente entre campos"). */}
             <div className="mx-auto w-full max-w-3xl">
               <button
                 type="button"
                 onClick={() => (configStep === 0 ? setConfigStep(1) : goToStep('productos'))}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                className="-mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
               >
                 Continuar <ArrowRight size={16} />
               </button>
