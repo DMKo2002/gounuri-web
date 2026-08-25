@@ -825,39 +825,45 @@ function OnboardingContent() {
               (ya no comparte espacio con el panel de roadmap de la
               derecha) y centra la grilla de 6 tarjetas dentro suyo. */}
           <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-            <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
-              Seleccioná un template
-            </h1>
+            {/* Envoltorio único (mismo max-w-5xl + mx-auto) para el título Y
+                la grilla, así el borde izquierdo del título queda alineado
+                con el de las tarjetas (pedido 2026-08-24) en vez de quedar
+                cada uno centrado por separado. */}
+            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col">
+              <h1 className="text-3xl font-extrabold leading-[1.15] text-zinc-900 sm:text-4xl">
+                Seleccioná un template
+              </h1>
 
-            {/* Grilla centrada en X (mx-auto + max-width) y en Y (flex-1 +
-                justify-center) respecto al panel completo. */}
-            <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center">
-              {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
-                  vez de `transform: scale()` porque zoom sí reduce el tamaño
-                  real de la caja (el grid recalcula el layout), mientras que
-                  scale solo lo dibuja más chico y deja el hueco del tamaño
-                  original. */}
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" style={{ zoom: 0.8 }}>
-                {TEMPLATES.map(t => (
-                  <TemplateCard
-                    key={t.slug}
-                    {...t}
-                    selected={template === t.slug}
-                    onSelect={() => setTemplate(t.slug)}
-                  />
-                ))}
+              {/* Grilla centrada en Y (flex-1 + justify-center) dentro del
+                  espacio que queda debajo del título. */}
+              <div className="flex flex-1 flex-col justify-center">
+                {/* Tarjetas al 80% de su tamaño (pedido 2026-08-18) — `zoom` en
+                    vez de `transform: scale()` porque zoom sí reduce el tamaño
+                    real de la caja (el grid recalcula el layout), mientras que
+                    scale solo lo dibuja más chico y deja el hueco del tamaño
+                    original. */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" style={{ zoom: 0.8 }}>
+                  {TEMPLATES.map(t => (
+                    <TemplateCard
+                      key={t.slug}
+                      {...t}
+                      selected={template === t.slug}
+                      onSelect={() => setTemplate(t.slug)}
+                    />
+                  ))}
+                </div>
+
+                {/* Botón "Continuar" simple para todos los tamaños de pantalla
+                    (ya no el botón circular SVG del panel de roadmap, que se
+                    saca de este paso) — mismo patrón que el paso 1. */}
+                <button
+                  type="button"
+                  onClick={() => { setConfigStep(0); goToStep('configurar') }}
+                  className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                >
+                  Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
+                </button>
               </div>
-
-              {/* Botón "Continuar" simple para todos los tamaños de pantalla
-                  (ya no el botón circular SVG del panel de roadmap, que se
-                  saca de este paso) — mismo patrón que el paso 1. */}
-              <button
-                type="button"
-                onClick={() => { setConfigStep(0); goToStep('configurar') }}
-                className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-              >
-                Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
-              </button>
             </div>
           </div>
         </div>
