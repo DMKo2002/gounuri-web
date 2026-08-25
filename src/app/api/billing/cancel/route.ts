@@ -23,8 +23,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { cancelPreapproval } from '@/lib/billing'
 import { getPlatformPaymentSettings } from '@/lib/platformBilling'
+import { sendEmail, emailBajaConfirmada } from '@/lib/email'
 
-export async function POST() {
+export async function POST(req: Request) {
   const service = createServiceClient()
 
   // Mismo gate que /api/billing/subscribe (ver ese archivo) — movido de
@@ -33,6 +34,11 @@ export async function POST() {
   if (!paymentSettings.mercadopagoEnabled) {
     return NextResponse.json({ error: 'El pago con Mercado Pago todavía no está habilitado' }, { status: 403 })
   }
+
+  // Motivo opcional de baja (2026-08-25, ver billing_cancellation_feedback) —
+  // req.json() puede fallar si viene sin body (compatibilidad con llamadas
+  // viejas que no lo mandaban), por eso el catch.
+  const { reason } = await req.json().catch(() => ({ reason: undefined as string | undefined }))
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -72,5 +78,35 @@ export async function POST() {
     billing_paused_by_user: true,
   }).eq('id', tenantId)
 
-  return NextResponse.json({ ok: true, activeUntil: tenantRow.next_billing_date ?? null })
+  // Mails de baja (2026-08-25, pedido de David/Aram — hasta acá esta acción
+  // no avisaba a nadie, ni al tenant ni a Gounuri). Best-effort: la baja ya
+  // se procesó bien contra MP y la base, un mail que falla no debe romperla.
+  const activeUntil = tenantRow.next_billing_date ?? null
+  const { data: tenantNameRow } = await service.from('tenants').select('name').eq('id', tenantId).limit(1).single()
+  const tenantName = tenantNameRow?.name ?? tenantId
+
+  if (typeof reason === 'string' && reason.trim()) {
+    await service.from('billing_cancellation_feedback').insert({
+      tenant_id: tenantId,
+      tenant_name: tenantName,
+      reason: reason.trim().slice(0, 2000),
+    }).then(({ error }) => {
+      if (error) console.error('[billing/cancel] error guardando motivo de baja:', error)
+    })
+  }
+
+  if (user.email) {
+    await sendEmail({
+      to: user.email,
+      subject: 'Diste de baja tu plan — gounuri',
+      html: emailBajaConfirmada({ tenantName, activeUntil, panelUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://panel.gounuri.com' }),
+    }).catch(e => console.error('[billing/cancel] error notificando al tenant:', e))
+  }
+  await sendEmail({
+    to: paymentSettings.contactEmail,
+    subject: `📉 Baja de suscripción — ${tenantName}`,
+    html: `<p><strong>${tenantName}</strong> dio de baja su suscripción de Mercado Pago.</p><p>Sigue con acceso hasta: ${activeUntil ?? '(sin fecha registrada)'}</p>`,
+  }).catch(e => console.error('[billing/cancel] error notificando a Gounuri:', e))
+
+  return NextResponse.json({ ok: true, activeUntil })
 }

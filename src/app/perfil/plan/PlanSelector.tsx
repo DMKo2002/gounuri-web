@@ -72,6 +72,10 @@ export default function PlanSelector({
   // "Dar de baja del servicio" — 2026-08-25, ver memoria de proyecto.
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [canceling, setCanceling] = useState(false)
+  // Motivo opcional de baja (2026-08-25, pedido de David/Aram tras probar el
+  // flujo — ver billing_cancellation_feedback) — no bloquea la baja si se
+  // deja vacío.
+  const [cancelReason, setCancelReason] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
@@ -119,10 +123,15 @@ export default function PlanSelector({
     setCanceling(true)
     setError(null)
     try {
-      const res = await fetch('/api/billing/cancel', { method: 'POST' })
+      const res = await fetch('/api/billing/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: cancelReason.trim() || undefined }),
+      })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Error desconocido')
       setShowCancelConfirm(false)
+      setCancelReason('')
       window.location.reload()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo dar de baja la suscripción')
@@ -313,12 +322,25 @@ export default function PlanSelector({
                           {nextBillingDate ? <> hasta el <strong>{formatFecha(nextBillingDate)}</strong></> : ''}.
                           Después de esa fecha no te volvemos a cobrar y tu plan pasa a gratuito.
                         </p>
+                        <div className="mt-3">
+                          <label className="block text-xs font-medium text-red-700 mb-1">
+                            Nos da pena que te vayas — ¿nos contás por qué cancelás? (opcional)
+                          </label>
+                          <textarea
+                            value={cancelReason}
+                            onChange={e => setCancelReason(e.target.value)}
+                            rows={2}
+                            maxLength={2000}
+                            placeholder="Tu respuesta nos ayuda a mejorar..."
+                            className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-red-400 focus:outline-none"
+                          />
+                        </div>
                         <div className="mt-3 flex gap-2">
                           <button onClick={cancelMp} disabled={canceling} className="btn-black flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50">
                             {canceling && <Loader2 size={15} className="animate-spin" />}
                             Sí, dar de baja
                           </button>
-                          <button onClick={() => setShowCancelConfirm(false)} disabled={canceling} className="btn-outline flex-1">
+                          <button onClick={() => { setShowCancelConfirm(false); setCancelReason('') }} disabled={canceling} className="btn-outline flex-1">
                             Cancelar
                           </button>
                         </div>

@@ -135,6 +135,40 @@ export function emailCuentaVinculada({
   </td></tr>`)
 }
 
+// ── Baja de suscripción confirmada (2026-08-25) ─────────────────────────────
+// Se dispara desde /api/billing/cancel al "dar de baja" desde /perfil/plan —
+// hasta acá esta acción no mandaba ningún mail, ni al tenant ni a Gounuri.
+export function emailBajaConfirmada({
+  tenantName,
+  activeUntil,
+  panelUrl,
+}: {
+  tenantName: string
+  activeUntil: string | null // ISO
+  panelUrl: string
+}): string {
+  const fechaTxt = activeUntil
+    ? new Date(activeUntil).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : null
+  return layout(`
+  <tr><td style="padding:40px 40px 32px;">
+    <p style="margin:0 0 18px;font-size:12px;color:#999;letter-spacing:0.1em;text-transform:uppercase;">Baja confirmada</p>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:700;color:#101010;line-height:1.3;">¡Hola!</h1>
+    <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.7;">
+      Confirmamos que diste de baja la suscripción de tu tienda <strong>${tenantName}</strong>. No te vamos a volver a cobrar.
+    </p>
+    ${fechaTxt ? `
+    <div style="background:#f7f7f7;border-radius:8px;padding:16px 20px;border-left:3px solid #101010;margin-bottom:24px;">
+      <p style="margin:0 0 4px;font-size:12px;color:#999;letter-spacing:0.05em;text-transform:uppercase;">Seguís con acceso hasta</p>
+      <p style="margin:0;font-size:14px;color:#101010;font-weight:600;">${fechaTxt}</p>
+    </div>` : ''}
+    <p style="margin:0 0 28px;font-size:14px;color:#767676;line-height:1.7;">
+      Después de esa fecha tu tienda pasa al plan gratuito — tus datos y tu catálogo quedan intactos. Si te arrepentís, podés volver a suscribirte cuando quieras.
+    </p>
+    ${ctaButton(`${panelUrl}/dashboard`, 'Ir a mi panel')}
+  </td></tr>`)
+}
+
 // ── Bienvenida con datos de la tienda creada ────────────────────────────────
 
 export function emailBienvenidaTienda({
