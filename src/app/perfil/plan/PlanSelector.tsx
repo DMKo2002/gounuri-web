@@ -397,7 +397,7 @@ export default function PlanSelector({
                             className="btn-black w-full disabled:opacity-50"
                           >
                             {loading === card.id && <Loader2 size={15} className="animate-spin" />}
-                            Continuar a Mercado Pago
+                            Continuar
                           </button>
                         </div>
                       )}
@@ -465,7 +465,7 @@ export default function PlanSelector({
           </>
         )}
         {paymentSettings.manualTransferEnabled && (
-          <p>Con transferencia, el plan se activa una vez que confirmemos el pago — normalmente el mismo día.</p>
+          <p>Con transferencia, el plan se activa una vez que confirmemos el pago.</p>
         )}
       </div>
     </div>
