@@ -1,12 +1,15 @@
 'use client'
 
 // Bloque reutilizable de "pagar por transferencia" — monto calculado +
-// CBU/alias (con botón de copiar) + accesos directos a WhatsApp/mail para
+// CBU/alias (con botón de copiar) + acceso directo a WhatsApp para
 // coordinar el pago (dispara /api/billing/notify-manual-intent, best-effort).
+// Antes también tenía "Escribir por mail" — sacado 2026-08-26 (pedido de
+// ARam: "todos los pagos se maneja con whatsapp"), acá y en /onboarding que
+// reusa este mismo componente.
 //
 // Extraído de /perfil/plan/PlanSelector.tsx (2026-08-22) para reusarlo tal
 // cual en el paso "Pago" del /onboarding — mismo diseño, el único que cambia
-// entre los dos lugares es el texto del mensaje de WhatsApp/mail (`accion`:
+// entre los dos lugares es el texto del mensaje de WhatsApp (`accion`:
 // "pasar mi tienda" en un cambio de plan existente, "activar mi tienda
 // nueva" recién creada desde el onboarding).
 
@@ -56,7 +59,7 @@ export default function TransferPaymentBlock({
   planNombre: string
   term: BillingTerm
   monto: number
-  /** Verbo/frase para el mensaje de WhatsApp/mail — "pasar mi tienda"
+  /** Verbo/frase para el mensaje de WhatsApp — "pasar mi tienda"
       (cambio de plan) por defecto, o "activar mi tienda nueva" desde el
       onboarding. */
   accion?: string
@@ -75,8 +78,8 @@ export default function TransferPaymentBlock({
   }
 
   // Aviso server-side a GOUNURI — no espera respuesta ni bloquea el click, el
-  // <a> navega igual al wa.me/mailto aunque este POST falle.
-  function notifyManualIntent(via: 'whatsapp' | 'mail') {
+  // <a> navega igual al wa.me aunque este POST falle.
+  function notifyManualIntent(via: 'whatsapp') {
     fetch('/api/billing/notify-manual-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -87,9 +90,6 @@ export default function TransferPaymentBlock({
   const montoFmt = formatARS(monto)
   const texto = `${accion} al plan ${planNombre} (${TERM_LABEL[term]}) — ${montoFmt}`
   const whatsappHref = `https://wa.me/${(paymentSettings.whatsappNumber ?? '541131351972').replace(/\D/g, '')}?text=${encodeURIComponent(`Hola! Quiero ${texto}.`)}`
-  const mailSubject = `Cambio de plan — ${planNombre} (${TERM_LABEL[term]})`
-  const mailBody = [`Hola, quiero ${texto}.`, '', 'Nombre de la tienda:', 'Nombre y apellido:'].join('\n')
-  const mailHref = `mailto:${paymentSettings.contactEmail}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody)}`
 
   return (
     <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left text-sm space-y-3">
@@ -110,22 +110,15 @@ export default function TransferPaymentBlock({
         <p className="text-xs text-zinc-500">Todavía no cargamos el CBU/alias acá — escribinos y te lo pasamos.</p>
       )}
 
-      <div className="flex gap-2 pt-1">
+      <div className="pt-1">
         <a
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => notifyManualIntent('whatsapp')}
-          className="btn-black flex-1 !px-3 !py-2 text-center text-xs"
+          className="btn-black w-full !px-3 !py-2 text-center text-xs"
         >
           Escribir por WhatsApp
-        </a>
-        <a
-          href={mailHref}
-          onClick={() => notifyManualIntent('mail')}
-          className="btn-outline flex-1 !px-3 !py-2 text-center text-xs"
-        >
-          Escribir por mail
         </a>
       </div>
     </div>

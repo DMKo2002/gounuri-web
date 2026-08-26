@@ -65,6 +65,9 @@ export default function PlanSelector({
   const [payerEmail, setPayerEmail] = useState('')
   const [term, setTerm] = useState<BillingTerm>(1)
   const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
+  // "Pagar con Mercado Pago" ahora abre un paso propio (email de la cuenta
+  // de MP) en vez de mandar directo al checkout — 2026-08-26, pedido de ARam.
+  const [mpEmailPlan, setMpEmailPlan] = useState<PlanId | null>(null)
 
   const searchParams = useSearchParams()
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -106,7 +109,10 @@ export default function PlanSelector({
       const res = await fetch('/api/billing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: planId, payerEmail: payerEmail.trim(), months: term }),
+        // Los descuentos por pago semestral/anual (TERM_DISCOUNTS) son solo
+        // para transferencia — con Mercado Pago siempre se cobra mensual,
+        // sin importar el plazo elegido arriba en el selector de precio.
+        body: JSON.stringify({ plan: planId, payerEmail: payerEmail.trim(), months: 1 }),
       })
       const json = await res.json()
       if (!res.ok || !json.init_point) throw new Error(json.error ?? 'Error desconocido')
@@ -155,30 +161,15 @@ export default function PlanSelector({
 
   return (
     <div ref={sectionRef}>
-      <h2 className="text-lg font-semibold text-zinc-900">Cambiar de plan</h2>
+      <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Suscripciones</h2>
       <p className="mt-1 text-sm text-zinc-500">
+        Esta vista sirve para elegir el plan a suscribir.{' '}
         {paymentSettings.mercadopagoEnabled && paymentSettings.manualTransferEnabled
           ? 'Elegí un plan y pagá con Mercado Pago (débito automático) o por transferencia bancaria.'
           : paymentSettings.mercadopagoEnabled
             ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
-            : 'Elegí un plan y coordinamos el pago por transferencia bancaria — por WhatsApp o por mail.'}
+            : 'Elegí un plan y coordinamos el pago por transferencia bancaria — por WhatsApp.'}
       </p>
-
-      {paymentSettings.mercadopagoEnabled && (
-        <div className="mt-4">
-          <label className="block text-sm font-bold text-zinc-700 mb-1">Email de tu cuenta de Mercado Pago</label>
-          <input
-            type="email"
-            className="max-w-sm w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none"
-            value={payerEmail}
-            onChange={e => setPayerEmail(e.target.value)}
-            placeholder="tu@email.com"
-          />
-          <p className="mt-1 text-xs text-zinc-400">
-            Solo hace falta si pagás con Mercado Pago. Asegurate de ingresar el email asociado a tu cuenta — de lo contrario, la suscripción no podrá concretarse.
-          </p>
-        </div>
-      )}
 
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento inline (misma geometría del archivo original) para poder
@@ -363,19 +354,54 @@ export default function PlanSelector({
               ) : (
                 <div className="mt-8 space-y-2">
                   {paymentSettings.mercadopagoEnabled && (
-                    <button
-                      onClick={() => subscribeMp(card.id)}
-                      disabled={loading !== null}
-                      className="btn-black w-full disabled:opacity-50"
-                    >
-                      {loading === card.id && <Loader2 size={15} className="animate-spin" />}
-                      {trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setMpEmailPlan(p => (p === card.id ? null : card.id))}
+                        disabled={loading !== null}
+                        className="btn-outline w-full disabled:opacity-50"
+                      >
+                        {mpEmailPlan === card.id
+                          ? 'Ocultar datos de Mercado Pago'
+                          : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
+                      </button>
+                      {term > 1 && (
+                        <p className="text-xs text-zinc-500">
+                          El descuento por plazo es solo para transferencia — con Mercado Pago se cobra {formatARS(card.precioARS)}/mes.
+                        </p>
+                      )}
+                      {mpEmailPlan === card.id && (
+                        <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
+                          <div>
+                            <label className="block text-base font-semibold text-zinc-800 mb-1.5">
+                              Email de tu cuenta de Mercado Pago
+                            </label>
+                            <input
+                              type="email"
+                              className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base focus:border-zinc-900 focus:outline-none"
+                              value={payerEmail}
+                              onChange={e => setPayerEmail(e.target.value)}
+                              placeholder="tu@email.com"
+                            />
+                            <p className="mt-2 text-sm text-zinc-500">
+                              Asegurate de ingresar el email asociado a tu cuenta — de lo contrario, la suscripción no podrá concretarse.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => subscribeMp(card.id)}
+                            disabled={loading !== null}
+                            className="btn-black w-full disabled:opacity-50"
+                          >
+                            {loading === card.id && <Loader2 size={15} className="animate-spin" />}
+                            Continuar a Mercado Pago
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                   {paymentSettings.manualTransferEnabled && (
                     <button
                       onClick={() => setExpandedPlan(p => (p === card.id ? null : card.id))}
-                      className="btn-outline w-full"
+                      className="btn-black w-full"
                     >
                       {expandedPlan === card.id ? 'Ocultar datos de transferencia' : 'Pagar por transferencia'}
                     </button>
@@ -434,7 +460,7 @@ export default function PlanSelector({
           </>
         )}
         {paymentSettings.manualTransferEnabled && (
-          <p>Con transferencia, el plan se activa a mano una vez que confirmemos el pago — normalmente el mismo día.</p>
+          <p>Con transferencia, el plan se activa una vez que confirmemos el pago — normalmente el mismo día.</p>
         )}
       </div>
     </div>

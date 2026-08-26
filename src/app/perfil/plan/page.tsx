@@ -72,11 +72,10 @@ export default async function PlanPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <p className="text-sm text-zinc-500">{tenant.name}</p>
 
+        {/* Las tarjetas de plan van primero (2026-08-26, pedido de ARam) — esta
+            pantalla es para elegir/suscribir un plan, el uso del mes es
+            secundario acá. */}
         <div className="mt-6">
-          <UsageBars usage={usage} />
-        </div>
-
-        <div className="mt-8">
           <PlanSelector
             currentPlan={currentPlan}
             trialing={trialing}
@@ -88,6 +87,10 @@ export default async function PlanPage() {
             legacyManualBilling={tenant.legacy_manual_billing ?? false}
             paymentHistory={paymentHistory}
           />
+        </div>
+
+        <div className="mt-8">
+          <UsageBars usage={usage} />
         </div>
       </div>
     </main>
