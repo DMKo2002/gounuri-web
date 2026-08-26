@@ -19,7 +19,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
-import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
+import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 import TransferPaymentBlock from '@/components/TransferPaymentBlock'
@@ -250,17 +250,17 @@ export default function PlanSelector({
               <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{card.descripcion}</p>
 
               {term > 1 ? (
-                // Un solo precio para los dos métodos de pago (unificado
-                // 2026-08-26, pedido de ARam) -- MP y transferencia cobran
-                // lo mismo con el descuento de plazo aplicado, ver
-                // priceForTerm en @/lib/plans.
+                // 2026-08-26 (bug reportado por David en QA): precio de
+                // lista siempre acá -- el descuento por plazo es solo para
+                // transferencia (ver fullPriceForTerm en @/lib/plans y el
+                // aviso de ahorro junto al botón de transferencia).
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(priceForTerm(card.id, term))}
+                    {formatARS(fullPriceForTerm(card.id, term))}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
-                  <p className="mt-0.5 text-xs text-emerald-600">
-                    equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes — {Math.round(TERM_DISCOUNTS[term] * 100)}% off
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    equivale a {formatARS(Math.round(fullPriceForTerm(card.id, term) / term))}/mes
                   </p>
                 </div>
               ) : (
@@ -341,6 +341,11 @@ export default function PlanSelector({
 
                   {!noTenantYet && paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
                     <div className="mt-3">
+                      {term > 1 && (
+                        <p className="mb-2 text-xs font-medium text-emerald-600">
+                          Pagando por transferencia ahorrás {Math.round(TERM_DISCOUNTS[term] * 100)}% ({formatARS(fullPriceForTerm(card.id, term) - priceForTerm(card.id, term))}) sobre el precio de Mercado Pago.
+                        </p>
+                      )}
                       <TransferPaymentBlock
                         paymentSettings={paymentSettings}
                         planId={card.id}

@@ -7,7 +7,7 @@
 // el preapproval, solo pega al webhook configurado en su cuenta.
 
 import { PLANES } from './site'
-import { priceForTerm, type PlanId, type BillingTerm } from './plans'
+import { fullPriceForTerm, type PlanId, type BillingTerm } from './plans'
 
 const MP_API = 'https://api.mercadopago.com'
 
@@ -81,9 +81,14 @@ export async function createPreapproval(opts: {
   const plan = PLANES.find(p => p.id === opts.planId)
   if (!plan) throw new Error(`[billing] plan desconocido: ${opts.planId}`)
   const months = opts.months ?? 1
-  // Mismo precio con descuento que transferencia (unificado 2026-08-26,
-  // pedido de ARam) -- ver comentario en priceForTerm, lib/plans.ts.
-  const amount = priceForTerm(opts.planId, months)
+  // 2026-08-26 (bug reportado por David en QA): el descuento por plazo
+  // (6/12 meses) es SOLO para transferencia -- el "unificar precio" de hoy
+  // mismo (ver git blame) hizo que Mercado Pago también lo aplicara, que no
+  // era la idea acordada con David/Aram. MP siempre cobra precio de lista x
+  // meses, sin descuento -- fullPriceForTerm en vez de priceForTerm. El
+  // descuento sigue existiendo, pero solo se ve/cobra en el flujo de
+  // transferencia (TransferPaymentBlock, notify-manual-intent).
+  const amount = fullPriceForTerm(opts.planId, months)
   const reason = months === 1
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`
@@ -112,9 +117,10 @@ export async function createSignupPreapproval(opts: {
   const plan = PLANES.find(p => p.id === opts.planId)
   if (!plan) throw new Error(`[billing] plan desconocido: ${opts.planId}`)
   const months = opts.months ?? 1
-  // Mismo precio con descuento que transferencia (unificado 2026-08-26,
-  // pedido de ARam) -- ver comentario en priceForTerm, lib/plans.ts.
-  const amount = priceForTerm(opts.planId, months)
+  // 2026-08-26: mismo criterio que createPreapproval de arriba -- MP
+  // siempre cobra precio de lista, el descuento por plazo es solo para
+  // transferencia.
+  const amount = fullPriceForTerm(opts.planId, months)
   const reason = months === 1
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`

@@ -22,7 +22,7 @@ import TransferPaymentBlock from '@/components/TransferPaymentBlock'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
-import { priceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
+import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 
 type Step = 'nombre' | 'template' | 'configurar' | 'pagos' | 'escalar' | 'plan' | 'pago'
@@ -698,9 +698,19 @@ function OnboardingContent() {
   const planElegido = PLANES.find(p => p.id === plan) ?? PLANES[1]
 
   // Cálculos del paso "Pago" (diseño Figma "Pago con Tarjeta") — mismas
-  // fórmulas que ya usan Pricing.tsx/PlanSelector.tsx (priceForTerm ya
-  // aplica el descuento por plazo), para no duplicar la lógica de precios.
-  const pagoTotal = priceForTerm(plan, billingTerm)
+  // fórmulas que ya usan Pricing.tsx/PlanSelector.tsx.
+  //
+  // 2026-08-26 (bug reportado por David en QA): el descuento por plazo
+  // (6/12 meses) es SOLO para transferencia -- el botón "Pagar" de acá pega
+  // a Mercado Pago, que cobra precio de lista (fullPriceForTerm, ver
+  // lib/billing.ts). pagoTotal (lo que muestra el resumen "Activar Plan" de
+  // la derecha) sigue el método que está de primero/activo: precio de
+  // lista si MP está prendido, o el real con descuento si MP está apagado y
+  // transferencia es la única forma de pagar. pagoTotalTransferencia es
+  // aparte porque TransferPaymentBlock siempre tiene que mostrar/cobrar el
+  // monto con descuento, sin importar qué muestre el resumen de arriba.
+  const pagoTotalTransferencia = priceForTerm(plan, billingTerm)
+  const pagoTotal = paymentSettings?.mercadopagoEnabled ? fullPriceForTerm(plan, billingTerm) : pagoTotalTransferencia
   const pagoSinDescuento = planElegido.precioARS * billingTerm
   const pagoDescuentoMonto = pagoSinDescuento - pagoTotal
   const pagoDescuentoPct = TERM_DISCOUNTS[billingTerm] * 100
@@ -1436,12 +1446,17 @@ function OnboardingContent() {
                       <div className="h-px flex-1 bg-zinc-200" />
                     </div>
                   )}
+                  {paymentSettings.mercadopagoEnabled && billingTerm > 1 && (
+                    <p className="mb-2 text-xs font-medium text-emerald-600">
+                      Pagando por transferencia ahorrás {pagoDescuentoPct}% ({formatPrecio(fullPriceForTerm(plan, billingTerm) - pagoTotalTransferencia)}) sobre el precio de Mercado Pago.
+                    </p>
+                  )}
                   <TransferPaymentBlock
                     paymentSettings={paymentSettings}
                     planId={plan}
                     planNombre={planElegido.nombre}
                     term={billingTerm}
-                    monto={pagoTotal}
+                    monto={pagoTotalTransferencia}
                     accion="activar mi tienda nueva"
                   />
                 </div>
