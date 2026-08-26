@@ -134,9 +134,9 @@ export default function PlanSelector({
       {/* Breadcrumb (2026-08-26, pedido de ARam) -- "Suscripción" en vez de
           "Plan", mismo criterio que el título de abajo. */}
       <p className="text-xs text-zinc-400">
-        Facturación <span className="mx-1">/</span> <span className="text-zinc-600">Suscripciones</span>
+        Facturación <span className="mx-1">/</span> <span className="text-zinc-600">PLANES</span>
       </p>
-      <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Suscripciones</h2>
+      <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">PLANES</h2>
       <p className="mt-1 text-sm text-zinc-500">
         Esta vista sirve para elegir el plan a suscribir.{' '}
         {paymentSettings.mercadopagoEnabled && paymentSettings.manualTransferEnabled
