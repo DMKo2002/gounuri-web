@@ -37,7 +37,7 @@
 // - Reenvío pega al mismo /api/auth/reenviar-confirmacion que ya usa el
 //   botón de /login.
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Turnstile from 'react-turnstile'
@@ -86,6 +86,21 @@ function RegistroForm() {
   // no sirve (usado, o pre-consumido por un escáner de seguridad de mail
   // antes de que el usuario llegara a hacer click) — ver comentario arriba.
   const confirmacionError = searchParams.get('confirmacion') === 'error'
+
+  // "Crear mi tienda" vs "Probar Gratis" (2026-08-26, pedido de ARam): las
+  // dos CTA de la landing pegan acá mismo (mismo /registro, mismo form) --
+  // lo único que cambia es ?intent=pago, que viene de REGISTRO_PAGO_URL en
+  // @/lib/site. Guardamos una cookie corta (1hs) apenas se carga la página
+  // porque de acá en más el usuario puede confirmar por mail (async, en
+  // otra pestaña/rato después) o irse por OAuth (ida y vuelta a Google/
+  // Facebook) -- un query param no sobrevive ninguno de los dos, una cookie
+  // sí. La lee /api/auth/confirmar y /auth/callback para decidir si mandan
+  // a /perfil/plan (paga primero) en vez de al onboarding de prueba gratis
+  // de siempre. Ver comentario en REGISTRO_PAGO_URL.
+  const intentPago = searchParams.get('intent') === 'pago'
+  useEffect(() => {
+    if (intentPago) document.cookie = 'gounuri_intent=pago; path=/; max-age=3600; samesite=lax'
+  }, [intentPago])
 
   const [form, setForm] = useState({
     email: '', password: '', confirmar: '',
@@ -246,9 +261,17 @@ function RegistroForm() {
     card = (
       <>
         <form onSubmit={handleSubmit} className="rounded-xl border border-zinc-200 bg-white p-6">
-          <h1 className="text-lg font-semibold text-zinc-900">Creá tu tienda</h1>
+          {/* Copy condicional según ?intent=pago (2026-08-26, pedido de
+              ARam) -- "clonar el formulario" hubiera significado duplicar
+              ~400 líneas de Turnstile/OAuth/manejo de errores por una sola
+              oración de diferencia; se resuelve acá con el mismo form. */}
+          <h1 className="text-lg font-semibold text-zinc-900">
+            {intentPago ? 'Confirmá tu cuenta' : 'Creá tu tienda'}
+          </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            {TRIAL_DAYS} días gratis, sin tarjeta. En 2 minutos tenés tu tienda online.
+            {intentPago
+              ? 'Ya elegiste tu plan. Confirmá tu cuenta para pagar y activar tu tienda.'
+              : `${TRIAL_DAYS} días gratis, sin tarjeta. En 2 minutos tenés tu tienda online.`}
           </p>
 
           {error && (

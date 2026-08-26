@@ -44,8 +44,9 @@ export default function PlanSelector({
   billingPausedByUser,
   legacyManualBilling,
   paymentHistory,
+  noTenantYet = false,
 }: {
-  currentPlan: string
+  currentPlan: string | null
   trialing: boolean
   paymentSettings: PlatformPaymentSettings
   // Todo lo agregado 2026-08-25 para mostrar plazo/proximo cobro y permitir
@@ -57,6 +58,15 @@ export default function PlanSelector({
   billingPausedByUser: boolean
   legacyManualBilling: boolean
   paymentHistory: { id: string; amount: number; status: string; created_at: string; mpPaymentId: string | null; mpPreapprovalId: string | null }[]
+  // Logueado pero sin tenant todavía (2026-08-26, pedido de ARam): viene de
+  // "Crear mi tienda" en la landing, ver /app/perfil/plan/page.tsx. En este
+  // modo "Pagar con Mercado Pago" no pasa por /api/billing/subscribe (que
+  // exige un tenant existente) sino por /api/ir-a-plan, que crea la
+  // suscripción sin tenant y recién genera la tienda cuando el webhook
+  // confirma el pago. Transferencia queda oculta -- ese flujo (notify-
+  // manual-intent) también necesita un tenant para dejar constancia del
+  // pago pendiente, no está armado para este caso todavía.
+  noTenantYet?: boolean
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -283,15 +293,26 @@ export default function PlanSelector({
                   {paymentSettings.mercadopagoEnabled && (
                     <>
                       <button
-                        onClick={() => setMpEmailPlan(p => (p === card.id ? null : card.id))}
+                        onClick={() => {
+                          if (noTenantYet) {
+                            // /api/ir-a-plan usa el email de la cuenta logueada
+                            // directo (no acepta uno custom) -- se salta el paso
+                            // de "ingresá tu email de MP" de acá abajo.
+                            window.location.href = `/api/ir-a-plan?plan=${card.id}&months=${term}`
+                            return
+                          }
+                          setMpEmailPlan(p => (p === card.id ? null : card.id))
+                        }}
                         disabled={loading !== null}
                         className="btn-outline w-full disabled:opacity-50"
                       >
-                        {mpEmailPlan === card.id
-                          ? 'Ocultar datos de MP'
-                          : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
+                        {noTenantYet
+                          ? 'Pagar con Mercado Pago'
+                          : mpEmailPlan === card.id
+                            ? 'Ocultar datos de MP'
+                            : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
                       </button>
-                      {mpEmailPlan === card.id && (
+                      {!noTenantYet && mpEmailPlan === card.id && (
                         <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
                           <div>
                             <label className="block text-base font-semibold text-zinc-800 mb-1.5">
@@ -320,7 +341,7 @@ export default function PlanSelector({
                       )}
                     </>
                   )}
-                  {paymentSettings.manualTransferEnabled && (
+                  {!noTenantYet && paymentSettings.manualTransferEnabled && (
                     <button
                       onClick={() => setExpandedPlan(p => (p === card.id ? null : card.id))}
                       className="btn-black w-full"
@@ -329,7 +350,7 @@ export default function PlanSelector({
                     </button>
                   )}
 
-                  {paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
+                  {!noTenantYet && paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
                     <div className="mt-3">
                       <TransferPaymentBlock
                         paymentSettings={paymentSettings}
@@ -388,7 +409,7 @@ export default function PlanSelector({
             <p>Aceptamos tarjetas de crédito y débito bancarias habilitadas para débito automático, o dinero disponible en tu cuenta de MercadoPago. No se aceptan tarjetas prepagas ni virtuales (ej. Prex, Uala prepaga) para suscripciones recurrentes.</p>
           </>
         )}
-        {paymentSettings.manualTransferEnabled && (
+        {!noTenantYet && paymentSettings.manualTransferEnabled && (
           <p>Con transferencia, el plan se activa una vez que confirmemos el pago.</p>
         )}
       </div>

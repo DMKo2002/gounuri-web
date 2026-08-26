@@ -15,7 +15,44 @@ export default async function PlanPage() {
   const service = createServiceClient()
   const { data: _rows } = await service.from('users').select('tenant_id').eq('id', user.id).limit(1)
   const tenantId = _rows?.[0]?.tenant_id
-  if (!tenantId) redirect('/perfil')
+
+  // Logueado pero sin tienda todavía (2026-08-26, pedido de ARam): quien
+  // clickeó "Crear mi tienda" en la landing llega derecho acá vía
+  // /api/auth/confirmar o /auth/callback (cookie gounuri_intent=pago, ver
+  // @/lib/site) SIN tener tenant -- antes esto redirigía a /perfil sin
+  // mostrar nada. Ahora se muestran las mismas tarjetas; "Pagar con
+  // Mercado Pago" dispara /api/ir-a-plan (mismo mecanismo que ya usa la
+  // sección de precios pública: recién se crea la tienda cuando el webhook
+  // confirma el pago) en vez de /api/billing/subscribe, que necesita un
+  // tenant existente -- ver PlanSelector.tsx (prop noTenantYet).
+  if (!tenantId) {
+    const paymentSettings = await getPlatformPaymentSettings(service)
+    return (
+      <main className="min-h-screen bg-zinc-50">
+        <header className="border-b border-zinc-200 bg-white">
+          <div className="mx-auto flex h-16 max-w-5xl items-center gap-4 px-6">
+            <Link href="/perfil" className="text-lg font-semibold tracking-tight text-zinc-900">
+              gounuri<span className="text-zinc-400">.com</span>
+            </Link>
+          </div>
+        </header>
+        <div className="mx-auto max-w-5xl px-6 py-10">
+          <PlanSelector
+            currentPlan={null}
+            trialing={false}
+            paymentSettings={paymentSettings}
+            billingTerm={null}
+            nextBillingDate={null}
+            mpPreapprovalId={null}
+            billingPausedByUser={false}
+            legacyManualBilling={false}
+            paymentHistory={[]}
+            noTenantYet
+          />
+        </div>
+      </main>
+    )
+  }
 
   const { data: _tenants } = await service
     .from('tenants')

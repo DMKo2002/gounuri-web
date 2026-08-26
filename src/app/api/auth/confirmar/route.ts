@@ -50,9 +50,18 @@ export async function POST(req: NextRequest) {
         .limit(1)
 
       const storeName = accountRows?.[0]?.store_name
-      const redirectTo = storeName
-        ? `/onboarding?store=${encodeURIComponent(storeName)}`
-        : '/onboarding'
+      // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- seteada
+      // por /registro cuando vino de un botón "Crear mi tienda" (en vez de
+      // "Probar Gratis"), ver REGISTRO_PAGO_URL en @/lib/site. En ese caso
+      // manda a /perfil/plan (elegís plan y pagás, la tienda se genera
+      // recién con el pago vía /api/ir-a-plan) en vez del onboarding de
+      // prueba gratis de siempre.
+      const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
+      const redirectTo = intentPago
+        ? '/perfil/plan'
+        : storeName
+          ? `/onboarding?store=${encodeURIComponent(storeName)}`
+          : '/onboarding'
       return NextResponse.json({ ok: true, redirectTo })
     }
     console.error('[api/auth/confirmar] verifyOtp error:', error?.message)

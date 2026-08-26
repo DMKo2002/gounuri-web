@@ -9,6 +9,15 @@ export const PANEL_URL =
 
 // El registro y el onboarding ahora viven en gounuri.com
 export const REGISTRO_URL = '/registro'
+// "Crear mi tienda" (2026-08-26, pedido de ARam) -- mismo /registro que
+// "Probar Gratis" (REGISTRO_URL, NO se toca) pero con ?intent=pago: /registro
+// lee ese query param y guarda una cookie corta (gounuri_intent=pago, 1hs)
+// que sobrevive a la confirmación de mail y al ida-y-vuelta de OAuth. Cuando
+// esa cookie está presente, /api/auth/confirmar y /auth/callback mandan a
+// /perfil/plan (elegís plan y pagás, recién ahí se genera la tienda) en vez
+// de al onboarding de prueba gratis de siempre. Ver /registro/page.tsx,
+// /api/auth/confirmar/route.ts y /auth/callback/route.ts.
+export const REGISTRO_PAGO_URL = '/registro?intent=pago'
 export const LOGIN_URL = '/login'
 
 export const TRIAL_DAYS = 7

@@ -56,7 +56,13 @@ export default function LoginPage() {
       }
       if (remember) localStorage.setItem(REMEMBER_KEY, email)
       else localStorage.removeItem(REMEMBER_KEY)
-      router.push('/perfil')
+      // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- mismo
+      // criterio que /api/auth/confirmar y /auth/callback: si vino de
+      // "Crear mi tienda" (por ejemplo, tocó el botón, /registro le mostró
+      // "ya tenés cuenta, ingresá acá" y volvió por acá), lo mandamos a
+      // elegir plan en vez de al perfil de siempre.
+      const intentPago = document.cookie.split('; ').some(c => c === 'gounuri_intent=pago')
+      router.push(intentPago ? '/perfil/plan' : '/perfil')
       router.refresh()
     } catch (err) {
       setLoading(false)

@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
           .limit(1)
 
         const tenantId = userRows?.[0]?.tenant_id
+        // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- mismo
+        // criterio que /api/auth/confirmar/route.ts, ver comentario ahí y
+        // REGISTRO_PAGO_URL en @/lib/site. Sobrevive el viaje de ida y
+        // vuelta a Google/Facebook porque es una cookie de gounuri.com, no
+        // un query param.
+        const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
+        if (intentPago) return NextResponse.redirect(`${origin}/perfil/plan`)
         return NextResponse.redirect(tenantId ? `${origin}/perfil` : `${origin}/onboarding`)
       }
       console.error('[auth/callback] exchangeCodeForSession error:', error?.message)
