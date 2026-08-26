@@ -46,7 +46,7 @@ export default async function PlanPage() {
   // la sección.
   const { data: _charges } = await service
     .from('billing_charges')
-    .select('id, amount, status, created_at')
+    .select('id, amount, status, created_at, mp_payment_id, mp_preapproval_id')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(12)
@@ -55,6 +55,8 @@ export default async function PlanPage() {
     amount: c.amount ?? 0,
     status: c.status ?? '',
     created_at: c.created_at,
+    mpPaymentId: c.mp_payment_id ?? null,
+    mpPreapprovalId: c.mp_preapproval_id ?? null,
   }))
 
   return (
