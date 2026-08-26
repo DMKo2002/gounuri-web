@@ -45,9 +45,12 @@ export async function POST(req: Request) {
   const { data: _existing } = await service.from('users').select('tenant_id').eq('id', user.id).limit(1)
   if (_existing?.[0]?.tenant_id) {
     const existingId = _existing[0].tenant_id
-    const { data: _existingTenant } = await service.from('tenants').select('slug, domain').eq('id', existingId).limit(1)
+    const { data: _existingTenant } = await service.from('tenants').select('slug, domain, domain_status').eq('id', existingId).limit(1)
     const et = _existingTenant?.[0]
-    const existingStoreUrl = et ? (et.domain ? `https://${et.domain}` : `https://${et.slug}.gounuri.com`) : null
+    // 2026-08-26: no mandar acá un dominio propio todavía no verificado (DNS
+    // sin configurar) como si fuera la URL real de la tienda — mismo bug que
+    // en frontendUrl más abajo y en superadmin/page.tsx (caso real: HAEJIN_HAEJIN).
+    const existingStoreUrl = et ? ((et.domain && et.domain_status === 'verified') ? `https://${et.domain}` : `https://${et.slug}.gounuri.com`) : null
     return NextResponse.json({ ok: true, tenantId: existingId, existing: true, storeUrl: existingStoreUrl })
   }
 
@@ -211,7 +214,17 @@ export async function POST(req: Request) {
   // probar gratis... lleva a mi tienda"), sin tener que rearmar el slug del
   // lado del cliente (que podría diferir del nombre tal cual lo escribió el
   // dueño — ver la normalización más arriba).
-  const storeUrl = tenant.domain ? `https://${tenant.domain}` : `https://${slug}.gounuri.com`
+  // 2026-08-26: bug real — si el dueño ya tipeó un dominio propio en el
+  // onboarding (campo "domain" más arriba), quedaba guardado en tenants.domain
+  // de entrada pero domain_status sigue en 'none' (default de la columna) hasta
+  // que alguien lo cargue de verdad en /dashboard/dominio y el DNS resuelva.
+  // Antes storeUrl trataba ese dominio recién tipeado como si ya estuviera en
+  // vivo — el mail de bienvenida y el redirect de "Probar Gratis" mandaban al
+  // dueño a una URL que todavía no respondía nada. Caso real: HAEJIN_HAEJIN
+  // (2026-08-26), dominio haejinhaejin.com.ar cargado en el alta, sin DNS
+  // configurado todavía. Ahora solo se usa el dominio propio si ya está
+  // 'verified'; si no, {slug}.gounuri.com — que siempre funciona.
+  const storeUrl = (tenant.domain && tenant.domain_status === 'verified') ? `https://${tenant.domain}` : `https://${slug}.gounuri.com`
 
   return NextResponse.json({ ok: true, tenantId: tenant.id, storeUrl })
 }

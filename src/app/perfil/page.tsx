@@ -70,13 +70,17 @@ export default async function PerfilPage() {
 
   const { data: _tenants } = await service
     .from('tenants')
-    .select('name, slug, domain, plan, plan_status, template, created_at, mp_preapproval_id')
+    .select('name, slug, domain, domain_status, plan, plan_status, template, created_at, mp_preapproval_id')
     .eq('id', tenantId)
     .limit(1)
   const tenant = _tenants?.[0]
   if (!tenant) return <main className="p-8 text-zinc-500">No se encontró la tienda.</main>
 
-  const tiendaUrl = tenant.domain ? `https://${tenant.domain}` : `https://${tenant.slug}.gounuri.com`
+  // 2026-08-26: no mostrar/linkear acá un dominio propio todavía sin verificar
+  // (DNS sin configurar) como si fuera "mi tienda" — el dueño hacía clic y no
+  // cargaba nada. Mismo bug que en gounuri-web/api/create-tenant y en
+  // panel-admin/superadmin (caso real: HAEJIN_HAEJIN, 2026-08-26).
+  const tiendaUrl = (tenant.domain && tenant.domain_status === 'verified') ? `https://${tenant.domain}` : `https://${tenant.slug}.gounuri.com`
   const planNombre = PLAN_NOMBRES[tenant.plan ?? ''] ?? 'Business'
   const estado = tenant.plan_status ? ESTADOS[tenant.plan_status] : null
   const tieneSuscripcion = !!tenant.mp_preapproval_id && (tenant.plan_status === 'active' || tenant.plan_status === 'past_due')
