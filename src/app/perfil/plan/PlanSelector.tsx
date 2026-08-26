@@ -17,7 +17,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Check, Loader2, ChevronRight } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
 import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
@@ -31,31 +31,6 @@ function formatARS(n: number) {
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
-
-// Mismo componente que usa /onboarding/page.tsx (ver comentario ahi) --
-// 2026-08-26, para el toggle de "Renovacion automatica" arriba de todo en
-// /perfil/plan (pedido de ARam).
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-1 ${
-        checked ? 'bg-zinc-900' : 'bg-zinc-200'
-      }`}
-    >
-      <span
-        className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-4' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  )
-}
-
-const TERM_LABEL: Record<BillingTerm, string> = { 1: 'Mensual', 6: 'Semestral', 12: 'Anual' }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -95,18 +70,6 @@ export default function PlanSelector({
   const searchParams = useSearchParams()
   const sectionRef = useRef<HTMLDivElement>(null)
   const [highlightPlan, setHighlightPlan] = useState<PlanId | null>(null)
-  // "Dar de baja del servicio" — 2026-08-25, ver memoria de proyecto.
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
-  const [canceling, setCanceling] = useState(false)
-  // Motivo opcional de baja (2026-08-25, pedido de David/Aram tras probar el
-  // flujo — ver billing_cancellation_feedback) — no bloquea la baja si se
-  // deja vacío.
-  const [cancelReason, setCancelReason] = useState('')
-  // Panel "Suscripciones" arriba de todo (2026-08-26, pedido de ARam) -- la
-  // flecha (o el toggle) abre el detalle con mas info y el boton de
-  // cancelar, en vez de tener ese widget repetido dentro de la card del
-  // plan actual.
-  const [subDetailOpen, setSubDetailOpen] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -152,28 +115,6 @@ export default function PlanSelector({
     }
   }
 
-  // Cancela el preapproval de Mercado Pago — el servicio sigue activo hasta
-  // nextBillingDate (ver /api/billing/cancel), no corta nada al instante.
-  async function cancelMp() {
-    setCanceling(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/billing/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: cancelReason.trim() || undefined }),
-      })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error ?? 'Error desconocido')
-      setShowCancelConfirm(false)
-      setCancelReason('')
-      window.location.reload()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo dar de baja la suscripción')
-      setCanceling(false)
-    }
-  }
-
   // Tenants pre-existentes al sistema de suscripción actual (ver memoria de
   // proyecto "Gounuri billing/subscriptions") — no deben poder disparar
   // ningún cobro real ni cancelar nada desde acá todavía.
@@ -204,97 +145,6 @@ export default function PlanSelector({
             ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
             : 'Elegí un plan y coordinamos el pago por transferencia bancaria — por WhatsApp.'}
       </p>
-
-      {/* Resumen de la suscripción actual arriba de todo (2026-08-26, pedido
-          de ARam) -- vencimiento, plan elegido, precio de renovación y el
-          toggle de renovación automática, con todo el detalle (y "Cancelar
-          suscripción") atrás de la flecha, en vez de enterrado adentro de la
-          card del plan. Solo aplica al flujo de Mercado Pago propio de este
-          tenant -- legacyManualBilling ya cortó con un return antes de acá. */}
-      {!trialing && (mpPreapprovalId || billingPausedByUser) && (() => {
-        const planActual = PLANES.find(p => p.id === currentPlan)
-        const precioRenovacion = mpPreapprovalId && isPlanId(currentPlan)
-          ? fullPriceForTerm(currentPlan, billingTerm ?? 1)
-          : null
-        return (
-          <div className="mt-8 overflow-hidden rounded-xl border border-zinc-200">
-            <div className="hidden sm:grid grid-cols-[1.4fr_1fr_1.3fr_1fr_28px] gap-4 bg-zinc-50 px-5 py-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
-              <span>Suscripción</span>
-              <span>Vencimiento</span>
-              <span>Renovación automática</span>
-              <span>Precio de renovación</span>
-              <span />
-            </div>
-            <button
-              type="button"
-              onClick={() => setSubDetailOpen(o => !o)}
-              className="grid w-full grid-cols-2 sm:grid-cols-[1.4fr_1fr_1.3fr_1fr_28px] items-center gap-x-4 gap-y-2 px-5 py-4 text-left transition-colors hover:bg-zinc-50"
-            >
-              <span className="font-semibold text-zinc-900">{planActual?.nombre ?? currentPlan}</span>
-              <span className="text-sm text-zinc-700 sm:text-left">{nextBillingDate ? formatFecha(nextBillingDate) : '—'}</span>
-              <span onClick={e => e.stopPropagation()} className="flex items-center gap-2 text-sm text-zinc-500 sm:text-transparent">
-                <Toggle checked={!!mpPreapprovalId} onChange={() => setSubDetailOpen(true)} />
-                <span className="sm:hidden">Renovación automática</span>
-              </span>
-              <span className="text-sm text-zinc-700">{precioRenovacion ? formatARS(precioRenovacion) : '—'}</span>
-              <ChevronRight className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${subDetailOpen ? 'rotate-90' : ''}`} />
-            </button>
-            {subDetailOpen && (
-              <div className="border-t border-zinc-200 bg-zinc-50 px-5 py-4 text-sm text-zinc-600">
-                <p className="font-medium text-zinc-900">Detalle de tu suscripción</p>
-                {billingTerm && <p className="mt-1">Facturación: {TERM_LABEL[billingTerm]}</p>}
-                {nextBillingDate && <p>Próximo cobro: {formatFecha(nextBillingDate)}</p>}
-
-                {mpPreapprovalId ? (
-                  showCancelConfirm ? (
-                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                      <p>
-                        Vas a poder seguir usando tu tienda
-                        {nextBillingDate ? <> hasta el <strong>{formatFecha(nextBillingDate)}</strong></> : ''}.
-                        Después de esa fecha no te volvemos a cobrar y tu plan pasa a gratuito.
-                      </p>
-                      <div className="mt-3">
-                        <label className="block text-xs font-medium text-red-700 mb-1">
-                          Nos da pena que te vayas — ¿nos contás por qué cancelás? (opcional)
-                        </label>
-                        <textarea
-                          value={cancelReason}
-                          onChange={e => setCancelReason(e.target.value)}
-                          rows={2}
-                          maxLength={2000}
-                          placeholder="Tu respuesta nos ayuda a mejorar..."
-                          className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-zinc-700 placeholder:text-zinc-400 focus:border-red-400 focus:outline-none"
-                        />
-                      </div>
-                      <div className="mt-3 flex gap-2">
-                        <button onClick={cancelMp} disabled={canceling} className="btn-black flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50">
-                          {canceling && <Loader2 size={15} className="animate-spin" />}
-                          Sí, dar de baja
-                        </button>
-                        <button onClick={() => { setShowCancelConfirm(false); setCancelReason('') }} disabled={canceling} className="btn-outline flex-1">
-                          Cancelar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button onClick={() => setShowCancelConfirm(true)} className="btn-outline mt-3 w-full text-red-600 border-red-200 hover:bg-red-50">
-                      Cancelar suscripción
-                    </button>
-                  )
-                ) : (
-                  <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-                    Diste de baja tu suscripción{nextBillingDate ? <> — seguís con acceso hasta el <strong>{formatFecha(nextBillingDate)}</strong></> : ''}.
-                  </p>
-                )}
-
-                <a href="#historial-de-pago" className="mt-3 inline-block text-xs font-medium text-zinc-500 underline hover:text-zinc-900">
-                  Ver historial de pago
-                </a>
-              </div>
-            )}
-          </div>
-        )
-      })()}
 
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento inline (misma geometría del archivo original) para poder

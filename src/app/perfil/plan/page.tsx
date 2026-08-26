@@ -2,10 +2,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getTenantUsage } from '@/lib/usage'
 import { getPlatformPaymentSettings } from '@/lib/platformBilling'
 import PlanSelector from './PlanSelector'
-import UsageBars from './UsageBars'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +33,6 @@ export default async function PlanPage() {
   const trialing = tenant.plan_status === 'trial' || tenant.status === 'suspended'
   const currentPlan = tenant.plan ?? 'standard'
 
-  const usage = await getTenantUsage(service, tenantId, currentPlan)
   const paymentSettings = await getPlatformPaymentSettings(service)
 
   // Historial de pagos — ver memoria de proyecto "Gounuri billing/subscriptions".
@@ -72,28 +69,22 @@ export default async function PlanPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <p className="text-sm text-zinc-500">{tenant.name}</p>
-
-        {/* Las tarjetas de plan van primero (2026-08-26, pedido de ARam) — esta
-            pantalla es para elegir/suscribir un plan, el uso del mes es
-            secundario acá. */}
-        <div className="mt-6">
-          <PlanSelector
-            currentPlan={currentPlan}
-            trialing={trialing}
-            paymentSettings={paymentSettings}
-            billingTerm={tenant.billing_term ?? null}
-            nextBillingDate={tenant.next_billing_date ?? null}
-            mpPreapprovalId={tenant.mp_preapproval_id ?? null}
-            billingPausedByUser={tenant.billing_paused_by_user ?? false}
-            legacyManualBilling={tenant.legacy_manual_billing ?? false}
-            paymentHistory={paymentHistory}
-          />
-        </div>
-
-        <div className="mt-8">
-          <UsageBars usage={usage} />
-        </div>
+        {/* Pantalla general de suscripcion (2026-08-26, pedido de ARam) --
+            pensada como una landing/pricing page, no como el panel de
+            gestion de la suscripcion de un tenant puntual (eso vive en
+            Panel Admin /facturacion/suscripcion) -- por eso no muestra el
+            nombre de la tienda ni el resumen de vencimiento/renovacion. */}
+        <PlanSelector
+          currentPlan={currentPlan}
+          trialing={trialing}
+          paymentSettings={paymentSettings}
+          billingTerm={tenant.billing_term ?? null}
+          nextBillingDate={tenant.next_billing_date ?? null}
+          mpPreapprovalId={tenant.mp_preapproval_id ?? null}
+          billingPausedByUser={tenant.billing_paused_by_user ?? false}
+          legacyManualBilling={tenant.legacy_manual_billing ?? false}
+          paymentHistory={paymentHistory}
+        />
       </div>
     </main>
   )
