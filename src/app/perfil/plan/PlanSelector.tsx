@@ -371,7 +371,7 @@ export default function PlanSelector({
                         className="btn-outline w-full disabled:opacity-50"
                       >
                         {mpEmailPlan === card.id
-                          ? 'Ocultar datos de Mercado Pago'
+                          ? 'Ocultar datos de MP'
                           : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
                       </button>
                       {mpEmailPlan === card.id && (
