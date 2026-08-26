@@ -57,8 +57,12 @@ export async function POST(req: NextRequest) {
       // recién con el pago vía /api/ir-a-plan) en vez del onboarding de
       // prueba gratis de siempre.
       const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
+      // Plan elegido en la sección de Planes (ver /api/ir-a-plan y
+      // /registro/page.tsx) -- si vino de ahí, /perfil/plan ya llega con
+      // esa card resaltada en vez de mostrar las tres sin ningún foco.
+      const planHint = req.cookies.get('gounuri_plan')?.value
       const redirectTo = intentPago
-        ? '/perfil/plan'
+        ? (planHint ? `/perfil/plan?plan=${planHint}` : '/perfil/plan')
         : storeName
           ? `/onboarding?store=${encodeURIComponent(storeName)}`
           : '/onboarding'

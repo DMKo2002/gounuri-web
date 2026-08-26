@@ -43,6 +43,7 @@ import { useSearchParams } from 'next/navigation'
 import Turnstile from 'react-turnstile'
 import { AlertTriangle, Eye, EyeOff, Loader2, Mail } from 'lucide-react'
 import { LOGIN_URL, TRIAL_DAYS } from '@/lib/site'
+import { isPlanId, isBillingTerm } from '@/lib/plans'
 import Navbar from '@/components/Navbar'
 import OAuthButtons from '@/components/OAuthButtons'
 import SideStrip from '@/components/SideStrip'
@@ -98,9 +99,22 @@ function RegistroForm() {
   // a /perfil/plan (paga primero) en vez de al onboarding de prueba gratis
   // de siempre. Ver comentario en REGISTRO_PAGO_URL.
   const intentPago = searchParams.get('intent') === 'pago'
+  // Plan/plazo elegidos en la sección de Planes (2026-08-26, pedido de
+  // ARam -- reportado en vivo: "Empezar con Mini" en incógnito perdía el
+  // plan elegido) -- vienen de /api/ir-a-plan?plan=X&months=Y cuando no
+  // estás logueado, ver comentario ahí. Se guardan junto con la cookie de
+  // intención para que /perfil/plan ya llegue con esa card resaltada
+  // (mismo mecanismo de highlightPlan que ya usa PlanSelector.tsx).
+  const planParamRaw = searchParams.get('plan')
+  const monthsParamRaw = Number(searchParams.get('months'))
+  const planHint = isPlanId(planParamRaw) ? planParamRaw : null
+  const monthsHint = isBillingTerm(monthsParamRaw) ? monthsParamRaw : null
   useEffect(() => {
-    if (intentPago) document.cookie = 'gounuri_intent=pago; path=/; max-age=3600; samesite=lax'
-  }, [intentPago])
+    if (!intentPago) return
+    document.cookie = 'gounuri_intent=pago; path=/; max-age=3600; samesite=lax'
+    if (planHint) document.cookie = `gounuri_plan=${planHint}; path=/; max-age=3600; samesite=lax`
+    if (monthsHint) document.cookie = `gounuri_months=${monthsHint}; path=/; max-age=3600; samesite=lax`
+  }, [intentPago, planHint, monthsHint])
 
   const [form, setForm] = useState({
     email: '', password: '', confirmar: '',

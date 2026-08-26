@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
         // vuelta a Google/Facebook porque es una cookie de gounuri.com, no
         // un query param.
         const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
-        if (intentPago) return NextResponse.redirect(`${origin}/perfil/plan`)
+        const planHint = req.cookies.get('gounuri_plan')?.value
+        if (intentPago) return NextResponse.redirect(`${origin}/perfil/plan${planHint ? `?plan=${planHint}` : ''}`)
         return NextResponse.redirect(tenantId ? `${origin}/perfil` : `${origin}/onboarding`)
       }
       console.error('[auth/callback] exchangeCodeForSession error:', error?.message)

@@ -40,7 +40,13 @@ export async function GET(req: Request) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(`${origin}/registro`)
+  // Sin loguear (2026-08-26, pedido de ARam -- reportado en vivo, entrando
+  // desde "Empezar con Mini" en incógnito): antes esto mandaba a /registro
+  // pelado y se perdía el plan elegido -- volvía siempre al trial genérico
+  // en vez de a pagar. Ahora manda con ?intent=pago&plan=X&months=Y (mismo
+  // mecanismo que usan los botones "Crear mi tienda", ver REGISTRO_PAGO_URL
+  // en @/lib/site) -- plan/months acá ya están validados arriba.
+  if (!user) return NextResponse.redirect(`${origin}/registro?intent=pago&plan=${plan}&months=${months}`)
 
   const service = createServiceClient()
   const { data: _rows } = await service.from('users').select('tenant_id').eq('id', user.id).limit(1)

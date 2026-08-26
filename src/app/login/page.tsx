@@ -62,7 +62,9 @@ export default function LoginPage() {
       // "ya tenés cuenta, ingresá acá" y volvió por acá), lo mandamos a
       // elegir plan en vez de al perfil de siempre.
       const intentPago = document.cookie.split('; ').some(c => c === 'gounuri_intent=pago')
-      router.push(intentPago ? '/perfil/plan' : '/perfil')
+      const planHintCookie = document.cookie.split('; ').find(c => c.startsWith('gounuri_plan='))
+      const planHint = planHintCookie?.split('=')[1]
+      router.push(intentPago ? `/perfil/plan${planHint ? `?plan=${planHint}` : ''}` : '/perfil')
       router.refresh()
     } catch (err) {
       setLoading(false)
