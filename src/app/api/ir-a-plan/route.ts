@@ -30,6 +30,8 @@ import type { BillingTerm, PlanId } from '@/lib/plans'
 const VALID_PLANS = ['mini', 'standard', 'premium']
 const VALID_MONTHS = [1, 6, 12]
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export async function GET(req: Request) {
   const origin = new URL(req.url).origin
   const url = new URL(req.url)
@@ -37,6 +39,12 @@ export async function GET(req: Request) {
   const plan = (VALID_PLANS.includes(planParam ?? '') ? planParam! : 'standard') as PlanId
   const monthsParam = Number(url.searchParams.get('months'))
   const months = (VALID_MONTHS.includes(monthsParam) ? monthsParam : 1) as BillingTerm
+  // Email de MP explícito (2026-08-26, pedido de ARam) -- /perfil/plan sin
+  // tenant todavía (PlanSelector, prop noTenantYet) sí deja elegir con qué
+  // cuenta de MP pagar, igual que el caso "ya tiene tienda" -- antes esto
+  // asumía siempre el email de la cuenta logueada sin dar esa opción.
+  const payerEmailParam = url.searchParams.get('payerEmail')
+  const payerEmailOverride = payerEmailParam && EMAIL_RE.test(payerEmailParam) ? payerEmailParam : null
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -61,7 +69,7 @@ export async function GET(req: Request) {
       const preapproval = await createSignupPreapproval({
         userId: user.id,
         planId: plan,
-        payerEmail: user.email,
+        payerEmail: payerEmailOverride ?? user.email,
         backUrl: `${origin}/onboarding?paso=confirmando`,
         months,
       })

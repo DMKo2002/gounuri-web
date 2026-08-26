@@ -19,7 +19,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
-import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
+import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 import TransferPaymentBlock from '@/components/TransferPaymentBlock'
@@ -106,14 +106,19 @@ export default function PlanSelector({
     }
     setLoading(planId)
     setError(null)
+    // Sin tenant todavía (2026-08-26, pedido de ARam): /api/billing/
+    // subscribe exige un tenant existente, así que este caso pasa por
+    // /api/ir-a-plan (mismo mecanismo que "Empezar con X" de la sección de
+    // Planes) -- ahora sí, con el email de MP que acaba de ingresar acá,
+    // en vez de asumir el email de la cuenta logueada.
+    if (noTenantYet) {
+      window.location.href = `/api/ir-a-plan?plan=${planId}&months=${term}&payerEmail=${encodeURIComponent(payerEmail.trim())}`
+      return
+    }
     try {
       const res = await fetch('/api/billing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Mercado Pago sí soporta cobrar cada 6 o 12 meses (un solo
-        // preapproval con auto_recurring.frequency = ese plazo) -- lo que NO
-        // tiene es el descuento por plazo, que queda solo para transferencia
-        // (2026-08-26, pedido de ARam; ver fullPriceForTerm en lib/billing.ts).
         body: JSON.stringify({ plan: planId, payerEmail: payerEmail.trim(), months: term }),
       })
       const json = await res.json()
@@ -245,23 +250,18 @@ export default function PlanSelector({
               <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{card.descripcion}</p>
 
               {term > 1 ? (
-                <div className="mt-6 space-y-3">
-                  <div>
-                    <span className="text-2xl font-bold tracking-tight text-zinc-900">
-                      {formatARS(fullPriceForTerm(card.id, term))}
-                    </span>
-                    <span className="ml-1 text-sm text-zinc-500">con Mercado Pago / {term} meses</span>
-                    <p className="mt-0.5 text-xs text-zinc-400">precio de lista, sin descuento por plazo</p>
-                  </div>
-                  <div>
-                    <span className="text-2xl font-bold tracking-tight text-zinc-900">
-                      {formatARS(priceForTerm(card.id, term))}
-                    </span>
-                    <span className="ml-1 text-sm text-zinc-500">por transferencia / {term} meses</span>
-                    <p className="mt-0.5 text-xs text-emerald-600">
-                      equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes — {Math.round(TERM_DISCOUNTS[term] * 100)}% off
-                    </p>
-                  </div>
+                // Un solo precio para los dos métodos de pago (unificado
+                // 2026-08-26, pedido de ARam) -- MP y transferencia cobran
+                // lo mismo con el descuento de plazo aplicado, ver
+                // priceForTerm en @/lib/plans.
+                <div className="mt-6">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
+                    {formatARS(priceForTerm(card.id, term))}
+                  </span>
+                  <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
+                  <p className="mt-0.5 text-xs text-emerald-600">
+                    equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes — {Math.round(TERM_DISCOUNTS[term] * 100)}% off
+                  </p>
                 </div>
               ) : (
                 <div className="mt-6">
@@ -293,26 +293,15 @@ export default function PlanSelector({
                   {paymentSettings.mercadopagoEnabled && (
                     <>
                       <button
-                        onClick={() => {
-                          if (noTenantYet) {
-                            // /api/ir-a-plan usa el email de la cuenta logueada
-                            // directo (no acepta uno custom) -- se salta el paso
-                            // de "ingresá tu email de MP" de acá abajo.
-                            window.location.href = `/api/ir-a-plan?plan=${card.id}&months=${term}`
-                            return
-                          }
-                          setMpEmailPlan(p => (p === card.id ? null : card.id))
-                        }}
+                        onClick={() => setMpEmailPlan(p => (p === card.id ? null : card.id))}
                         disabled={loading !== null}
                         className="btn-outline w-full disabled:opacity-50"
                       >
-                        {noTenantYet
-                          ? 'Pagar con Mercado Pago'
-                          : mpEmailPlan === card.id
-                            ? 'Ocultar datos de MP'
-                            : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
+                        {mpEmailPlan === card.id
+                          ? 'Ocultar datos de MP'
+                          : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
                       </button>
-                      {!noTenantYet && mpEmailPlan === card.id && (
+                      {mpEmailPlan === card.id && (
                         <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
                           <div>
                             <label className="block text-base font-semibold text-zinc-800 mb-1.5">

@@ -28,19 +28,21 @@ function precioMensual(planId: PlanId): number {
   return p.precioARS
 }
 
-// Precio TOTAL a cobrar por el plazo elegido (ya con el descuento aplicado).
-// Descuento solo aplica a transferencia (2026-08-26, pedido de ARam) — ver
-// fullPriceForTerm para lo que se cobra via Mercado Pago.
+// Precio TOTAL a cobrar por el plazo elegido, ya con el descuento de
+// semestral/anual aplicado -- se usa TANTO para transferencia como para
+// Mercado Pago (unificado 2026-08-26, pedido de ARam: antes MP cobraba
+// precio de lista sin descuento y transferencia sí lo tenía, resultaba
+// inconsistente que el mismo plan/plazo saliera distinto según el método
+// de pago). Ver createPreapproval/createSignupPreapproval en lib/billing.ts.
 export function priceForTerm(planId: PlanId, months: BillingTerm): number {
   const discount = TERM_DISCOUNTS[months]
   return Math.round(precioMensual(planId) * months * (1 - discount))
 }
 
-// Precio TOTAL sin descuento -- lo que cobra Mercado Pago para el plazo
-// elegido (el descuento por pago semestral/anual es un beneficio exclusivo
-// de transferencia, no de MP). MP si soporta cobrar cada 6 o 12 meses (un
-// solo preapproval con auto_recurring.frequency = esos meses), solo que al
-// precio de lista.
+// Precio de lista sin descuento -- ya NO se usa para cobrar (ver
+// priceForTerm más arriba), queda solo por si hace falta mostrar el precio
+// "antes del descuento" en algún lado (ej. tachado al lado del precio con
+// descuento).
 export function fullPriceForTerm(planId: PlanId, months: BillingTerm): number {
   return precioMensual(planId) * months
 }
