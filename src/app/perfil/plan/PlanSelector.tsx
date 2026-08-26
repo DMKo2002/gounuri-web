@@ -131,20 +131,9 @@ export default function PlanSelector({
 
   return (
     <div ref={sectionRef}>
-      {/* Breadcrumb (2026-08-26, pedido de ARam) -- "Suscripción" en vez de
-          "Plan", mismo criterio que el título de abajo. */}
-      <p className="text-xs text-zinc-400">
-        Facturación <span className="mx-1">/</span> <span className="text-zinc-600">PLANES</span>
-      </p>
-      <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">PLANES</h2>
-      <p className="mt-1 text-sm text-zinc-500">
-        Esta vista sirve para elegir el plan a suscribir.{' '}
-        {paymentSettings.mercadopagoEnabled && paymentSettings.manualTransferEnabled
-          ? 'Elegí un plan y pagá con Mercado Pago (débito automático) o por transferencia bancaria.'
-          : paymentSettings.mercadopagoEnabled
-            ? 'Tu suscripción se renueva automáticamente. Tenés total libertad para cancelar cuando quieras.'
-            : 'Elegí un plan y coordinamos el pago por transferencia bancaria — por WhatsApp.'}
-      </p>
+      {/* Titulo general (2026-08-26, pedido de ARam) -- sin breadcrumb ni
+          bajada, esta pantalla ahora es solo el selector de planes. */}
+      <h2 className="text-2xl font-bold tracking-tight text-zinc-900">PLANES</h2>
 
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento inline (misma geometría del archivo original) para poder
