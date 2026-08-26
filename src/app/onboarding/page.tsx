@@ -1250,38 +1250,43 @@ function OnboardingContent() {
 
             <div className="mt-10 w-full space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
               {isPlaceholderPaid ? (
-                // Ya eligió y pagó un plan desde la landing (/api/ir-a-plan)
-                // antes de llegar acá — no tiene sentido ofrecerle de nuevo
-                // prueba gratis ni elegir plan, solo falta completar la
-                // tienda con lo que ya cargó en los pasos anteriores.
+                // Ya eligió y pagó un plan desde la landing (/api/ir-a-plan
+                // o /perfil/plan) antes de llegar acá — no tiene sentido
+                // ofrecerle de nuevo prueba gratis ni elegir plan, solo
+                // falta completar la tienda con lo que ya cargó en los
+                // pasos anteriores. Botón negro "Crear mi tienda" (2026-08-26,
+                // pedido de ARam: esta pantalla se divide en dos versiones
+                // según por dónde entró — acá entra quien ya pagó, mismo
+                // estilo/label que el botón "Crear mi tienda" de la landing,
+                // no el rojo de prueba gratis).
                 <button
                   type="button"
                   onClick={handleFinalizarTienda}
                   disabled={finalizando}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60"
                 >
                   {finalizando && <Loader2 size={15} className="animate-spin" />}
-                  {finalizando ? 'Creando tu tienda...' : 'Finalizar mi tienda'}
+                  {finalizando ? 'Creando tu tienda...' : 'Crear mi tienda'}
                 </button>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleFinalSubmit}
-                    disabled={saving}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
-                  >
-                    {saving && <Loader2 size={15} className="animate-spin" />}
-                    {saving ? 'Creando tu tienda...' : `Crear mi tienda - Probar Gratis ${TRIAL_DAYS} días`}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => goToStep('plan')}
-                    className="flex w-full items-center justify-center rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-                  >
-                    Crear mi tienda
-                  </button>
-                </>
+                // Entró por "Probar Gratis" — solo el botón rojo de prueba
+                // gratis. Antes también se ofrecía acá un botón negro
+                // "Crear mi tienda" que mandaba a elegir plan y pagar
+                // dentro del wizard (step 'plan' → 'pago'); se saca (2026-08-26,
+                // pedido de ARam) porque ese camino de pago ahora es
+                // /perfil/plan, no esta pantalla — dejarlo duplicaba la
+                // decisión y confundía sobre qué botón corresponde a cada
+                // flujo. El step 'plan'/'pago' queda en el código sin uso
+                // desde acá, no se borra por si hace falta reactivarlo.
+                <button
+                  type="button"
+                  onClick={handleFinalSubmit}
+                  disabled={saving}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#fe4648] py-4 text-sm font-medium text-white transition-colors hover:brightness-95 disabled:opacity-60"
+                >
+                  {saving && <Loader2 size={15} className="animate-spin" />}
+                  {saving ? 'Creando tu tienda...' : `Crear mi tienda - Probar Gratis ${TRIAL_DAYS} días`}
+                </button>
               )}
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
