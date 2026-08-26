@@ -278,13 +278,17 @@ function RegistroForm() {
           {/* Copy condicional según ?intent=pago (2026-08-26, pedido de
               ARam) -- "clonar el formulario" hubiera significado duplicar
               ~400 líneas de Turnstile/OAuth/manejo de errores por una sola
-              oración de diferencia; se resuelve acá con el mismo form. */}
+              oración de diferencia; se resuelve acá con el mismo form.
+              Genérico a propósito (no dice "ya elegiste tu plan"): "Crear
+              mi tienda" no siempre viene con un plan pre-elegido, solo
+              "Empezar con X" de la sección de Planes lo trae -- pedido de
+              ARam 2026-08-26, corrige un copy que asumía de más. */}
           <h1 className="text-lg font-semibold text-zinc-900">
-            {intentPago ? 'Confirmá tu cuenta' : 'Creá tu tienda'}
+            {intentPago ? 'Registrate' : 'Creá tu tienda'}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
             {intentPago
-              ? 'Ya elegiste tu plan. Confirmá tu cuenta para pagar y activar tu tienda.'
+              ? 'Ya activaremos tu tienda.'
               : `${TRIAL_DAYS} días gratis, sin tarjeta. En 2 minutos tenés tu tienda online.`}
           </p>
 
