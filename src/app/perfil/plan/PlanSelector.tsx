@@ -19,7 +19,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
-import { priceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
+import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
 import { createClient } from '@/lib/supabase/client'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 import TransferPaymentBlock from '@/components/TransferPaymentBlock'
@@ -109,10 +109,11 @@ export default function PlanSelector({
       const res = await fetch('/api/billing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Los descuentos por pago semestral/anual (TERM_DISCOUNTS) son solo
-        // para transferencia — con Mercado Pago siempre se cobra mensual,
-        // sin importar el plazo elegido arriba en el selector de precio.
-        body: JSON.stringify({ plan: planId, payerEmail: payerEmail.trim(), months: 1 }),
+        // Mercado Pago sí soporta cobrar cada 6 o 12 meses (un solo
+        // preapproval con auto_recurring.frequency = ese plazo) -- lo que NO
+        // tiene es el descuento por plazo, que queda solo para transferencia
+        // (2026-08-26, pedido de ARam; ver fullPriceForTerm en lib/billing.ts).
+        body: JSON.stringify({ plan: planId, payerEmail: payerEmail.trim(), months: term }),
       })
       const json = await res.json()
       if (!res.ok || !json.init_point) throw new Error(json.error ?? 'Error desconocido')
@@ -271,14 +272,23 @@ export default function PlanSelector({
               <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{card.descripcion}</p>
 
               {term > 1 ? (
-                <div className="mt-6">
-                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(priceForTerm(card.id, term))}
-                  </span>
-                  <span className="ml-1 text-sm text-zinc-500">total / {term} meses</span>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes
-                  </p>
+                <div className="mt-6 space-y-3">
+                  <div>
+                    <span className="text-2xl font-bold tracking-tight text-zinc-900">
+                      {formatARS(fullPriceForTerm(card.id, term))}
+                    </span>
+                    <span className="ml-1 text-sm text-zinc-500">con Mercado Pago / {term} meses</span>
+                    <p className="mt-0.5 text-xs text-zinc-400">precio de lista, sin descuento por plazo</p>
+                  </div>
+                  <div>
+                    <span className="text-2xl font-bold tracking-tight text-zinc-900">
+                      {formatARS(priceForTerm(card.id, term))}
+                    </span>
+                    <span className="ml-1 text-sm text-zinc-500">por transferencia / {term} meses</span>
+                    <p className="mt-0.5 text-xs text-emerald-600">
+                      equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes — {Math.round(TERM_DISCOUNTS[term] * 100)}% off
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-6">
@@ -364,11 +374,6 @@ export default function PlanSelector({
                           ? 'Ocultar datos de Mercado Pago'
                           : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
                       </button>
-                      {term > 1 && (
-                        <p className="text-xs text-zinc-500">
-                          El descuento por plazo es solo para transferencia — con Mercado Pago se cobra {formatARS(card.precioARS)}/mes.
-                        </p>
-                      )}
                       {mpEmailPlan === card.id && (
                         <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
                           <div>
