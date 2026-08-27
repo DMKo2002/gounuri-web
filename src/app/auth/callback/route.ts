@@ -1,4 +1,4 @@
-// GET /auth/callback?code=... — vuelta de Google/Facebook tras
+// GET /auth/callback?code=... — vuelta del login social tras
 // signInWithOAuth (ver components/OAuthButtons.tsx). Cambia el code por una
 // sesión (exchangeCodeForSession setea las cookies) y decide a dónde
 // mandar: si ya tiene tienda (login de alguien existente) → /perfil, si es
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
         // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- mismo
         // criterio que /api/auth/confirmar/route.ts, ver comentario ahí y
         // REGISTRO_PAGO_URL en @/lib/site. Sobrevive el viaje de ida y
-        // vuelta a Google/Facebook porque es una cookie de gounuri.com, no
+        // vuelta a Google porque es una cookie de gounuri.com, no
         // un query param.
         const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
         const planHint = req.cookies.get('gounuri_plan')?.value

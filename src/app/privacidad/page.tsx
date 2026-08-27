@@ -39,7 +39,7 @@ export default function Privacidad() {
       <p><strong>2.1. Gounuri como Responsable:</strong> respecto de los datos personales que el Tenant (la persona física o jurídica que crea una cuenta y una tienda en Gounuri) proporciona directamente a la Plataforma para darse de alta, administrar su cuenta y facturar el servicio SaaS contratado. Esta Política de Privacidad regula ese tratamiento.</p>
       <p><strong>2.2. Gounuri como Encargado del Tratamiento:</strong> respecto de los datos personales de los Clientes Finales (los compradores de cada tienda) que el Tenant recopila, almacena y gestiona a través de la infraestructura de Gounuri. En ese caso, el Tenant reviste el carácter de Responsable de dicha base de datos, y es quien define las políticas de privacidad de su propia tienda (configurables desde su Panel Admin, sección "Legal"). Gounuri únicamente aloja y procesa esa información por cuenta del Tenant, conforme a sus instrucciones y a los fines de prestar el servicio.</p>
       <h2 id="sec-3">3. Datos que Recopilamos</h2>
-      <p><strong>3.1. Datos de registro y cuenta:</strong> nombre, dirección de correo electrónico, contraseña (almacenada de forma cifrada), y, si el Usuario elige registrarse mediante Google o Facebook, la información básica de perfil que dichos proveedores comparten con Gounuri (nombre y correo electrónico).</p>
+      <p><strong>3.1. Datos de registro y cuenta:</strong> nombre, dirección de correo electrónico, contraseña (almacenada de forma cifrada), y, si el Usuario elige registrarse mediante Google, la información básica de perfil que dicho proveedor comparte con Gounuri (nombre y correo electrónico).</p>
       <p><strong>3.2. Datos de la tienda y facturación:</strong> nombre comercial, dominio, datos de contacto, y la información necesaria para procesar el cobro de la suscripción al servicio.</p>
       <p><strong>3.3. Datos técnicos y de uso:</strong> dirección IP, tipo de dispositivo y navegador, páginas visitadas, y datos de interacción con la Plataforma, recopilados mediante cookies y tecnologías similares con fines de seguridad, funcionamiento y análisis.</p>
       <h2 id="sec-4">4. Finalidad del Tratamiento</h2>
@@ -51,7 +51,7 @@ export default function Privacidad() {
       <li>Procesadores de pago (MercadoPago) para la facturación del servicio SaaS.</li>
       <li>Proveedores de envío de correo electrónico transaccional (Resend).</li>
       <li>Servicios de verificación antibots (Cloudflare Turnstile).</li>
-      <li>Proveedores de autenticación externa (Google, Facebook), únicamente si el Usuario elige iniciar sesión con esas cuentas.</li>
+      <li>Proveedores de autenticación externa (Google), únicamente si el Usuario elige iniciar sesión con esa cuenta.</li>
       </ul>
       <p><strong>5.2.</strong> Estos proveedores acceden a los datos estrictamente necesarios para prestar su servicio a Gounuri, y están sujetos a sus propias políticas de privacidad y a obligaciones de confidencialidad.</p>
       <p><strong>5.3.</strong> Gounuri podrá además divulgar datos personales cuando así lo exija la ley, una orden judicial o un requerimiento de autoridad competente.</p>

@@ -12,7 +12,7 @@
 // ahora se completan opcionalmente después, desde gounuri.com/perfil (ver
 // /perfil/datos). El nombre de la tienda ya se pregunta en el onboarding
 // (paso 1), así que sacarlo de acá no perdía nada, era una pregunta
-// duplicada. También se sumó login social (Google/Facebook, ver
+// duplicada. También se sumó login social (Google, ver
 // components/OAuthButtons.tsx) como alternativa a mail+contraseña.
 //
 // 2026-08-17: rediseño visual según Figma "Registracion 6" (node 1018:2,
@@ -93,8 +93,8 @@ function RegistroForm() {
   // lo único que cambia es ?intent=pago, que viene de REGISTRO_PAGO_URL en
   // @/lib/site. Guardamos una cookie corta (1hs) apenas se carga la página
   // porque de acá en más el usuario puede confirmar por mail (async, en
-  // otra pestaña/rato después) o irse por OAuth (ida y vuelta a Google/
-  // Facebook) -- un query param no sobrevive ninguno de los dos, una cookie
+  // otra pestaña/rato después) o irse por OAuth (ida y vuelta a Google)
+  // -- un query param no sobrevive ninguno de los dos, una cookie
   // sí. La lee /api/auth/confirmar y /auth/callback para decidir si mandan
   // a /perfil/plan (paga primero) en vez de al onboarding de prueba gratis
   // de siempre. Ver comentario en REGISTRO_PAGO_URL.
