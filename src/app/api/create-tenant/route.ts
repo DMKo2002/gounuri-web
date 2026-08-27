@@ -111,14 +111,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: tenantError.message }, { status: 500 })
   }
 
+  // Glow y Bazaar son templates de rubros que en general no manejan talle/
+  // color (indumentaria por talle es la excepción, no la regla acá) y usan
+  // foto de producto cuadrada — así que arrancan en modo simple con fotos
+  // 1:1 en vez del default de indumentaria (sizes_colors + 2:3). El resto de
+  // los templates sigue con el default de la columna en la base.
+  const isSimpleTemplate = chosenTemplate === 'glow' || chosenTemplate === 'bazaar'
+
   const { error: configError } = await service
     .from('store_config')
     .insert({
       tenant_id: tenant.id,
-      variant_attributes: [
+      variant_attributes: isSimpleTemplate ? [] : [
         { key: 'talle', label: 'Talle', type: 'select', options: ['XS','S','M','L','XL','XXL'] },
         { key: 'color', label: 'Color', type: 'text' },
       ],
+      variant_mode: isSimpleTemplate ? 'simple' : 'sizes_colors',
+      product_image_ratio: isSimpleTemplate ? '1:1' : '2:3',
       mp_enabled: Boolean(mpEnabled),
       transfer_enabled: Boolean(transferEnabled),
       cash_enabled: Boolean(cashEnabled),
