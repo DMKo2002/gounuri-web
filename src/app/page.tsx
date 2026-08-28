@@ -20,23 +20,24 @@ import { TiendaBazaar } from '@/components/tiendas/TiendaBazaar'
 // no tenga claro cual es "la" pagina representativa del sitio y a veces
 // termina indexando la que no queres (ver /registro/layout.tsx, que ahora
 // tiene su propio titulo + noindex por la misma razon).
-// Titulo largo (96 caracteres) a pedido de Aram para que los "0%" salgan
-// tal cual en el resultado de busqueda -- OJO: Google trunca el titulo
-// visible en el SERP a mano de ~60 caracteres, asi que en la practica hoy
-// se va a ver algo como "Gounuri - Tu tienda online en minutos - 0%..." con
-// puntos suspensivos. El texto completo igual queda en el <title> real (lo
-// puede leer un lector de pantalla, y Google a veces lo usa completo en
-// otros formatos como el Overview de IA), pero visualmente en el link azul
-// clasico se va a cortar.
+// Revisado 2026-08-28 a pedido de Aram: el titulo largo anterior (96 chars)
+// se truncaba en el SERP antes de mostrar "0%...", asi que ahora el titulo
+// es corto (marca + propuesta) y el pitch de 0% comision / 0% retencion /
+// 0% letra chica se movio a la description, donde Google deja ~155-160
+// caracteres sin cortar. "confiscado" paso a "retenido": es mas preciso
+// (retencion temporal de fondos, no perdida definitiva) y coincide con el
+// termino que usan los comerciantes afectados cuando buscan el problema.
+// Tambien se saco "indumentaria": Gounuri sirve para cualquier rubro, no
+// solo moda.
 export const metadata: Metadata = {
-  title: 'Gounuri - Tu tienda online en minutos - 0% Comisión de venta 0% Dinero confiscado 0% Letra chica',
+  title: 'Gounuri — Tu tienda online en minutos',
   description:
-    'Creá tu tienda online de indumentaria en Argentina. 0% comisión de venta, 0% dinero confiscado, 0% letra chica. Catálogo, pagos con MercadoPago y diseño profesional.',
+    '0% comisión de venta · 0% dinero retenido · 0% letra chica. Creá tu tienda online para cualquier rubro, con MercadoPago y diseño profesional.',
   alternates: { canonical: 'https://gounuri.com' },
   openGraph: {
-    title: 'Gounuri - Tu tienda online en minutos - 0% Comisión de venta 0% Dinero confiscado 0% Letra chica',
+    title: 'Gounuri — Tu tienda online en minutos',
     description:
-      'Creá tu tienda online de indumentaria: catálogo, pedidos, pagos y diseño profesional.',
+      'Creá tu tienda online para cualquier rubro: catálogo, pedidos, pagos y diseño profesional.',
     url: 'https://gounuri.com',
     locale: 'es_AR',
     type: 'website',
