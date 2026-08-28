@@ -30,12 +30,12 @@ import { TiendaBazaar } from '@/components/tiendas/TiendaBazaar'
 // Tambien se saco "indumentaria": Gounuri sirve para cualquier rubro, no
 // solo moda.
 export const metadata: Metadata = {
-  title: 'Gounuri — Tu tienda online en minutos',
+  title: 'Gounuri — Tu tienda online en minutos, sin comisión',
   description:
     '0% comisión de venta · 0% dinero retenido · 0% letra chica. Creá tu tienda online para cualquier rubro, con MercadoPago y diseño profesional.',
   alternates: { canonical: 'https://gounuri.com' },
   openGraph: {
-    title: 'Gounuri — Tu tienda online en minutos',
+    title: 'Gounuri — Tu tienda online en minutos, sin comisión',
     description:
       'Creá tu tienda online para cualquier rubro: catálogo, pedidos, pagos y diseño profesional.',
     url: 'https://gounuri.com',
