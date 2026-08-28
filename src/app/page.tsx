@@ -20,13 +20,21 @@ import { TiendaBazaar } from '@/components/tiendas/TiendaBazaar'
 // no tenga claro cual es "la" pagina representativa del sitio y a veces
 // termina indexando la que no queres (ver /registro/layout.tsx, que ahora
 // tiene su propio titulo + noindex por la misma razon).
+// Titulo largo (96 caracteres) a pedido de Aram para que los "0%" salgan
+// tal cual en el resultado de busqueda -- OJO: Google trunca el titulo
+// visible en el SERP a mano de ~60 caracteres, asi que en la practica hoy
+// se va a ver algo como "Gounuri - Tu tienda online en minutos - 0%..." con
+// puntos suspensivos. El texto completo igual queda en el <title> real (lo
+// puede leer un lector de pantalla, y Google a veces lo usa completo en
+// otros formatos como el Overview de IA), pero visualmente en el link azul
+// clasico se va a cortar.
 export const metadata: Metadata = {
-  title: 'Tu tienda online en minutos - Gounuri.com',
+  title: 'Gounuri - Tu tienda online en minutos - 0% Comisión de venta 0% Dinero confiscado 0% Letra chica',
   description:
     'Creá tu tienda online de indumentaria en Argentina. 0% comisión de venta, 0% dinero confiscado, 0% letra chica. Catálogo, pagos con MercadoPago y diseño profesional.',
   alternates: { canonical: 'https://gounuri.com' },
   openGraph: {
-    title: 'Tu tienda online en minutos - Gounuri.com',
+    title: 'Gounuri - Tu tienda online en minutos - 0% Comisión de venta 0% Dinero confiscado 0% Letra chica',
     description:
       'Creá tu tienda online de indumentaria: catálogo, pedidos, pagos y diseño profesional.',
     url: 'https://gounuri.com',
