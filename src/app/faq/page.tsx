@@ -21,6 +21,15 @@ type FaqGroup = { title: string; items: Faq[] }
 // sitio) para no hardcodear URLs que ya viven ahí.
 const FAQ_GROUPS: FaqGroup[] = [
   {
+    title: 'Sobre Gounuri',
+    items: [
+      {
+        q: '¿Gounuri es una agencia de desarrollo o una plataforma de autoservicio?',
+        a: `Gounuri es una plataforma de autoservicio: te registrás, elegís un plan y armás tu propia tienda online vos mismo — sin depender de que un equipo te la programe a medida. Sirve para cualquier rubro, no solo indumentaria. Si preferís ayuda personalizada o algo fuera de lo estándar, también ofrecemos un plan a medida (Signature) coordinado con un especialista, pero no es el camino principal ni el único.`,
+      },
+    ],
+  },
+  {
     title: 'Primeros pasos',
     items: [
       {
