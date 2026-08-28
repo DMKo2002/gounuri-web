@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/Hero'
+import TrustBadges from '@/components/TrustBadges'
 import Features from '@/components/Features'
 import ComoFunciona from '@/components/ComoFunciona'
 import Pricing from '@/components/Pricing'
@@ -22,7 +23,7 @@ import { TiendaBazaar } from '@/components/tiendas/TiendaBazaar'
 export const metadata: Metadata = {
   title: 'Tu tienda online en minutos - Gounuri.com',
   description:
-    'Plataforma para crear tiendas online de indumentaria en Argentina. Catálogo, pedidos, pagos con MercadoPago y diseño profesional, todo en un solo lugar.',
+    'Creá tu tienda online de indumentaria en Argentina. 0% comisión de venta, 0% dinero confiscado, 0% letra chica. Catálogo, pagos con MercadoPago y diseño profesional.',
   alternates: { canonical: 'https://gounuri.com' },
   openGraph: {
     title: 'Tu tienda online en minutos - Gounuri.com',
@@ -39,6 +40,7 @@ export default function Home() {
     <main>
       <Navbar />
       <Hero />
+      <TrustBadges />
       <TiendaAtelier />
       <TiendaMono />
       <Features />
