@@ -30,6 +30,29 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        {/* Datos estructurados (schema.org Organization) -- ayuda a Google a
+            identificar gounuri.com como la entidad "Gounuri" (SaaS de
+            tiendas online, Argentina) y a distinguirla de otras empresas
+            que tambien se llaman asi (ej. una marca coreana de regalos). */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Gounuri',
+              url: 'https://gounuri.com',
+              logo: 'https://gounuri.com/img/onboarding/g-logo-slogan.svg',
+              description:
+                'Plataforma para crear tiendas online de indumentaria en Argentina: catalogo, pedidos, pagos con MercadoPago y diseno profesional.',
+              areaServed: 'AR',
+              address: {
+                '@type': 'PostalAddress',
+                addressCountry: 'AR',
+              },
+            }),
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
         {children}
