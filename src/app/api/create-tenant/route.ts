@@ -113,18 +113,17 @@ export async function POST(req: Request) {
 
   // Glow y Bazaar son templates de rubros que en general no manejan talle/
   // color (indumentaria por talle es la excepción, no la regla acá) y usan
-  // foto de producto cuadrada — 1:1 en vez del default de indumentaria
-  // (2:3). El resto de los templates sigue con el default de la columna en
-  // la base.
+  // foto de producto cuadrada — así que arrancan en modo simple con fotos
+  // 1:1 en vez del default de indumentaria (sizes_colors + 2:3). El resto de
+  // los templates sigue con el default de la columna en la base.
   //
-  // (2026-08-27) Antes arrancaban en variant_mode='simple' (sin tabla de
-  // variantes). Los rubros de estos templates (comida, productos por peso/
-  // cantidad) sí suelen necesitar una tabla — la piden manualmente en
-  // Catálogo apenas arrancan (caso real: HAEJIN-HAEJIN, bazaar). Ahora
-  // arrancan con la tabla libre ya activada (variant_column_type='text') y
-  // los ejes nombrados con el caso de uso más común — se puede renombrar en
-  // Catálogo en cualquier momento. Mismo criterio en
-  // Panel Admin/src/app/api/create-tenant/route.ts — mantener sincronizado.
+  // (2026-08-28) David había cambiado esto el 27/08 para que arrancaran en
+  // variant_mode='sizes_colors' con una tabla libre de texto ya activada
+  // (ejes "Cantidad" x "Peso") en vez de modo simple, razonando que rubros
+  // como comida sí suelen necesitar una tabla. Decisión de Aram: se revierte
+  // a modo simple — el tenant que necesite una tabla la activa a mano desde
+  // Catálogo. Mismo criterio en
+  // panel-admin/src/app/api/create-tenant/route.ts — mantener sincronizado.
   const isSimpleTemplate = chosenTemplate === 'glow' || chosenTemplate === 'bazaar'
 
   const { error: configError } = await service
@@ -135,10 +134,7 @@ export async function POST(req: Request) {
         { key: 'talle', label: 'Talle', type: 'select', options: ['XS','S','M','L','XL','XXL'] },
         { key: 'color', label: 'Color', type: 'text' },
       ],
-      variant_mode: 'sizes_colors',
-      variant_column_type: isSimpleTemplate ? 'text' : 'color',
-      variant_row_label: isSimpleTemplate ? 'Cantidad' : null,
-      variant_column_label: isSimpleTemplate ? 'Peso' : null,
+      variant_mode: isSimpleTemplate ? 'simple' : 'sizes_colors',
       product_image_ratio: isSimpleTemplate ? '1:1' : '2:3',
       mp_enabled: Boolean(mpEnabled),
       transfer_enabled: Boolean(transferEnabled),
