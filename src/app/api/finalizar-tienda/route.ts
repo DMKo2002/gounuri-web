@@ -139,9 +139,12 @@ export async function POST(req: Request) {
     console.error('[finalizar-tienda] no se pudo dar de alta el dominio en Vercel', e)
   }
 
+  // 2026-08-28: mismo bug que en /api/create-tenant (ver ese archivo) --
+  // este sendEmail() estaba fire-and-forget antes del return, la funcion
+  // serverless se puede cortar antes de que el fetch a Resend termine.
   if (user.email) {
     const planObj = PLANES.find(p => p.id === tenant.plan)
-    sendEmail({
+    await sendEmail({
       to: user.email,
       subject: `¡Tu tienda ${name.trim()} está lista! — gounuri`,
       html: emailBienvenidaTienda({

@@ -192,10 +192,22 @@ export async function POST(req: Request) {
   }
 
   // Notificación al admin + bienvenida al tenant (best effort, no bloqueante)
+  // 2026-08-28: los dos envios de aca abajo (notificacion a admin + mail de
+  // bienvenida al tenant) estaban fire-and-forget (sin await) antes del
+  // return de mas abajo -- en Vercel serverless la funcion puede cortarse
+  // apenas se manda la respuesta, matando el fetch a Resend a mitad de
+  // camino sin ningun error visible. Mismo bug que ya se habia arreglado en
+  // tienda-core/src/api/crear-pedido.ts el 2026-07-23 (ver
+  // creart_silent_failure_pattern en memoria) -- nunca se replico ese fix
+  // aca. Reportado por David 2026-08-28: "no llega mail despues de crear la
+  // tienda". Ahora se juntan las promesas y se awaitean antes de responder.
   const resendKey = process.env.RESEND_API_KEY
   if (resendKey) {
     const adminEmail = process.env.ADMIN_EMAIL ?? 'dmko2002@gmail.com'
-    fetch('https://api.resend.com/emails', {
+    const emailPromises: Promise<any>[] = []
+
+    emailPromises.push(
+      fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -210,11 +222,13 @@ export async function POST(req: Request) {
           <p><strong>Tenant ID:</strong> <code>${tenant.id}</code></p>
         `,
       }),
-    }).catch(() => {})
+    }).catch(e => console.error('[create-tenant] notificacion admin error:', e))
+    )
 
     if (user.email) {
       const chosenPlanObj = PLANES.find(p => p.id === chosenPlan)
-      sendEmail({
+      emailPromises.push(
+        sendEmail({
         to: user.email,
         subject: `¡Tu tienda ${name.trim()} está lista! — gounuri`,
         html: emailBienvenidaTienda({
@@ -227,7 +241,10 @@ export async function POST(req: Request) {
           trialDays: TRIAL_DAYS,
         }),
       }).catch(e => console.error('[email bienvenida tienda] error:', e))
+      )
     }
+
+    await Promise.all(emailPromises)
   }
 
   // storeUrl: para que /onboarding pueda redirigir directo a la tienda

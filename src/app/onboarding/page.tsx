@@ -371,6 +371,9 @@ function OnboardingContent() {
   const [payerEmail, setPayerEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 2026-08-28: chequeo temprano de nombre en uso (ver handleNombreSubmit)
+  // -- reportado por David: antes esto recien se sabia al final del wizard.
+  const [checkingNombre, setCheckingNombre] = useState(false)
   const [slideIndex, setSlideIndex] = useState(0)
   // Paso "Configurá tu Tienda" (2026-08-18): un único formulario de Contacto
   // y Redes (la 2da sub-pantalla de "recomendaciones" informativa se sacó
@@ -538,10 +541,31 @@ function OnboardingContent() {
     return () => clearInterval(t)
   }, [step])
 
-  function handleNombreSubmit(e: React.FormEvent) {
+  async function handleNombreSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) { setError('El nombre de la tienda es obligatorio.'); return }
     setError(null)
+
+    // Chequeo temprano de disponibilidad del nombre — antes esto recién se
+    // sabía al final del onboarding (409 del POST a /api/create-tenant o
+    // /api/finalizar-tienda), después de completar template/contacto/pagos/
+    // plan. Reportado por David 2026-08-28: "no te deja registrarte pero
+    // tendría que avisar que el nombre está en uso de primera". Best effort:
+    // si el chequeo en sí falla (red, etc.) no bloqueamos el paso — el POST
+    // final igual valida esto con un 409.
+    setCheckingNombre(true)
+    try {
+      const res = await fetch(`/api/check-nombre?name=${encodeURIComponent(name.trim())}`)
+      const json = await res.json().catch(() => ({ available: true }))
+      if (json.available === false) {
+        setError(`El nombre "${name.trim()}" ya está en uso. Probá con otro nombre para tu tienda.`)
+        setCheckingNombre(false)
+        return
+      }
+    } catch (e) {
+      console.error('[onboarding] chequeo de nombre falló, se deja seguir', e)
+    }
+    setCheckingNombre(false)
 
     // DNI/CUIT y WhatsApp son opcionales y no bloquean el paso — son datos
     // de la tienda para dejarla más preparada (facturación, botón de
@@ -853,8 +877,12 @@ function OnboardingContent() {
                     implementemos este para todo") — se saca el botón pill
                     de Figma (SVG "Button.svg") que estaba solo en desktop,
                     ahora este es el único botón del paso 1. */}
-                <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700">
-                  Continuar <ArrowRight size={16} />
+                <button
+                  type="submit"
+                  disabled={checkingNombre}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60"
+                >
+                  {checkingNombre ? 'Comprobando nombre...' : <>Continuar <ArrowRight size={16} /></>}
                 </button>
               </form>
             </div>
