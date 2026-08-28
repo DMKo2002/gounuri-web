@@ -58,10 +58,8 @@ function layout(bodyHtml: string): string {
 <table width="100%" style="max-width:520px;background:#fff;border-radius:8px;overflow:hidden;">
 
   <!-- Header -->
-  <tr><td style="background:#101010;padding:32px 40px;text-align:center;">
-    <p style="margin:0;font-size:20px;font-weight:700;letter-spacing:-0.01em;">
-      <span style="color:#fff;">gounuri</span><span style="color:#767676;">.com</span>
-    </p>
+  <tr><td style="background:#101010;padding:30px 40px;text-align:center;">
+    <img src="https://www.gounuri.com/img/email/gounuri-logo.png" width="160" height="31" alt="gounuri.com" style="display:block;margin:0 auto;border:0;outline:none;max-width:160px;height:auto;">
   </td></tr>
 
   ${bodyHtml}
