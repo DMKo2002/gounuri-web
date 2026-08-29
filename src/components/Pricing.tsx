@@ -219,7 +219,7 @@ export default function Pricing({
             </ul>
 
             <a
-              href="https://www.gounuri.com/migracion/contacto"
+              href="https://www.gounuri.com/contacto"
               className="btn-black mt-8 w-full"
             >
               Contactá a un especialista
