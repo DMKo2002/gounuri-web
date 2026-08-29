@@ -1,22 +1,19 @@
 // GET /api/ir-a-plan?plan=mini|standard|premium&months=1|6|12
 //
 // A dónde va el botón "Empezar con X" de la página de precios — no siempre a
-// /registro. Antes mandaba SIEMPRE a /registro, incluso si ya estabas
-// logueado y ya tenías una tienda (bug reportado 2026-08-12). Ahora:
+// /registro.
 //   - No logueado           → /registro (arranca el trial, como siempre)
-//   - Logueado sin tienda   → NO se crea ningún tenant todavía — pedido
-//                              2026-08-18: "selecciona el plan - paga - recién
-//                              con el pago queda generado la tienda -
-//                              onboarding". Se crea directamente un preapproval
-//                              de MP con un external_reference tipo
-//                              "new:userId:planId:months" (sin tenantId) y se
-//                              manda al checkout hospedado de MP. Recién
-//                              cuando el webhook de Panel Admin confirme
-//                              'authorized' se crea el tenant (ver
-//                              panel-admin/src/app/api/billing/webhook). El
-//                              back_url apunta a /onboarding?paso=confirmando,
-//                              que sondea /api/mi-estado-onboarding hasta que
-//                              el tenant exista.
+//   - Logueado sin tienda   → /onboarding, con el plan/plazo elegidos como
+//                              hint (2026-08-29, pedido de ARam: invertir el
+//                              orden a login -> onboarding -> pago). Antes
+//                              esto armaba un preapproval de MP directo acá
+//                              mismo y recién creaba un tenant placeholder
+//                              "(pendiente)" cuando se confirmaba el pago —
+//                              ahora el pago queda como último paso del
+//                              wizard de onboarding (ver
+//                              /api/onboarding/pagar), después de cargar
+//                              nombre/template/contacto, así que nunca se
+//                              crea nada hasta que el pago esté confirmado.
 //   - Logueado con tienda   → /perfil/plan?plan=X (ahí elige plazo —
 //                              mensual/6/12 meses — y paga, todo acá mismo en
 //                              gounuri.com, sin pasar por el Panel Admin)
@@ -24,13 +21,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { createSignupPreapproval } from '@/lib/billing'
-import type { BillingTerm, PlanId } from '@/lib/plans'
+import type { PlanId } from '@/lib/plans'
 
 const VALID_PLANS = ['mini', 'standard', 'premium']
 const VALID_MONTHS = [1, 6, 12]
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function GET(req: Request) {
   const origin = new URL(req.url).origin
@@ -38,13 +32,7 @@ export async function GET(req: Request) {
   const planParam = url.searchParams.get('plan')
   const plan = (VALID_PLANS.includes(planParam ?? '') ? planParam! : 'standard') as PlanId
   const monthsParam = Number(url.searchParams.get('months'))
-  const months = (VALID_MONTHS.includes(monthsParam) ? monthsParam : 1) as BillingTerm
-  // Email de MP explícito (2026-08-26, pedido de ARam) -- /perfil/plan sin
-  // tenant todavía (PlanSelector, prop noTenantYet) sí deja elegir con qué
-  // cuenta de MP pagar, igual que el caso "ya tiene tienda" -- antes esto
-  // asumía siempre el email de la cuenta logueada sin dar esa opción.
-  const payerEmailParam = url.searchParams.get('payerEmail')
-  const payerEmailOverride = payerEmailParam && EMAIL_RE.test(payerEmailParam) ? payerEmailParam : null
+  const months = VALID_MONTHS.includes(monthsParam) ? monthsParam : 1
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -61,24 +49,15 @@ export async function GET(req: Request) {
   const tenantId = _rows?.[0]?.tenant_id
 
   if (!tenantId) {
-    if (!user.email) {
-      console.error('[ir-a-plan] usuario sin email, no se puede armar el preapproval', user.id)
-      return NextResponse.redirect(`${origin}/onboarding`)
-    }
-    try {
-      const preapproval = await createSignupPreapproval({
-        userId: user.id,
-        planId: plan,
-        payerEmail: payerEmailOverride ?? user.email,
-        backUrl: `${origin}/onboarding?paso=confirmando`,
-        months,
-      })
-      if (!preapproval.init_point) throw new Error('MP no devolvió init_point')
-      return NextResponse.redirect(preapproval.init_point)
-    } catch (e) {
-      console.error('[ir-a-plan] no se pudo crear el preapproval de signup', e)
-      return NextResponse.redirect(`${origin}/onboarding`)
-    }
+    // El wizard de /onboarding lee estas mismas cookies que ya usa /registro
+    // (gounuri_plan/gounuri_months) para preseleccionar el plan en el paso
+    // "Plan" — y gounuri_intent=pago para saber que tiene que terminar en
+    // plan/pago en vez de crear la tienda gratis de una.
+    const res = NextResponse.redirect(`${origin}/onboarding`)
+    res.cookies.set('gounuri_intent', 'pago', { path: '/', maxAge: 3600, sameSite: 'lax' })
+    res.cookies.set('gounuri_plan', plan, { path: '/', maxAge: 3600, sameSite: 'lax' })
+    res.cookies.set('gounuri_months', String(months), { path: '/', maxAge: 3600, sameSite: 'lax' })
+    return res
   }
 
   return NextResponse.redirect(`${origin}/perfil/plan?plan=${plan}`)

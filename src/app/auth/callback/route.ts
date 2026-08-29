@@ -27,14 +27,11 @@ export async function GET(req: NextRequest) {
           .limit(1)
 
         const tenantId = userRows?.[0]?.tenant_id
-        // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- mismo
-        // criterio que /api/auth/confirmar/route.ts, ver comentario ahí y
-        // REGISTRO_PAGO_URL en @/lib/site. Sobrevive el viaje de ida y
-        // vuelta a Google porque es una cookie de gounuri.com, no
-        // un query param.
-        const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
-        const planHint = req.cookies.get('gounuri_plan')?.value
-        if (intentPago) return NextResponse.redirect(`${origin}/perfil/plan${planHint ? `?plan=${planHint}` : ''}`)
+        // 2026-08-29: intent=pago ya no manda a /perfil/plan -- el wizard
+        // de /onboarding lee la misma cookie gounuri_intent=pago (seteada
+        // por /registro, sobrevive el ida y vuelta a Google) para saber que
+        // tiene que terminar en plan/pago en vez de crear la tienda gratis
+        // de una (ver onboarding/page.tsx).
         return NextResponse.redirect(tenantId ? `${origin}/perfil` : `${origin}/onboarding`)
       }
       console.error('[auth/callback] exchangeCodeForSession error:', error?.message)

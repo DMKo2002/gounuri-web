@@ -22,7 +22,7 @@ import TransferPaymentBlock from '@/components/TransferPaymentBlock'
 import { createClient } from '@/lib/supabase/client'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
-import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
+import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, isBillingTerm, type BillingTerm, type PlanId } from '@/lib/plans'
 import type { PlatformPaymentSettings } from '@/lib/platformBilling'
 
 type Step = 'nombre' | 'template' | 'configurar' | 'pagos' | 'escalar' | 'plan' | 'pago'
@@ -363,11 +363,6 @@ function OnboardingContent() {
   const [template, setTemplate] = useState('minimalista')
   const [plan, setPlan] = useState<PlanId>('standard')
   const [billingTerm, setBillingTerm] = useState<BillingTerm>(1)
-  // La tienda se crea al elegir un plan en el paso "Plan" (antes de pasar a
-  // "Pago") — este flag evita volver a crearla si el usuario va para atrás y
-  // elige otro plan (el 2do POST a /api/create-tenant fallaría con 409,
-  // nombre ya en uso). El plan/plazo elegido se manda recién al suscribir.
-  const [tenantReady, setTenantReady] = useState(false)
   const [payerEmail, setPayerEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -409,6 +404,14 @@ function OnboardingContent() {
   // Ver comentario en el useEffect que lo consulta (/api/mi-estado-onboarding)
   const [isPlaceholderPaid, setIsPlaceholderPaid] = useState(false)
   const [finalizando, setFinalizando] = useState(false)
+  // ¿Vino del botón "Crear mi tienda" (vs "Probar Gratis")? Misma cookie
+  // gounuri_intent=pago que setea /registro (ver @/lib/site) — sobrevive la
+  // confirmación de mail y el ida/vuelta de Google. 2026-08-29 (pedido de
+  // ARam: invertir el orden a login -> onboarding -> pago): ya no manda a
+  // /perfil/plan antes del wizard, así que este flag es lo único que le
+  // dice al paso "Escalá con tus Ventas" que tiene que terminar en
+  // plan/pago en vez de crear la tienda gratis de una.
+  const [intentPago, setIntentPago] = useState(false)
 
   // Métodos de pago habilitados desde superadmin (2026-08-22) — ver paso
   // "Pago" más abajo: si Mercado Pago está apagado, se ofrece transferencia
@@ -468,6 +471,20 @@ function OnboardingContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // gounuri_intent=pago (ver comentario en la declaración de intentPago más
+  // arriba) — junto con el plan/plazo elegidos en la página de precios
+  // pública si vino de ahí (gounuri_plan/gounuri_months, mismas cookies que
+  // ya usa /registro).
+  useEffect(() => {
+    const cookies = document.cookie.split('; ')
+    if (cookies.some(c => c === 'gounuri_intent=pago')) setIntentPago(true)
+    const planCookie = cookies.find(c => c.startsWith('gounuri_plan='))?.split('=')[1]
+    const monthsCookie = Number(cookies.find(c => c.startsWith('gounuri_months='))?.split('=')[1])
+    if (isPlanId(planCookie)) setPlan(planCookie)
+    if (isBillingTerm(monthsCookie)) setBillingTerm(monthsCookie)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ¿Ya tiene una tienda placeholder pagada? (eligió un plan desde la
   // landing sin tener tienda todavía — ver /api/ir-a-plan — y ya completó el
   // pago). En ese caso el paso "Escalá con tus Ventas" no debe volver a
@@ -477,6 +494,10 @@ function OnboardingContent() {
     fetch('/api/mi-estado-onboarding')
       .then(res => res.json())
       .then(json => {
+        // Camino nuevo (2026-08-29): si el webhook ya creó la tienda real y
+        // completa (por ejemplo, se volvió a entrar a /onboarding después
+        // de haber terminado), no hay nada más que pedirle al usuario acá.
+        if (json?.ready) { window.location.href = '/perfil'; return }
         if (json?.isPlaceholder) {
           setIsPlaceholderPaid(true)
           if (json.plan) setPlan(json.plan)
@@ -510,6 +531,13 @@ function OnboardingContent() {
         .then(res => res.json())
         .then(json => {
           if (cancelled) return
+          // Camino nuevo (2026-08-29): el webhook ya creó la tienda real y
+          // completa con los datos que se cargaron ANTES de pagar — no
+          // queda ningún paso del wizard por mostrar.
+          if (json?.ready) {
+            window.location.href = '/perfil'
+            return
+          }
           if (json?.isPlaceholder) {
             setIsPlaceholderPaid(true)
             if (json.plan) setPlan(json.plan)
@@ -680,23 +708,25 @@ function OnboardingContent() {
     window.location.href = '/perfil'
   }
 
-  // Tarjeta de plan elegida en el paso "Plan" (Pricing en mode="select"):
-  // crea la tienda con ese plan/plazo (si todavía no existe — ver comentario
-  // de `tenantReady`) y sigue al paso "Pago" para suscribir de verdad vía
-  // Mercado Pago, en vez de crear directo con prueba gratis.
+  // Tarjeta de plan elegida en el paso "Plan" (Pricing en mode="select") —
+  // 2026-08-29: ya NO crea la tienda acá. Con el orden nuevo (login ->
+  // onboarding -> pago) el tenant recién se crea del lado del webhook de MP
+  // cuando confirma el pago (ver /api/onboarding/pagar y
+  // panel-admin/api/billing/webhook), con todos los datos ya cargados en
+  // los pasos anteriores del wizard — así nunca queda una tienda a medio
+  // crear si el usuario no llega a pagar.
   async function handleSelectPlan(planId: PlanId, term: BillingTerm) {
     setPlan(planId)
     setBillingTerm(term)
-    if (tenantReady) { goToStep('pago'); return }
-    const storeUrl = await createTenant(planId)
-    if (!storeUrl) return
-    setTenantReady(true)
     goToStep('pago')
   }
 
-  // Paso "Pago": inicia la suscripción real en Mercado Pago (Preapproval) —
-  // mismo endpoint que usa /perfil/plan — y redirige al checkout de MP.
+  // Paso "Pago": manda TODO lo cargado en el wizard a /api/onboarding/pagar
+  // (no /api/billing/subscribe — ese requiere un tenant que todavía no
+  // existe), que lo guarda como borrador y arma el signup preapproval real
+  // en Mercado Pago.
   async function handlePagar() {
+    if (!name.trim()) { setError('Falta el nombre de la tienda.'); goToStep('nombre'); return }
     if (!EMAIL_RE.test(payerEmail.trim())) {
       setError('Ingresá el email de tu cuenta de Mercado Pago.')
       return
@@ -704,13 +734,34 @@ function OnboardingContent() {
     setSaving(true)
     setError(null)
     try {
-      const res = await fetch('/api/billing/subscribe', {
+      const res = await fetch('/api/onboarding/pagar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, payerEmail: payerEmail.trim(), months: billingTerm }),
+        body: JSON.stringify({
+          name: name.trim(),
+          domain: domain.trim() || null,
+          template,
+          whatsapp: whatsapp.trim() || null,
+          instagram: instagram.trim() || null,
+          facebook: facebook.trim() || null,
+          tiktok: tiktok.trim() || null,
+          direccion: direccion.trim() || null,
+          direccionDespacho: direccionDespacho.trim() || null,
+          mpEnabled,
+          transferEnabled,
+          cashEnabled,
+          plan,
+          months: billingTerm,
+          payerEmail: payerEmail.trim(),
+        }),
       })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok || !json.init_point) throw new Error(json.error ?? 'No se pudo iniciar el pago. Probá de nuevo.')
+      if (!res.ok || !json.init_point) {
+        setSaving(false)
+        setError(json.error ?? 'No se pudo iniciar el pago. Probá de nuevo.')
+        if (res.status === 409) goToStep('nombre')
+        return
+      }
       window.location.href = json.init_point
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo iniciar el pago. Probá de nuevo.')
@@ -1288,15 +1339,12 @@ function OnboardingContent() {
 
             <div className="mt-10 w-full space-y-4 lg:absolute lg:left-24 lg:right-24 lg:top-1/2 lg:mt-0 lg:w-auto lg:-translate-y-1/2">
               {isPlaceholderPaid ? (
-                // Ya eligió y pagó un plan desde la landing (/api/ir-a-plan
-                // o /perfil/plan) antes de llegar acá — no tiene sentido
-                // ofrecerle de nuevo prueba gratis ni elegir plan, solo
-                // falta completar la tienda con lo que ya cargó en los
-                // pasos anteriores. Botón negro "Crear mi tienda" (2026-08-26,
-                // pedido de ARam: esta pantalla se divide en dos versiones
-                // según por dónde entró — acá entra quien ya pagó, mismo
-                // estilo/label que el botón "Crear mi tienda" de la landing,
-                // no el rojo de prueba gratis).
+                // Red de seguridad del flujo viejo (ver /api/finalizar-tienda
+                // y /api/mi-estado-onboarding): un tenant placeholder
+                // "(pendiente)" ya pagado que hay que completar. El wizard
+                // nuevo (ver rama intentPago de abajo) no debería generar
+                // más placeholders, pero si uno queda dando vueltas se
+                // sigue completando acá igual que antes.
                 <button
                   type="button"
                   onClick={handleFinalizarTienda}
@@ -1306,16 +1354,23 @@ function OnboardingContent() {
                   {finalizando && <Loader2 size={15} className="animate-spin" />}
                   {finalizando ? 'Creando tu tienda...' : 'Crear mi tienda'}
                 </button>
+              ) : intentPago ? (
+                // Entró por "Crear mi tienda" (2026-08-29, pedido de ARam:
+                // invertir el orden a login -> onboarding -> pago, en vez de
+                // pago -> placeholder -> onboarding). Ya cargó nombre/
+                // template/contacto/redes/pagos en los pasos anteriores —
+                // ahora elige plan y paga, y recién ahí se crea la tienda
+                // real (ver /api/onboarding/pagar).
+                <button
+                  type="button"
+                  onClick={() => goToStep('plan')}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zinc-900 py-4 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                >
+                  Elegir plan y pagar <ArrowRight size={16} />
+                </button>
               ) : (
-                // Entró por "Probar Gratis" — solo el botón rojo de prueba
-                // gratis. Antes también se ofrecía acá un botón negro
-                // "Crear mi tienda" que mandaba a elegir plan y pagar
-                // dentro del wizard (step 'plan' → 'pago'); se saca (2026-08-26,
-                // pedido de ARam) porque ese camino de pago ahora es
-                // /perfil/plan, no esta pantalla — dejarlo duplicaba la
-                // decisión y confundía sobre qué botón corresponde a cada
-                // flujo. El step 'plan'/'pago' queda en el código sin uso
-                // desde acá, no se borra por si hace falta reactivarlo.
+                // Entró por "Probar Gratis" — el botón rojo de prueba
+                // gratis, crea la tienda de una con el plan por defecto.
                 <button
                   type="button"
                   onClick={handleFinalSubmit}
