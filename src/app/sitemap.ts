@@ -9,7 +9,7 @@ import type { MetadataRoute } from 'next'
 // /onboarding, /perfil, /recuperar) quedan afuera a proposito -- no aportan
 // valor de busqueda y generarian contenido "fino" duplicado en el indice.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://gounuri.com'
+  const base = 'https://www.gounuri.com'
   const now = new Date()
 
   return [

@@ -33,12 +33,12 @@ export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda online en minutos, sin comisión',
   description:
     '0% comisión de venta · 0% dinero retenido · 0% letra chica. Creá tu tienda online para cualquier rubro, con MercadoPago y diseño profesional.',
-  alternates: { canonical: 'https://gounuri.com' },
+  alternates: { canonical: 'https://www.gounuri.com' },
   openGraph: {
     title: 'Gounuri — Tu tienda online en minutos, sin comisión',
     description:
       'Creá tu tienda online para cualquier rubro: catálogo, pedidos, pagos y diseño profesional.',
-    url: 'https://gounuri.com',
+    url: 'https://www.gounuri.com',
     locale: 'es_AR',
     type: 'website',
   },

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda online',
   description:
     'Plataforma para crear tiendas online en Argentina, para cualquier rubro. Catálogo, pedidos, pagos con MercadoPago y diseño profesional, todo en un solo lugar.',
-  metadataBase: new URL('https://gounuri.com'),
+  metadataBase: new URL('https://www.gounuri.com'),
   openGraph: {
     title: 'Gounuri — Tu tienda online',
     description:
@@ -41,8 +41,8 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Organization',
               name: 'Gounuri',
-              url: 'https://gounuri.com',
-              logo: 'https://gounuri.com/img/onboarding/g-logo-slogan.svg',
+              url: 'https://www.gounuri.com',
+              logo: 'https://www.gounuri.com/img/onboarding/g-logo-slogan.svg',
               description:
                 'Plataforma para crear tiendas online en Argentina, para cualquier rubro: catalogo, pedidos, pagos con MercadoPago y diseno profesional.',
               areaServed: 'AR',
