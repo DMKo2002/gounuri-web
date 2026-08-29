@@ -14,6 +14,7 @@
 // pública de la tienda.
 
 import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export async function GET(req: Request) {
@@ -26,7 +27,26 @@ export async function GET(req: Request) {
     .select('tenant_id')
     .eq('pending_signup_token', token)
     .limit(1)
-  const account = accountRows?.[0]
+  let account = accountRows?.[0]
+
+  if (!account) {
+    // Respaldo (2026-08-29): si este navegador SÍ tiene la sesión del
+    // usuario (por ejemplo, se está probando en la misma pestaña donde se
+    // iba a pagar, o el token quedó desactualizado por algún reintento
+    // viejo), no hace falta depender solo del token — se chequea también
+    // por la cuenta logueada antes de decir que no se encontró el pago.
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: bySession } = await service
+        .from('gounuri_accounts')
+        .select('tenant_id')
+        .eq('auth_user_id', user.id)
+        .limit(1)
+      account = bySession?.[0]
+    }
+  }
+
   if (!account) return NextResponse.json({ error: 'invalid_token', ready: false }, { status: 404 })
 
   if (!account.tenant_id) {

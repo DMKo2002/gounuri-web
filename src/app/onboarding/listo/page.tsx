@@ -109,27 +109,18 @@ function ListoContent() {
           <>
             <CheckCircle2 size={36} className="mb-4 text-emerald-500" />
             <p className="mb-2 text-xl font-bold text-zinc-900">¡Tu tienda ya está lista!</p>
-            <p className="mb-6 max-w-sm text-sm text-zinc-500">
-              Ya podés volver a tu navegador de siempre si esta pantalla se abrió dentro de otra app.
-            </p>
-            <div className="flex flex-col items-center gap-3 sm:flex-row">
-              {storeUrl && (
-                <a
-                  href={storeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
-                >
-                  Ir a mi tienda
-                </a>
-              )}
-              <a
-                href="/perfil"
-                className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
-              >
-                Ir a mi cuenta
-              </a>
-            </div>
+            {storeUrl && (
+              <p className="mb-6 max-w-sm text-sm text-zinc-500">{storeUrl.replace('https://', '')}</p>
+            )}
+            {/* 2026-08-29 (pedido de ARam): un solo botón "Comenzar" a
+                /perfil — antes había dos botones (tienda / cuenta) que
+                complicaban de más esta pantalla. */}
+            <a
+              href="/perfil"
+              className="rounded-full bg-zinc-900 px-8 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
+            >
+              Comenzar
+            </a>
           </>
         )}
       </div>

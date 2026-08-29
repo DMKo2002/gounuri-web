@@ -98,7 +98,23 @@ export async function POST(req: Request) {
   // si Mercado Pago devuelve al navegador propio de su app en vez del
   // navegador del celular (confirmado en testing por ARam: "abre gounuri.com
   // pero dentro de MP").
-  const confirmToken = crypto.randomUUID()
+  //
+  // Reusar el token si ya existe uno (en vez de generar uno nuevo en cada
+  // submit) — bug real encontrado en testing 2026-08-29: si el usuario
+  // vuelve a tocar "Pagar" (reintento, doble tap, volvió atrás y probó de
+  // nuevo), un token nuevo pisaba el anterior acá en la base, pero el
+  // checkout de MP ya abierto en la otra pestaña/intento seguía viajando
+  // con el token VIEJO en su back_url — al volver, ese token ya no
+  // matcheaba con nada ("No encontramos ese pago") aunque el pago se haya
+  // confirmado y la tienda se haya creado bien. Reusando el mismo token
+  // mientras no se haya consumido, cualquiera de los intentos que efectivamente
+  // se pague va a volver con un token que sigue siendo válido.
+  const { data: _existingAccount } = await service
+    .from('gounuri_accounts')
+    .select('pending_signup_token')
+    .eq('auth_user_id', user.id)
+    .limit(1)
+  const confirmToken = _existingAccount?.[0]?.pending_signup_token || crypto.randomUUID()
 
   const { error: draftError } = await service
     .from('gounuri_accounts')
