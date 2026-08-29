@@ -99,6 +99,8 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} GOUNURI.COM{' '}
           <Link href="/terminos">TERMINOS Y CONDICIONES</Link>
           {' · '}
+          <Link href="/arrepentimiento">BOTON DE ARREPENTIMIENTO</Link>
+          {' · '}
           <Link href="/privacidad">POLITICA DE PRIVACIDAD</Link>
         </p>
       </div>
