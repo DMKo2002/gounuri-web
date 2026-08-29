@@ -258,8 +258,14 @@ export default function PlanSelector({
                 // lista siempre acá -- el descuento por plazo es solo para
                 // transferencia (ver fullPriceForTerm en @/lib/plans y el
                 // aviso de ahorro junto al botón de transferencia).
+                //
+                // Color cambiado de negro a gris (2026-08-29, pedido de
+                // ARam) -- mismo criterio que el precio de transferencia de
+                // más abajo, para que los dos precios se lean con el mismo
+                // peso visual y la diferencia quede solo en la leyenda
+                // ("· Mercado Pago" / "· Transferencia").
                 <div className="mt-6">
-                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-500">
                     {formatARS(fullPriceForTerm(card.id, term, planPrices))}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
