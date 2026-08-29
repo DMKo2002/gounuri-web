@@ -93,11 +93,17 @@ export async function POST(req: Request) {
   }
 
   // Token propio para la pantalla de confirmación post-pago (2026-08-29,
-  // ver /onboarding/listo y /api/onboarding/estado) — viaja en el back_url
-  // en vez de depender de la cookie de sesión, que puede no estar presente
-  // si Mercado Pago devuelve al navegador propio de su app en vez del
-  // navegador del celular (confirmado en testing por ARam: "abre gounuri.com
-  // pero dentro de MP").
+  // ver /onboarding/listo/[token] y /api/onboarding/estado) — viaja en el
+  // PATH del back_url (no como ?t=<token>) en vez de depender de la cookie
+  // de sesión, que puede no estar presente si Mercado Pago devuelve al
+  // navegador propio de su app en vez del navegador del celular (confirmado
+  // en testing por ARam: "abre gounuri.com pero dentro de MP"). Va en el
+  // path y no en un query param porque en testing real (2026-08-29,
+  // segunda vuelta) un pago que sí se acreditó y creó la tienda bien igual
+  // mostró "No encontramos ese pago" -- todo indica que MP le agrega sus
+  // propios parámetros al back_url antes de redirigir de vuelta y en el
+  // proceso el "t=" original no llegaba intacto. Un segmento de path no
+  // tiene ese problema.
   //
   // Reusar el token si ya existe uno (en vez de generar uno nuevo en cada
   // submit) — bug real encontrado en testing 2026-08-29: si el usuario
@@ -131,7 +137,7 @@ export async function POST(req: Request) {
       userId: user.id,
       planId: plan,
       payerEmail,
-      backUrl: `${origin}/onboarding/listo?t=${confirmToken}`,
+      backUrl: `${origin}/onboarding/listo/${confirmToken}`,
       months,
     })
     if (!preapproval.init_point) throw new Error('MP no devolvió init_point')

@@ -47,7 +47,10 @@ export async function GET(req: Request) {
     }
   }
 
-  if (!account) return NextResponse.json({ error: 'invalid_token', ready: false }, { status: 404 })
+  if (!account) {
+    console.error('[onboarding/estado] token sin match', { token })
+    return NextResponse.json({ error: 'invalid_token', ready: false }, { status: 404 })
+  }
 
   if (!account.tenant_id) {
     // El webhook de Mercado Pago todavía no confirmó el pago (o lo está
