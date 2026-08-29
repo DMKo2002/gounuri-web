@@ -200,6 +200,15 @@
   .hero-strip{position:relative;left:auto;height:auto;flex-direction:column}
   .strip-wordmark{padding:24px 0}
   .strip-callout{padding:24px}
+  /* 2026-08-29 (reportado por ARam): los botones "Crear mi tienda" /
+     "Probar Gratis" son SVGs de ancho fijo (200px cada uno, ver
+     ".hero-ctas .btn-svg svg" arriba) -- en fila con gap, en un celular
+     angosto (~360-390px) no entran los dos y el segundo queda cortado
+     fuera de la pantalla. Mismo criterio que ".mig-ctas .btn-svg svg" más
+     abajo en este archivo: en mobile se apilan y el ancho se limita a un
+     % del viewport en vez de un px fijo. */
+  .hero-ctas{flex-direction:column;align-items:flex-start;gap:10px}
+  .hero-ctas .btn-svg svg{width:min(200px,70vw);height:auto}
 }
 
 /* ───────────────── SHOP / TIENDAS ───────────────── */
