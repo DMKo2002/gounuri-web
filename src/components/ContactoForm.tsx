@@ -49,7 +49,7 @@ export default function ContactoForm() {
         </div>
         <div className="contact-field">
           <label htmlFor="nota">Nota <span className="optional">(opcional)</span></label>
-          <textarea id="nota" name="nota" placeholder="Contanos en qué te podemos ayudar..." />
+          <textarea id="nota" name="nota" placeholder="Contanos en qué te podemos ayudar..." style={{ minHeight: 176 }} />
         </div>
       </fieldset>
 
