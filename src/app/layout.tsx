@@ -5,7 +5,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda online',
   description:
-    'Plataforma para crear tiendas online en Argentina, para cualquier rubro. Catálogo, pedidos, pagos con MercadoPago y diseño profesional, todo en un solo lugar.',
+    'Plataforma para crear tiendas online en Argentina, para cualquier rubro. Catálogo, pedidos, pagos y diseño profesional, todo en un solo lugar.',
   metadataBase: new URL('https://www.gounuri.com'),
   openGraph: {
     title: 'Gounuri — Tu tienda online',
@@ -44,7 +44,7 @@ export default function RootLayout({
               url: 'https://www.gounuri.com',
               logo: 'https://www.gounuri.com/img/onboarding/g-logo-slogan.svg',
               description:
-                'Plataforma para crear tiendas online en Argentina, para cualquier rubro: catalogo, pedidos, pagos con MercadoPago y diseno profesional.',
+                'Plataforma para crear tiendas online en Argentina, para cualquier rubro: catalogo, pedidos, pagos y diseno profesional.',
               areaServed: 'AR',
               address: {
                 '@type': 'PostalAddress',

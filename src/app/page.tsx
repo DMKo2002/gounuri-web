@@ -32,7 +32,7 @@ import { TiendaBazaar } from '@/components/tiendas/TiendaBazaar'
 export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda online en minutos, sin comisión',
   description:
-    '0% comisión de venta · 0% dinero retenido · 0% letra chica. Creá tu tienda online para cualquier rubro, con MercadoPago y diseño profesional.',
+    '0% comisión de venta · 0% dinero retenido · 0% letra chica. Creá tu tienda online para cualquier rubro, con diseño profesional.',
   alternates: { canonical: 'https://www.gounuri.com' },
   openGraph: {
     title: 'Gounuri — Tu tienda online en minutos, sin comisión',
