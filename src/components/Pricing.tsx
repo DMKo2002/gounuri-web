@@ -7,7 +7,7 @@ import { fullPriceForTerm, type BillingTerm, type PlanId } from '@/lib/plans'
 
 // Leyenda entre el selector de plazo y las tarjetas — solo texto, sin marco
 // ni fondo, las 3 frases en un renglón.
-const LOOP_PHRASES = ['0% Comisión de Venta', '0% Dinero Confiscado', '0% letra chica']
+const LOOP_PHRASES = ['0% Comisión de Venta', '0% Dinero Retenido', '0% letra chica']
 
 const SIGNATURE_FEATURES = [
   'Ecosistema 100% a medida',
