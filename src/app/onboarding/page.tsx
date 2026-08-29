@@ -418,6 +418,13 @@ function OnboardingContent() {
   // mientras carga, para no mostrar el formulario de MP de entrada y que
   // "salte" apenas llega la respuesta.
   const [paymentSettings, setPaymentSettings] = useState<PlatformPaymentSettings | null>(null)
+  // 2026-08-29, pedido de ARam: precios editables desde /superadmin/planes
+  // -- esta página es 100% client, así que se piden a /api/billing/plan-prices
+  // (mismo criterio que paymentSettings arriba). null mientras carga o si
+  // falla el fetch: los usos más abajo caen al precio hardcodeado de PLANES
+  // (planPrices?.[plan] ?? planElegido.precioARS) hasta que llegue la
+  // respuesta, para no dejar la pantalla en blanco.
+  const [planPrices, setPlanPrices] = useState<Record<PlanId, number> | null>(null)
 
   // Cambia de paso y refleja el nuevo paso en la URL (`?paso=01/02/03/04`)
   // con `router.push`, para que quede como una entrada de historial propia
@@ -501,6 +508,14 @@ function OnboardingContent() {
       .then(res => res.json())
       .then(json => { if (json && !json.error) setPaymentSettings(json) })
       .catch(e => console.error('[onboarding] no se pudieron consultar los métodos de pago', e))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/billing/plan-prices')
+      .then(res => res.json())
+      .then(json => { if (json && !json.error) setPlanPrices(json) })
+      .catch(e => console.error('[onboarding] no se pudieron consultar los precios de los planes', e))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -723,9 +738,9 @@ function OnboardingContent() {
   // transferencia es la única forma de pagar. pagoTotalTransferencia es
   // aparte porque TransferPaymentBlock siempre tiene que mostrar/cobrar el
   // monto con descuento, sin importar qué muestre el resumen de arriba.
-  const pagoTotalTransferencia = priceForTerm(plan, billingTerm)
-  const pagoTotal = paymentSettings?.mercadopagoEnabled ? fullPriceForTerm(plan, billingTerm) : pagoTotalTransferencia
-  const pagoSinDescuento = planElegido.precioARS * billingTerm
+  const pagoTotalTransferencia = priceForTerm(plan, billingTerm, planPrices ?? undefined)
+  const pagoTotal = paymentSettings?.mercadopagoEnabled ? fullPriceForTerm(plan, billingTerm, planPrices ?? undefined) : pagoTotalTransferencia
+  const pagoSinDescuento = (planPrices?.[plan] ?? planElegido.precioARS) * billingTerm
   const pagoDescuentoMonto = pagoSinDescuento - pagoTotal
   const pagoDescuentoPct = TERM_DISCOUNTS[billingTerm] * 100
   const pagoTermLabel = billingTerm === 1 ? 'mensual' : billingTerm === 6 ? 'semestral' : 'anual'
@@ -1350,7 +1365,7 @@ function OnboardingContent() {
             </div>
           )}
 
-          <Pricing mode="select" onSelect={handleSelectPlan} />
+          <Pricing mode="select" onSelect={handleSelectPlan} planPrices={planPrices ?? undefined} />
         </div>
       )}
 
@@ -1440,7 +1455,7 @@ function OnboardingContent() {
                   )}
                   {paymentSettings.mercadopagoEnabled && billingTerm > 1 && (
                     <p className="mb-2 text-xs font-medium text-emerald-600">
-                      Pagando por transferencia ahorrás {pagoDescuentoPct}% ({formatPrecio(fullPriceForTerm(plan, billingTerm) - pagoTotalTransferencia)}) sobre el precio de Mercado Pago.
+                      Pagando por transferencia ahorrás {pagoDescuentoPct}% ({formatPrecio(fullPriceForTerm(plan, billingTerm, planPrices ?? undefined) - pagoTotalTransferencia)}) sobre el precio de Mercado Pago.
                     </p>
                   )}
                   <TransferPaymentBlock
@@ -1484,7 +1499,7 @@ function OnboardingContent() {
             <div className="mt-8 space-y-3 text-sm">
               <div className="flex items-center justify-between text-zinc-600">
                 <span>
-                  {formatPrecio(planElegido.precioARS)} x {billingTerm} {billingTerm === 1 ? 'mes' : 'meses'}
+                  {formatPrecio(planPrices?.[plan] ?? planElegido.precioARS)} x {billingTerm} {billingTerm === 1 ? 'mes' : 'meses'}
                 </span>
                 <span>{formatPrecio(pagoSinDescuento)}</span>
               </div>

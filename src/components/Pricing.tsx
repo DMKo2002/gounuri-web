@@ -30,9 +30,15 @@ function formatARS(n: number) {
 export default function Pricing({
   mode = 'marketing',
   onSelect,
+  planPrices,
 }: {
   mode?: 'marketing' | 'select'
   onSelect?: (planId: PlanId, term: BillingTerm) => void
+  // 2026-08-29, pedido de ARam: precio vigente de platform_plan_prices, SOLO
+  // para mode="select" (onboarding) -- ver comentario ahí. La landing
+  // pública (mode="marketing", sin este prop) sigue mostrando el precio
+  // hardcodeado de PLANES tal cual, a propósito ("vidriera", no tocar).
+  planPrices?: Partial<Record<PlanId, number>>
 } = {}) {
   const [term, setTerm] = useState<BillingTerm>(1)
   const embedded = mode === 'select'
@@ -154,17 +160,17 @@ export default function Pricing({
                 // solo para transferencia, que acá ni se ofrece.
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(fullPriceForTerm(plan.id, term))}
+                    {formatARS(fullPriceForTerm(plan.id, term, planPrices))}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">total / {term} meses</span>
                   <p className="mt-1 text-xs text-zinc-400">
-                    equivale a {formatARS(Math.round(fullPriceForTerm(plan.id, term) / term))}/mes
+                    equivale a {formatARS(Math.round(fullPriceForTerm(plan.id, term, planPrices) / term))}/mes
                   </p>
                 </div>
               ) : (
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatPrecio(plan.precioARS)}
+                    {formatPrecio(planPrices?.[plan.id] ?? plan.precioARS)}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ mes</span>
                 </div>

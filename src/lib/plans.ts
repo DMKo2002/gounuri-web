@@ -22,7 +22,10 @@ export function isPlanId(v: unknown): v is PlanId {
   return v === 'mini' || v === 'standard' || v === 'premium'
 }
 
-function precioMensual(planId: PlanId): number {
+function precioMensual(planId: PlanId, pricesOverride?: Partial<Record<PlanId, number>>): number {
+  if (pricesOverride && typeof pricesOverride[planId] === 'number') {
+    return pricesOverride[planId]!
+  }
   const p = PLANES.find(p => p.id === planId)
   if (!p) throw new Error(`[plans] plan desconocido: ${planId}`)
   return p.precioARS
@@ -34,15 +37,20 @@ function precioMensual(planId: PlanId): number {
 // precio de lista sin descuento y transferencia sí lo tenía, resultaba
 // inconsistente que el mismo plan/plazo saliera distinto según el método
 // de pago). Ver createPreapproval/createSignupPreapproval en lib/billing.ts.
-export function priceForTerm(planId: PlanId, months: BillingTerm): number {
+//
+// pricesOverride (2026-08-29, pedido de ARam): precio vigente de
+// platform_plan_prices (ver lib/platformPlanPrices.ts), para no depender del
+// hardcodeado de PLANES una vez que superadmin edita el precio. Opcional --
+// sin él, se comporta exactamente igual que antes (precio de PLANES).
+export function priceForTerm(planId: PlanId, months: BillingTerm, pricesOverride?: Partial<Record<PlanId, number>>): number {
   const discount = TERM_DISCOUNTS[months]
-  return Math.round(precioMensual(planId) * months * (1 - discount))
+  return Math.round(precioMensual(planId, pricesOverride) * months * (1 - discount))
 }
 
 // Precio de lista sin descuento -- ya NO se usa para cobrar (ver
 // priceForTerm más arriba), queda solo por si hace falta mostrar el precio
 // "antes del descuento" en algún lado (ej. tachado al lado del precio con
 // descuento).
-export function fullPriceForTerm(planId: PlanId, months: BillingTerm): number {
-  return precioMensual(planId) * months
+export function fullPriceForTerm(planId: PlanId, months: BillingTerm, pricesOverride?: Partial<Record<PlanId, number>>): number {
+  return precioMensual(planId, pricesOverride) * months
 }

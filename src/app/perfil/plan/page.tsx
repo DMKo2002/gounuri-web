@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getPlatformPaymentSettings } from '@/lib/platformBilling'
+import { getPlatformPlanPrices } from '@/lib/platformPlanPrices'
 import PlanSelector from './PlanSelector'
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +28,7 @@ export default async function PlanPage() {
   // tenant existente -- ver PlanSelector.tsx (prop noTenantYet).
   if (!tenantId) {
     const paymentSettings = await getPlatformPaymentSettings(service)
+    const planPrices = await getPlatformPlanPrices(service)
     return (
       <main className="min-h-screen bg-zinc-50">
         <header className="border-b border-zinc-200 bg-white">
@@ -41,6 +43,7 @@ export default async function PlanPage() {
             currentPlan={null}
             trialing={false}
             paymentSettings={paymentSettings}
+            planPrices={planPrices}
             billingTerm={null}
             nextBillingDate={null}
             mpPreapprovalId={null}
@@ -71,6 +74,10 @@ export default async function PlanPage() {
   const currentPlan = tenant.plan ?? 'standard'
 
   const paymentSettings = await getPlatformPaymentSettings(service)
+  // 2026-08-29, pedido de ARam: precios editables desde /superadmin/planes
+  // -- se resuelven acá (server) y se pasan como prop para que la tarjeta
+  // muestre siempre el precio vigente, no el hardcodeado en PLANES.
+  const planPrices = await getPlatformPlanPrices(service)
 
   // Historial de pagos — ver memoria de proyecto "Gounuri billing/subscriptions".
   // Se alimenta del webhook (tópico "Pagos" de MP, todavía a activar a mano en
@@ -115,6 +122,7 @@ export default async function PlanPage() {
           currentPlan={currentPlan}
           trialing={trialing}
           paymentSettings={paymentSettings}
+          planPrices={planPrices}
           billingTerm={tenant.billing_term ?? null}
           nextBillingDate={tenant.next_billing_date ?? null}
           mpPreapprovalId={tenant.mp_preapproval_id ?? null}

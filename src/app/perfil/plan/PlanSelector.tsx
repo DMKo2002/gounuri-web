@@ -38,6 +38,7 @@ export default function PlanSelector({
   currentPlan,
   trialing,
   paymentSettings,
+  planPrices,
   billingTerm,
   nextBillingDate,
   mpPreapprovalId,
@@ -49,6 +50,9 @@ export default function PlanSelector({
   currentPlan: string | null
   trialing: boolean
   paymentSettings: PlatformPaymentSettings
+  // 2026-08-29, pedido de ARam: precios vigentes de platform_plan_prices,
+  // resueltos server-side por page.tsx -- ver @/lib/platformPlanPrices.
+  planPrices: Record<PlanId, number>
   // Todo lo agregado 2026-08-25 para mostrar plazo/proximo cobro y permitir
   // dar de baja sin pasar por Mercado Pago directamente — ver memoria de
   // proyecto "Gounuri billing/subscriptions".
@@ -256,11 +260,11 @@ export default function PlanSelector({
                 // aviso de ahorro junto al botón de transferencia).
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(fullPriceForTerm(card.id, term))}
+                    {formatARS(fullPriceForTerm(card.id, term, planPrices))}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
                   <p className="mt-0.5 text-xs text-zinc-500">
-                    equivale a {formatARS(Math.round(fullPriceForTerm(card.id, term) / term))}/mes · Mercado Pago
+                    equivale a {formatARS(Math.round(fullPriceForTerm(card.id, term, planPrices) / term))}/mes · Mercado Pago
                   </p>
                   {/* 2026-08-29, pedido de ARam: el precio con descuento por
                       transferencia ahora se ve con el mismo tamaño de fuente
@@ -271,18 +275,18 @@ export default function PlanSelector({
                       transferencia -- ahora se ve de una, arriba de todo. */}
                   <div className="mt-3">
                     <span className="text-3xl font-bold tracking-tight text-emerald-600">
-                      {formatARS(priceForTerm(card.id, term))}
+                      {formatARS(priceForTerm(card.id, term, planPrices))}
                     </span>
                     <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
                     <p className="mt-0.5 text-xs font-medium text-emerald-600">
-                      equivale a {formatARS(Math.round(priceForTerm(card.id, term) / term))}/mes · Transferencia (-{Math.round(TERM_DISCOUNTS[term] * 100)}%)
+                      equivale a {formatARS(Math.round(priceForTerm(card.id, term, planPrices) / term))}/mes · Transferencia (-{Math.round(TERM_DISCOUNTS[term] * 100)}%)
                     </p>
                   </div>
                 </div>
               ) : (
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(card.precioARS)}
+                    {formatARS(planPrices[card.id] ?? card.precioARS)}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ mes</span>
                 </div>
@@ -372,7 +376,7 @@ export default function PlanSelector({
                       planId={card.id}
                       planNombre={card.nombre}
                       term={term}
-                      monto={priceForTerm(card.id, term)}
+                      monto={priceForTerm(card.id, term, planPrices)}
                       accion="pasar mi tienda"
                     />
                   </div>
