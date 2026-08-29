@@ -92,9 +92,17 @@ export async function POST(req: Request) {
     cashEnabled: Boolean(cashEnabled),
   }
 
+  // Token propio para la pantalla de confirmación post-pago (2026-08-29,
+  // ver /onboarding/listo y /api/onboarding/estado) — viaja en el back_url
+  // en vez de depender de la cookie de sesión, que puede no estar presente
+  // si Mercado Pago devuelve al navegador propio de su app en vez del
+  // navegador del celular (confirmado en testing por ARam: "abre gounuri.com
+  // pero dentro de MP").
+  const confirmToken = crypto.randomUUID()
+
   const { error: draftError } = await service
     .from('gounuri_accounts')
-    .update({ pending_signup: draft })
+    .update({ pending_signup: draft, pending_signup_token: confirmToken })
     .eq('auth_user_id', user.id)
   if (draftError) {
     console.error('[onboarding/pagar] no se pudo guardar el borrador', draftError)
@@ -107,7 +115,7 @@ export async function POST(req: Request) {
       userId: user.id,
       planId: plan,
       payerEmail,
-      backUrl: `${origin}/onboarding?paso=confirmando`,
+      backUrl: `${origin}/onboarding/listo?t=${confirmToken}`,
       months,
     })
     if (!preapproval.init_point) throw new Error('MP no devolvió init_point')

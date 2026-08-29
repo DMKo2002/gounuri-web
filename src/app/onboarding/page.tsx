@@ -357,7 +357,6 @@ function OnboardingContent() {
   const initialStep = stepFromParam(searchParams.get('paso')) ?? (storeFromQuery ? 'template' : 'nombre')
   const [step, setStepState] = useState<Step>(initialStep)
   const [name, setName] = useState(storeFromQuery)
-  const [domain, setDomain] = useState('')
   const [dniCuit, setDniCuit] = useState('')
   const [celular, setCelular] = useState('')
   const [template, setTemplate] = useState('minimalista')
@@ -419,16 +418,6 @@ function OnboardingContent() {
   // mientras carga, para no mostrar el formulario de MP de entrada y que
   // "salte" apenas llega la respuesta.
   const [paymentSettings, setPaymentSettings] = useState<PlatformPaymentSettings | null>(null)
-
-  // Pantalla "Confirmando tu pago..." (2026-08-18) — a dónde vuelve MP
-  // (back_url) después de pagar desde /api/ir-a-plan sin tener tienda
-  // todavía. El tenant recién lo crea el webhook de Panel Admin cuando
-  // confirma 'authorized', y eso puede tardar unos segundos más que el
-  // redirect del navegador — este estado sondea /api/mi-estado-onboarding
-  // hasta que aparezca. Ver el useEffect de más abajo.
-  const [confirmandoPago, setConfirmandoPago] = useState(() => searchParams.get('paso') === 'confirmando')
-  const [confirmandoTimeout, setConfirmandoTimeout] = useState(false)
-  const [pollAttempt, setPollAttempt] = useState(0)
 
   // Cambia de paso y refleja el nuevo paso en la URL (`?paso=01/02/03/04`)
   // con `router.push`, para que quede como una entrada de historial propia
@@ -515,53 +504,6 @@ function OnboardingContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Sondeo de la pantalla "Confirmando tu pago..." — solo corre mientras
-  // confirmandoPago esté prendido (?paso=confirmando). Reintenta cada 1.5s
-  // hasta 20 veces (~30s); si el webhook todavía no creó el tenant para
-  // entonces, se corta y se ofrece un botón para reintentar a mano
-  // (pollAttempt fuerza que el effect vuelva a correr).
-  useEffect(() => {
-    if (!confirmandoPago) return
-    let cancelled = false
-    let tries = 0
-    const MAX_TRIES = 20
-
-    function poll() {
-      fetch('/api/mi-estado-onboarding')
-        .then(res => res.json())
-        .then(json => {
-          if (cancelled) return
-          // Camino nuevo (2026-08-29): el webhook ya creó la tienda real y
-          // completa con los datos que se cargaron ANTES de pagar — no
-          // queda ningún paso del wizard por mostrar.
-          if (json?.ready) {
-            window.location.href = '/perfil'
-            return
-          }
-          if (json?.isPlaceholder) {
-            setIsPlaceholderPaid(true)
-            if (json.plan) setPlan(json.plan)
-            setConfirmandoPago(false)
-            goToStep('nombre')
-            return
-          }
-          tries++
-          if (tries >= MAX_TRIES) { setConfirmandoTimeout(true); return }
-          setTimeout(poll, 1500)
-        })
-        .catch(e => {
-          console.error('[onboarding] error consultando confirmación de pago', e)
-          if (cancelled) return
-          tries++
-          if (tries >= MAX_TRIES) { setConfirmandoTimeout(true); return }
-          setTimeout(poll, 1500)
-        })
-    }
-    poll()
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [confirmandoPago, pollAttempt])
-
   // Carrusel de fondo del paso 1 (mismo timing que el Hero de gounuri.com)
   useEffect(() => {
     if (step !== 'nombre') return
@@ -632,7 +574,6 @@ function OnboardingContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: name.trim(),
-        domain: domain.trim() || null,
         template,
         plan: planId,
         whatsapp: whatsapp.trim() || null,
@@ -685,7 +626,6 @@ function OnboardingContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: name.trim(),
-        domain: domain.trim() || null,
         template,
         whatsapp: whatsapp.trim() || null,
         instagram: instagram.trim() || null,
@@ -739,7 +679,6 @@ function OnboardingContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          domain: domain.trim() || null,
           template,
           whatsapp: whatsapp.trim() || null,
           instagram: instagram.trim() || null,
@@ -794,41 +733,6 @@ function OnboardingContent() {
   const pagoFin = new Date(pagoInicio)
   pagoFin.setMonth(pagoFin.getMonth() + billingTerm)
   const fmtFecha = (d: Date) => d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-
-  // Pantalla "Confirmando tu pago..." — reemplaza todo el resto mientras
-  // espera al webhook (ver el useEffect de sondeo más arriba). Return
-  // temprano a propósito: ningún paso normal (nombre/template/etc.) tiene
-  // sentido mostrar acá, el tenant todavía ni existe.
-  if (confirmandoPago) {
-    return (
-      <main className="min-h-screen bg-zinc-50">
-        <Navbar />
-        <div className="flex min-h-[calc(100vh-72px)] flex-col items-center justify-center px-6 text-center">
-          {confirmandoTimeout ? (
-            <>
-              <p className="mb-2 text-xl font-bold text-zinc-900">Todavía estamos confirmando tu pago</p>
-              <p className="mb-6 max-w-sm text-sm text-zinc-500">
-                Puede demorar un poco más de lo esperado. Probá de nuevo en unos segundos — si ya pagaste, no hace falta que vuelvas a hacerlo.
-              </p>
-              <button
-                type="button"
-                onClick={() => { setConfirmandoTimeout(false); setPollAttempt(a => a + 1) }}
-                className="rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
-              >
-                Reintentar
-              </button>
-            </>
-          ) : (
-            <>
-              <Loader2 size={32} className="mb-4 animate-spin text-zinc-400" />
-              <p className="text-xl font-bold text-zinc-900">Confirmando tu pago...</p>
-              <p className="mt-2 max-w-sm text-sm text-zinc-500">Esto toma solo unos segundos. No cierres esta ventana.</p>
-            </>
-          )}
-        </div>
-      </main>
-    )
-  }
 
   return (
     <main className="min-h-screen bg-zinc-50">
@@ -904,20 +808,14 @@ function OnboardingContent() {
                   </div>
                 </div>
 
-                {/* No está en el diseño de Figma, pero ya existía y create-tenant
-                    lo usa — lo dejamos como cuarto campo opcional para no
-                    perder la función de dominio propio durante el onboarding. */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    Dominio propio <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <input
-                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-300"
-                    value={domain}
-                    onChange={e => setDomain(e.target.value)}
-                    placeholder="Ej: mitienda.com — lo podés configurar después"
-                  />
-                </div>
+                {/* 2026-08-29 (pedido de ARam): se saca el campo "Dominio
+                    propio" de acá — un dominio sin verificar cargado antes
+                    de que la tienda exista confundía más de lo que ayudaba
+                    (ver el bug de HAEJIN_HAEJIN en /api/create-tenant). El
+                    dominio propio se sigue pudiendo cargar después, ya con
+                    la tienda creada, desde el Panel Admin
+                    (/dashboard/dominio), que tiene el flujo real de
+                    verificación DNS. */}
 
                 {error && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
@@ -1018,8 +916,11 @@ function OnboardingContent() {
 
           {/* Panel de templates — ocupa todo el ancho que deja la franja
               (ya no comparte espacio con el panel de roadmap de la
-              derecha) y centra la grilla de 6 tarjetas dentro suyo. */}
-          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+              derecha) y centra la grilla de 6 tarjetas dentro suyo.
+              pb-28 (solo hasta lg): dejar lugar abajo para que la barra fija
+              del botón "Continuar" en mobile no tape la última fila de
+              tarjetas — ver comentario en esa barra más abajo. */}
+          <div className="flex w-full flex-1 flex-col overflow-y-auto bg-[#fafafa] px-6 py-10 pb-28 sm:px-10 lg:px-14 lg:py-14 lg:pb-14">
             {/* Envoltorio único (mismo max-w-5xl + mx-auto) para el título Y
                 la grilla, así el borde izquierdo del título queda alineado
                 con el de las tarjetas (pedido 2026-08-24) en vez de quedar
@@ -1048,16 +949,24 @@ function OnboardingContent() {
                   ))}
                 </div>
 
-                {/* Botón "Continuar" simple para todos los tamaños de pantalla
-                    (ya no el botón circular SVG del panel de roadmap, que se
-                    saca de este paso) — mismo patrón que el paso 1. */}
-                <button
-                  type="button"
-                  onClick={() => goToStep('configurar')}
-                  className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
-                >
-                  Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
-                </button>
+                {/* Botón "Continuar" — 2026-08-29 (pedido de ARam, reportado
+                    en testing: en mobile, al elegir un template, el botón
+                    quedaba debajo de la grilla de 6 tarjetas sin ningún
+                    indicio de que había que scrollear para verlo). Hasta
+                    `lg` pasa a ser una barra fija al pie de la PANTALLA
+                    (`fixed`, no `sticky`: así queda visible sin importar
+                    cuánto scrolleaste, no solo cuando llegás al final del
+                    scroll) — de `lg` en adelante vuelve al flujo normal
+                    debajo de la grilla, como siempre. */}
+                <div className="fixed inset-x-0 bottom-0 z-10 border-t border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur-sm [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))] lg:static lg:z-auto lg:mt-8 lg:border-0 lg:bg-transparent lg:p-0 lg:[padding-bottom:0] lg:backdrop-blur-none">
+                  <button
+                    type="button"
+                    onClick={() => goToStep('configurar')}
+                    className="mx-auto flex w-full max-w-5xl items-center justify-center gap-2 rounded-lg bg-zinc-900 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                  >
+                    Continuar con &quot;{templateElegido.nombre}&quot; <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
