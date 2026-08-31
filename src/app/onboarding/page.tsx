@@ -386,6 +386,7 @@ function OnboardingContent() {
   // y se mandan en el POST a /api/create-tenant para que quede precargado
   // ahí mismo desde el momento en que se crea la tienda.
   const [whatsapp, setWhatsapp] = useState('')
+  const [contactEmail, setContactEmail] = useState('')
   const [instagram, setInstagram] = useState('')
   const [facebook, setFacebook] = useState('')
   const [tiktok, setTiktok] = useState('')
@@ -608,6 +609,7 @@ function OnboardingContent() {
         template,
         plan: planId,
         whatsapp: whatsapp.trim() || null,
+        contactEmail: contactEmail.trim() || null,
         instagram: instagram.trim() || null,
         facebook: facebook.trim() || null,
         tiktok: tiktok.trim() || null,
@@ -660,6 +662,7 @@ function OnboardingContent() {
         domain: domain.trim() || null,
         template,
         whatsapp: whatsapp.trim() || null,
+        contactEmail: contactEmail.trim() || null,
         instagram: instagram.trim() || null,
         facebook: facebook.trim() || null,
         tiktok: tiktok.trim() || null,
@@ -1085,6 +1088,17 @@ function OnboardingContent() {
                           className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
                         />
                         <p className="mt-1 text-xs text-zinc-400">También es el número al que llegan los avisos de WhatsApp — configurables en Notificaciones.</p>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-zinc-600">Email de contacto</label>
+                        <input
+                          type="email"
+                          value={contactEmail}
+                          onChange={e => setContactEmail(e.target.value)}
+                          placeholder="contacto@tutienda.com"
+                          className="w-full rounded-[10px] border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 shadow-sm focus:border-zinc-400 focus:outline-none"
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">Aparece en el pie de tu tienda y en la página de contacto — puede ser distinto del email de notificaciones.</p>
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-zinc-600">Instagram</label>

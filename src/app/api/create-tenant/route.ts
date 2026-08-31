@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     // (panel-admin/src/app/dashboard/contacto/page.tsx), para que ya estén
     // cargados cuando el dueño entra por primera vez a su panel.
     whatsapp, instagram, facebook, tiktok, direccion, direccionDespacho,
+    contactEmail,
     // Paso "pagos" del onboarding (Figma "Registracion 4", 2026-08-25) —
     // mismas columnas que usa Panel Admin > Pagos y Finanzas
     // (panel-admin/src/app/dashboard/pagos/page.tsx: mp_enabled/
@@ -147,6 +148,7 @@ export async function POST(req: Request) {
       // el nombre de columna real quedó así del lado del Panel Admin, no es
       // un error de este endpoint.
       whatsapp_number: whatsapp?.trim?.() || null,
+      contact_email: contactEmail?.trim?.() || null,
       instagram_url: instagram?.trim?.() || null,
       facebook_url: facebook?.trim?.() || null,
       tiktok_url: tiktok?.trim?.() || null,
