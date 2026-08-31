@@ -6,7 +6,7 @@ const BADGES = [
   },
   {
     valor: '0%',
-    titulo: 'Dinero confiscado',
+    titulo: 'Dinero retenido',
     texto: 'Tu plata no queda retenida. Cobrás y disponés al toque.',
   },
   {

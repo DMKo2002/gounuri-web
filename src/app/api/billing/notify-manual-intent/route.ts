@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getPlatformPaymentSettings } from '@/lib/platformBilling'
+import { getPlatformPlanPrices } from '@/lib/platformPlanPrices'
 import { sendEmail } from '@/lib/email'
 import { PLANES } from '@/lib/site'
 import { priceForTerm, isPlanId, isBillingTerm } from '@/lib/plans'
@@ -37,7 +38,10 @@ export async function POST(req: Request) {
 
   const card = PLANES.find(p => p.id === plan)
   const nombrePlan = card?.nombre ?? plan
-  const monto = priceForTerm(plan, term)
+  // 2026-08-29: precio vigente de platform_plan_prices, no el hardcodeado
+  // de PLANES -- ver /superadmin/planes.
+  const prices = await getPlatformPlanPrices(service)
+  const monto = priceForTerm(plan, term, prices)
 
   // "Pago a confirmar" (2026-08-22) — deja rastro en el tenant de que
   // declaró intención de pago, para que /superadmin lo pueda filtrar/mostrar

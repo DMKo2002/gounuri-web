@@ -110,7 +110,17 @@ function RegistroForm() {
   const planHint = isPlanId(planParamRaw) ? planParamRaw : null
   const monthsHint = isBillingTerm(monthsParamRaw) ? monthsParamRaw : null
   useEffect(() => {
-    if (!intentPago) return
+    if (!intentPago) {
+      // 2026-08-29: si no viene ?intent=pago (entrada real por "Probar
+      // Gratis"), hay que borrar explícitamente una cookie gounuri_intent
+      // que haya quedado de un intento anterior de "Crear mi tienda" en
+      // el mismo navegador (dura 1hs) -- si no, el onboarding la sigue
+      // viendo y muestra el botón de pago en vez del de prueba gratis.
+      document.cookie = 'gounuri_intent=; path=/; max-age=0; samesite=lax'
+      document.cookie = 'gounuri_plan=; path=/; max-age=0; samesite=lax'
+      document.cookie = 'gounuri_months=; path=/; max-age=0; samesite=lax'
+      return
+    }
     document.cookie = 'gounuri_intent=pago; path=/; max-age=3600; samesite=lax'
     if (planHint) document.cookie = `gounuri_plan=${planHint}; path=/; max-age=3600; samesite=lax`
     if (monthsHint) document.cookie = `gounuri_months=${monthsHint}; path=/; max-age=3600; samesite=lax`

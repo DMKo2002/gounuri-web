@@ -38,6 +38,7 @@ export default function PlanSelector({
   currentPlan,
   trialing,
   paymentSettings,
+  planPrices,
   billingTerm,
   nextBillingDate,
   mpPreapprovalId,
@@ -49,6 +50,9 @@ export default function PlanSelector({
   currentPlan: string | null
   trialing: boolean
   paymentSettings: PlatformPaymentSettings
+  // 2026-08-29, pedido de ARam: precios vigentes de platform_plan_prices,
+  // resueltos server-side por page.tsx -- ver @/lib/platformPlanPrices.
+  planPrices: Record<PlanId, number>
   // Todo lo agregado 2026-08-25 para mostrar plazo/proximo cobro y permitir
   // dar de baja sin pasar por Mercado Pago directamente — ver memoria de
   // proyecto "Gounuri billing/subscriptions".
@@ -254,19 +258,47 @@ export default function PlanSelector({
                 // lista siempre acá -- el descuento por plazo es solo para
                 // transferencia (ver fullPriceForTerm en @/lib/plans y el
                 // aviso de ahorro junto al botón de transferencia).
+                //
+                // Color cambiado de negro a gris (2026-08-29, pedido de
+                // ARam) -- mismo criterio que el precio de transferencia de
+                // más abajo, para que los dos precios se lean con el mismo
+                // peso visual y la diferencia quede solo en la leyenda
+                // ("· Mercado Pago" / "· Transferencia").
                 <div className="mt-6">
-                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(fullPriceForTerm(card.id, term))}
+                  <span className="text-3xl font-bold tracking-tight text-zinc-500">
+                    {formatARS(fullPriceForTerm(card.id, term, planPrices))}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
                   <p className="mt-0.5 text-xs text-zinc-500">
-                    equivale a {formatARS(Math.round(fullPriceForTerm(card.id, term) / term))}/mes
+                    equivale a {formatARS(Math.round(fullPriceForTerm(card.id, term, planPrices) / term))}/mes · Mercado Pago
                   </p>
+                  {/* 2026-08-29, pedido de ARam: el precio con descuento por
+                      transferencia ahora se ve con el mismo tamaño de fuente
+                      que el de Mercado Pago (antes era una línea chica) -- y
+                      con su propio "equivale a $X/mes" calculado sobre el
+                      monto YA con descuento, no sobre el de lista. Antes
+                      esto vivía escondido adentro del acordeón de
+                      transferencia -- ahora se ve de una, arriba de todo.
+                      Color del precio cambiado de verde a gris oscuro
+                      (2026-08-29, pedido de ARam) -- consistente con la
+                      paleta negro/blanco del resto de la card. La leyenda
+                      de abajo ("equivale a... Transferencia") volvió a
+                      verde (mismo pedido, aclarado después): el gris era
+                      solo para el precio grande, no para la leyenda. */}
+                  <div className="mt-3">
+                    <span className="text-3xl font-bold tracking-tight text-zinc-800">
+                      {formatARS(priceForTerm(card.id, term, planPrices))}
+                    </span>
+                    <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
+                    <p className="mt-0.5 text-xs font-medium text-emerald-600">
+                      equivale a {formatARS(Math.round(priceForTerm(card.id, term, planPrices) / term))}/mes · Transferencia (-{Math.round(TERM_DISCOUNTS[term] * 100)}%)
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-6">
                   <span className="text-3xl font-bold tracking-tight text-zinc-900">
-                    {formatARS(card.precioARS)}
+                    {formatARS(planPrices[card.id] ?? card.precioARS)}
                   </span>
                   <span className="ml-1 text-sm text-zinc-500">/ mes</span>
                 </div>
@@ -281,83 +313,87 @@ export default function PlanSelector({
                 ))}
               </ul>
 
-              {esActual ? (
-                // El detalle (plazo, próximo cobro, cancelar) ahora vive en
-                // el resumen de arriba de todo (2026-08-26, pedido de ARam)
-                // -- acá la card del plan actual solo necesita decir eso.
-                <button disabled className="btn-black mt-8 w-full opacity-50">
-                  Tu plan actual
-                </button>
-              ) : (
-                <div className="mt-8 space-y-2">
-                  {paymentSettings.mercadopagoEnabled && (
-                    <>
-                      <button
-                        onClick={() => setMpEmailPlan(p => (p === card.id ? null : card.id))}
-                        disabled={loading !== null}
-                        className="btn-outline w-full disabled:opacity-50"
-                      >
-                        {mpEmailPlan === card.id
-                          ? 'Ocultar datos de MP'
-                          : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP` : 'Pagar con Mercado Pago'}
-                      </button>
-                      {mpEmailPlan === card.id && (
-                        <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
-                          <div>
-                            <label className="block text-base font-semibold text-zinc-800 mb-1.5">
-                              Email de tu cuenta de Mercado Pago
-                            </label>
-                            <input
-                              type="email"
-                              className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base focus:border-zinc-900 focus:outline-none"
-                              value={payerEmail}
-                              onChange={e => setPayerEmail(e.target.value)}
-                              placeholder="tu@email.com"
-                            />
-                            <p className="mt-2 text-sm text-zinc-500">
-                              Importante: tiene que ser el mismo email con el que vas a iniciar sesión en Mercado Pago al pagar — si no coincide, Mercado Pago rechaza el cobro.
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => subscribeMp(card.id)}
-                            disabled={loading !== null}
-                            className="btn-black w-full disabled:opacity-50"
-                          >
-                            {loading === card.id && <Loader2 size={15} className="animate-spin" />}
-                            Continuar
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {!noTenantYet && paymentSettings.manualTransferEnabled && (
-                    <button
-                      onClick={() => setExpandedPlan(p => (p === card.id ? null : card.id))}
-                      className="btn-black w-full"
-                    >
-                      {expandedPlan === card.id ? 'Ocultar datos de transferencia' : 'Pagar por transferencia'}
-                    </button>
-                  )}
-
-                  {!noTenantYet && paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
-                    <div className="mt-3">
-                      {term > 1 && (
-                        <p className="mb-2 text-xs font-medium text-emerald-600">
-                          Pagando por transferencia ahorrás {Math.round(TERM_DISCOUNTS[term] * 100)}% ({formatARS(fullPriceForTerm(card.id, term) - priceForTerm(card.id, term))}) sobre el precio de Mercado Pago.
-                        </p>
-                      )}
-                      <TransferPaymentBlock
-                        paymentSettings={paymentSettings}
-                        planId={card.id}
-                        planNombre={card.nombre}
-                        term={term}
-                        monto={priceForTerm(card.id, term)}
-                        accion="pasar mi tienda"
-                      />
-                    </div>
-                  )}
-                </div>
+              {/* 2026-08-29, pedido de ARam (bug detectado en vivo): antes,
+                  si esActual, esto renderizaba un único botón deshabilitado
+                  "Tu plan actual" y listo -- un tenant que quiere renovar el
+                  mismo plan/plazo (pago manual por transferencia que está
+                  por vencer, o alguien que canceló su débito automático y
+                  quiere volver a suscribirse) no tenía ningún botón para
+                  hacerlo. El backend (subscribe/notify-manual-intent) ya
+                  soportaba pagar el plan actual de nuevo sin problema -- acá
+                  solo faltaba no bloquear el botón. Ahora la card del plan
+                  actual muestra los mismos botones que cualquier otra, con
+                  una etiqueta aclaratoria arriba y el texto de los botones
+                  ajustado a "Renovar" en vez de "Pagar". */}
+              {esActual && (
+                <p className="mt-8 text-center text-xs font-medium text-zinc-500">
+                  Tu plan actual — renová o cambiá el plazo de pago
+                </p>
               )}
+              <div className={esActual ? 'mt-2 space-y-2' : 'mt-8 space-y-2'}>
+                {paymentSettings.mercadopagoEnabled && (
+                  <>
+                    <button
+                      onClick={() => setMpEmailPlan(p => (p === card.id ? null : card.id))}
+                      disabled={loading !== null}
+                      className="btn-outline w-full disabled:opacity-50"
+                    >
+                      {mpEmailPlan === card.id
+                        ? 'Ocultar datos de MP'
+                        : trialing && card.id === currentPlan ? `Activar ${card.nombre} con MP`
+                        : esActual ? 'Renovar con Mercado Pago' : 'Pagar con Mercado Pago'}
+                    </button>
+                    {mpEmailPlan === card.id && (
+                      <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-left space-y-3">
+                        <div>
+                          <label className="block text-base font-semibold text-zinc-800 mb-1.5">
+                            Email de tu cuenta de Mercado Pago
+                          </label>
+                          <input
+                            type="email"
+                            className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base focus:border-zinc-900 focus:outline-none"
+                            value={payerEmail}
+                            onChange={e => setPayerEmail(e.target.value)}
+                            placeholder="tu@email.com"
+                          />
+                          <p className="mt-2 text-sm text-zinc-500">
+                            Importante: tiene que ser el mismo email con el que vas a iniciar sesión en Mercado Pago al pagar — si no coincide, Mercado Pago rechaza el cobro.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => subscribeMp(card.id)}
+                          disabled={loading !== null}
+                          className="btn-black w-full disabled:opacity-50"
+                        >
+                          {loading === card.id && <Loader2 size={15} className="animate-spin" />}
+                          Continuar
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+                {!noTenantYet && paymentSettings.manualTransferEnabled && (
+                  <button
+                    onClick={() => setExpandedPlan(p => (p === card.id ? null : card.id))}
+                    className="btn-black w-full"
+                  >
+                    {expandedPlan === card.id ? 'Ocultar datos de transferencia' : esActual ? 'Renovar por transferencia' : 'Pagar por transferencia'}
+                  </button>
+                )}
+
+                {!noTenantYet && paymentSettings.manualTransferEnabled && expandedPlan === card.id && (
+                  <div className="mt-3">
+                    <TransferPaymentBlock
+                      paymentSettings={paymentSettings}
+                      planId={card.id}
+                      planNombre={card.nombre}
+                      term={term}
+                      monto={priceForTerm(card.id, term, planPrices)}
+                      accion="pasar mi tienda"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )
         })}

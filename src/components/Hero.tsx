@@ -183,7 +183,7 @@ export default function Hero() {
         </div>
         <div className="strip-callout">
           <p className="typed" data-text="0% Comision de venta" />
-          <p className="typed" data-text="0% Dinero confiscado" />
+          <p className="typed" data-text="0% Dinero retenido" />
           <p className="typed" data-text="0% Letra chica" />
         </div>
       </div>

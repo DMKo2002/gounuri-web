@@ -6,7 +6,7 @@ import type { MetadataRoute } from 'next'
 // gastan crawl budget; todo el resto (home, templates, faq, registro,
 // login, legales) queda abierto.
 export default function robots(): MetadataRoute.Robots {
-  const base = 'https://gounuri.com'
+  const base = 'https://www.gounuri.com'
 
   return {
     rules: [

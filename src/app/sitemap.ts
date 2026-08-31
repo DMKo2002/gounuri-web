@@ -9,7 +9,7 @@ import type { MetadataRoute } from 'next'
 // /onboarding, /perfil, /recuperar) quedan afuera a proposito -- no aportan
 // valor de busqueda y generarian contenido "fino" duplicado en el indice.
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://gounuri.com'
+  const base = 'https://www.gounuri.com'
   const now = new Date()
 
   return [
@@ -17,7 +17,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/templates`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/migracion`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${base}/migracion/contacto`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/migracion/formulario`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/contacto`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/terminos`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${base}/privacidad`, lastModified: now, changeFrequency: 'yearly', priority: 0.2 },
   ]

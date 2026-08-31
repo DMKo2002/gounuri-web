@@ -8,6 +8,8 @@
 
 import { PLANES } from './site'
 import { fullPriceForTerm, type PlanId, type BillingTerm } from './plans'
+import { createServiceClient } from '@/lib/supabase/service'
+import { getPlatformPlanPrices } from '@/lib/platformPlanPrices'
 
 const MP_API = 'https://api.mercadopago.com'
 
@@ -88,7 +90,12 @@ export async function createPreapproval(opts: {
   // meses, sin descuento -- fullPriceForTerm en vez de priceForTerm. El
   // descuento sigue existiendo, pero solo se ve/cobra en el flujo de
   // transferencia (TransferPaymentBlock, notify-manual-intent).
-  const amount = fullPriceForTerm(opts.planId, months)
+  //
+  // 2026-08-29, pedido de ARam: precio vigente de platform_plan_prices, no
+  // el hardcodeado de PLANES -- así una nueva alta cobra el precio que
+  // superadmin haya dejado cargado hoy. Ver /superadmin/planes.
+  const prices = await getPlatformPlanPrices(createServiceClient())
+  const amount = fullPriceForTerm(opts.planId, months, prices)
   const reason = months === 1
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`
@@ -120,7 +127,11 @@ export async function createSignupPreapproval(opts: {
   // 2026-08-26: mismo criterio que createPreapproval de arriba -- MP
   // siempre cobra precio de lista, el descuento por plazo es solo para
   // transferencia.
-  const amount = fullPriceForTerm(opts.planId, months)
+  //
+  // 2026-08-29: precio vigente de platform_plan_prices -- ver comentario en
+  // createPreapproval más arriba.
+  const prices = await getPlatformPlanPrices(createServiceClient())
+  const amount = fullPriceForTerm(opts.planId, months, prices)
   const reason = months === 1
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`

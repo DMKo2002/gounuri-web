@@ -27,7 +27,7 @@ export default function CTA() {
             Crear mi tienda
           </a>
           <a
-            href="mailto:info@gounuri.com"
+            href="/contacto"
             className="inline-flex items-center justify-center rounded-lg border border-zinc-300 px-8 py-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
           >
             Contactanos

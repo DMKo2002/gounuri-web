@@ -50,22 +50,17 @@ export async function POST(req: NextRequest) {
         .limit(1)
 
       const storeName = accountRows?.[0]?.store_name
-      // Cookie gounuri_intent=pago (2026-08-26, pedido de ARam) -- seteada
-      // por /registro cuando vino de un botón "Crear mi tienda" (en vez de
-      // "Probar Gratis"), ver REGISTRO_PAGO_URL en @/lib/site. En ese caso
-      // manda a /perfil/plan (elegís plan y pagás, la tienda se genera
-      // recién con el pago vía /api/ir-a-plan) en vez del onboarding de
-      // prueba gratis de siempre.
-      const intentPago = req.cookies.get('gounuri_intent')?.value === 'pago'
-      // Plan elegido en la sección de Planes (ver /api/ir-a-plan y
-      // /registro/page.tsx) -- si vino de ahí, /perfil/plan ya llega con
-      // esa card resaltada en vez de mostrar las tres sin ningún foco.
-      const planHint = req.cookies.get('gounuri_plan')?.value
-      const redirectTo = intentPago
-        ? (planHint ? `/perfil/plan?plan=${planHint}` : '/perfil/plan')
-        : storeName
-          ? `/onboarding?store=${encodeURIComponent(storeName)}`
-          : '/onboarding'
+      // 2026-08-29 (pedido de ARam: invertir el orden a login -> onboarding
+      // -> pago): "Crear mi tienda" y "Probar Gratis" arrancan igual, por
+      // el mismo wizard de /onboarding -- antes acá se mandaba derecho a
+      // /perfil/plan, saltando todo el onboarding. La cookie
+      // gounuri_intent=pago (seteada por /registro, ver REGISTRO_PAGO_URL
+      // en @/lib/site) sigue viva y es lo que /onboarding lee para saber
+      // que tiene que terminar en plan/pago en vez de crear la tienda
+      // gratis de una.
+      const redirectTo = storeName
+        ? `/onboarding?store=${encodeURIComponent(storeName)}`
+        : '/onboarding'
       return NextResponse.json({ ok: true, redirectTo })
     }
     console.error('[api/auth/confirmar] verifyOtp error:', error?.message)
