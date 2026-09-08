@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Templates — Gounuri',
   description:
     'Explorá los diseños de tienda disponibles en Gounuri. Cada uno con demo en vivo para que lo pruebes como si fueras un cliente.',
+  alternates: { canonical: '/templates' },
 }
 
 // Busca el screenshot en public/templates/{slug}.jpg|.png (resuelto en build).

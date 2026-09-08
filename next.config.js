@@ -12,6 +12,26 @@ const nextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }]
   },
+  // Fuerza gounuri.com (apex, sin www) a redirigir a www.gounuri.com.
+  // Google Search Console tiene las dos propiedades verificadas por
+  // separado (gounuri.com y www.gounuri.com) y ambas servian el mismo
+  // contenido con status 200 -- sin este redirect, cada pagina publica
+  // queda duplicada entre los dos dominios. Las paginas ya declaran
+  // <link rel="canonical"> hacia la version www (ver metadataBase en
+  // layout.tsx y alternates.canonical en cada page.tsx), pero un
+  // redirect real a nivel de dominio es el arreglo de fondo: asi el
+  // apex ni siquiera llega a indexarse como "duplicada sin canonica",
+  // pasa a mostrarse en GSC como "pagina con redireccion" (esperado).
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'gounuri.com' }],
+        destination: 'https://www.gounuri.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig

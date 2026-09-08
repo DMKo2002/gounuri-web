@@ -6,6 +6,7 @@ import ContactoForm from '@/components/ContactoForm'
 export const metadata: Metadata = {
   title: 'Contactanos — Gounuri',
   description: 'Dejanos tus datos y un especialista de Gounuri se va a contactar con vos.',
+  alternates: { canonical: '/contacto' },
 }
 
 export default function ContactoPage() {

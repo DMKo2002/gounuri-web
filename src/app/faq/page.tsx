@@ -6,6 +6,7 @@ import { PANEL_URL, REGISTRO_URL } from '@/lib/site'
 export const metadata: Metadata = {
   title: 'Preguntas frecuentes — Gounuri',
   description: 'Respuestas a las dudas más comunes al armar tu tienda en Gounuri: dominio, footer, productos, pagos, envíos y plan.',
+  alternates: { canonical: '/faq' },
 }
 
 type Faq = { q: string; a: string }

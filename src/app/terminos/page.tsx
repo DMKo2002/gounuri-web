@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Terminos y condiciones — Gounuri',
+  alternates: { canonical: '/terminos' },
 }
 
 export default function Terminos() {

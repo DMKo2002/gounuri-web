@@ -22,6 +22,7 @@ import { CONTACTO_EMAIL } from '@/lib/site'
 
 export const metadata = {
   title: 'Política de Privacidad — Gounuri',
+  alternates: { canonical: '/privacidad' },
 }
 
 export default function Privacidad() {

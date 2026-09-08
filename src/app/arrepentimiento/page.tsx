@@ -21,6 +21,7 @@ import { CONTACTO_EMAIL, whatsappUrl } from '@/lib/site'
 
 export const metadata = {
   title: 'Botón de Arrepentimiento — Gounuri',
+  alternates: { canonical: '/arrepentimiento' },
 }
 
 export default function Arrepentimiento() {

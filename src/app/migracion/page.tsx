@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: 'Migración a Gounuri — Gounuri',
   description:
     'Migrá tu tienda a Gounuri de forma rápida y segura, sin perder datos ni ventas. Para mayoristas B2B y minoristas B2C.',
+  alternates: { canonical: '/migracion' },
 }
 
 export default function MigracionPage() {
