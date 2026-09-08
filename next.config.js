@@ -24,6 +24,16 @@ const nextConfig = {
   // pasa a mostrarse en GSC como "pagina con redireccion" (esperado).
   async redirects() {
     return [
+      // /demo ya no existe (la pagina se sacó) -- redirige al lugar donde
+      // hoy se ven demos reales de cada template, en vez de dejar un 404
+      // en una URL que Google todavia tiene indexada. Va primero y con
+      // destino absoluto (no relativo) para resolver en un solo salto
+      // sea cual sea el dominio de origen (apex o www).
+      {
+        source: '/demo',
+        destination: 'https://www.gounuri.com/templates',
+        permanent: true,
+      },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'gounuri.com' }],
