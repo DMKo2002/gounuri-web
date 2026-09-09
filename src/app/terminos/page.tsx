@@ -1,7 +1,8 @@
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Terminos y condiciones — Gounuri',
   alternates: { canonical: '/terminos' },
 }

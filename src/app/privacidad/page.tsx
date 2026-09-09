@@ -16,11 +16,12 @@
 // globals.css, mismo Navbar/Footer) para que las dos páginas legales se
 // vean consistentes entre sí.
 
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { CONTACTO_EMAIL } from '@/lib/site'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Política de Privacidad — Gounuri',
   alternates: { canonical: '/privacidad' },
 }

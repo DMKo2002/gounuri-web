@@ -15,13 +15,14 @@
 // Mantiene el mismo layout que /terminos y /privacidad (misma clase
 // .tc-page en globals.css, mismo Navbar/Footer).
 
+import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { CONTACTO_EMAIL, whatsappUrl } from '@/lib/site'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Botón de Arrepentimiento — Gounuri',
-  alternates: { canonical: '/arrepentimiento' },
+  robots: { index: false, follow: false },
 }
 
 export default function Arrepentimiento() {
