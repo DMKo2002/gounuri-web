@@ -220,8 +220,7 @@
 .clientes-marquee{width:100%;overflow:hidden;padding:28px 0 56px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 .clientes-marquee-track{display:flex;width:max-content;gap:20px;animation:clientes-scroll 36s linear infinite}
 .clientes-marquee:hover .clientes-marquee-track,.clientes-marquee:focus-within .clientes-marquee-track{animation-play-state:paused}
-.clientes-marquee-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:168px;height:76px;border-radius:12px;background:var(--white);border:1px solid var(--gray-panel,#e4e4e7);box-shadow:0 1px 3px rgba(0,0,0,.06);padding:14px 20px;transition:transform .2s ease,box-shadow .2s ease}
-.clientes-marquee-item:hover{box-shadow:0 4px 10px rgba(0,0,0,.1)}
+.clientes-marquee-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:168px;height:76px;padding:14px 20px;transition:transform .2s ease}
 .clientes-marquee-item:hover{transform:translateY(-2px)}
 .clientes-marquee-item img{max-width:100%;max-height:100%;object-fit:contain}
 @keyframes clientes-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
