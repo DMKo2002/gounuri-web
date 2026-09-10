@@ -49,10 +49,11 @@ const CLIENTES: { nombre: string; logo: string | null; url: string }[] = [
   {
     nombre: 'My Queen Trend',
     logo: 'https://xvhqiwypejurjdqioyuq.supabase.co/storage/v1/object/public/store-assets/dfc238e6-73a5-4e42-94e9-c16937a078ee/logo.jpg',
-    // myqueentrend.com tiene un problema de DNS sin resolver del lado de
-    // Hostinger (no es un tema de "todavia no lo activamos" como los de
-    // arriba) -- mientras tanto se linkea al fallback que si funciona.
-    url: 'https://my-queen-trend.gounuri.com',
+    // 2026-09-10, a pedido de ARam: linkear directo a myqueentrend.com
+    // (antes al fallback my-queen-trend.gounuri.com). Ese dominio tuvo un
+    // problema de DNS sin resolver del lado de Hostinger -- si el link no
+    // anda, revisar si ya se resolvio o volver al fallback mientras tanto.
+    url: 'https://myqueentrend.com/',
   },
   {
     nombre: 'Iruda',
@@ -69,7 +70,7 @@ export default function ClientesShowcase() {
   return (
     <section className="border-t border-zinc-200 bg-white overflow-hidden">
       <div className="mx-auto max-w-6xl px-6 pt-16">
-        <h2 className="text-center text-2xl font-bold text-zinc-900 sm:text-3xl">
+        <h2 className="text-center text-[18px] font-bold text-zinc-900 sm:text-[22.5px]">
           Nuestros clientes
         </h2>
       </div>
