@@ -20,9 +20,14 @@ function formatFecha(iso: string): string {
 
 export default function BlogIndexPage() {
   return (
-    <main>
+    <main className="blog-index-page">
       <Navbar />
       <section className="blog-index">
+        <p className="blog-index-legal">
+          Gounuri proporciona una plataforma tecnológica de software como servicio
+          (SaaS) destinada a facilitar la creación, administración y operación de
+          tiendas de comercio electrónico.
+        </p>
         <h1>Blog</h1>
         <p className="blog-index-intro">
           Notas sobre vender online en Argentina — costos reales, comisiones,
