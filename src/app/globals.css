@@ -222,13 +222,7 @@
 .clientes-marquee:hover .clientes-marquee-track,.clientes-marquee:focus-within .clientes-marquee-track{animation-play-state:paused}
 .clientes-marquee-item{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:168px;height:76px;padding:14px 20px;transition:transform .2s ease}
 .clientes-marquee-item:hover{transform:translateY(-2px)}
-/* Alto fijo para el logo (no max-height:100% del contenedor): asi todos
-   los logos pesan visualmente igual sin importar las dimensiones del
-   archivo original -- si no, un logo ancho/alto de mas "tinta" (ej.
-   Mykonos) se ve mucho mas grande que uno chico o que el placeholder de
-   texto (ej. Iruda), y da la sensacion de trato desigual entre clientes. */
-.clientes-marquee-item img{height:38px;width:auto;max-width:140px;object-fit:contain}
-@media (max-width:900px){.clientes-marquee-item img{height:32px}}
+.clientes-marquee-item img{max-width:100%;max-height:100%;object-fit:contain}
 @keyframes clientes-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion: reduce){.clientes-marquee-track{animation:none}}
 @media (max-width:900px){.clientes-marquee-item{width:132px;height:64px}}
