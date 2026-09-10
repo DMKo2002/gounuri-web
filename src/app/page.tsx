@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/Hero'
-import TrustBadges from '@/components/TrustBadges'
+import ClientesShowcase from '@/components/ClientesShowcase'
 import Features from '@/components/Features'
 import ComoFunciona from '@/components/ComoFunciona'
 import Pricing from '@/components/Pricing'
@@ -49,7 +49,7 @@ export default function Home() {
     <main>
       <Navbar />
       <Hero />
-      <TrustBadges />
+      <ClientesShowcase />
       <TiendaAtelier />
       <TiendaMono />
       <Features />
