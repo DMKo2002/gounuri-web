@@ -27,10 +27,10 @@ const LINKS = [
   { href: '/#features', label: 'FEATURES' },
   { href: '/#como-funciona', label: 'COMO FUNCIONA' },
   { href: '/templates', label: 'TEMPLATE' },
-  { href: '/blog', label: 'BLOG' },
   { href: '/#planes', label: 'PLANES' },
   { href: '/#contacto', label: 'CONTACTO' },
   { href: '/migracion', label: 'MIGRACION' },
+  { href: '/blog', label: 'BLOG' },
 ]
 
 export default function MobileNavToggle() {
