@@ -67,12 +67,9 @@ export default function ClientesShowcase() {
   const loop = [...CLIENTES, ...CLIENTES]
 
   return (
-    <section className="border-t border-zinc-800 bg-zinc-900 overflow-hidden">
+    <section className="border-t border-zinc-200 bg-white overflow-hidden">
       <div className="mx-auto max-w-6xl px-6 pt-16">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-          Ya confían en Gounuri
-        </p>
-        <h2 className="mt-2 text-center text-2xl font-bold text-white sm:text-3xl">
+        <h2 className="text-center text-2xl font-bold text-zinc-900 sm:text-3xl">
           Nuestros clientes
         </h2>
       </div>
