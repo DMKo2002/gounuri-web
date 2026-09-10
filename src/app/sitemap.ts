@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { BLOG_POSTS } from '@/lib/blog'
 
 // Sitemap dinamico de gounuri.com (la landing/marketing, no las tiendas de
 // los tenants). Google/Search Console lo lee en /sitemap.xml automaticamente
@@ -15,6 +16,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: `${base}/templates`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    ...BLOG_POSTS.map(post => ({
+      url: `${base}/blog/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: 'yearly' as const,
+      priority: 0.6,
+    })),
     { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/migracion`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${base}/migracion/formulario`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },

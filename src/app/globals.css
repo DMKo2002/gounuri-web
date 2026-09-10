@@ -353,6 +353,32 @@
 }
 .faq-cta a:hover{opacity:.9}
 
+/* ───────────────── BLOG (2026-09-10) ───────────────── */
+.blog-eyebrow{
+  display:inline-block;background:#FDE9E7;color:var(--red);font-size:12px;font-weight:800;
+  letter-spacing:.08em;padding:6px 14px;border-radius:999px;margin-bottom:22px;
+}
+.blog-page{max-width:760px;margin:0 auto;padding:64px 24px 96px;background:var(--white);color:var(--black)}
+.blog-page h1{font-size:clamp(26px,4vw,44px);font-weight:800;letter-spacing:-.015em;line-height:1.15;margin-bottom:16px}
+.blog-meta{font-size:13px;color:#878787;letter-spacing:.02em;margin-bottom:48px}
+.blog-page h2{font-size:22px;font-weight:800;letter-spacing:-.01em;margin:40px 0 14px}
+.blog-page p{font-size:16px;line-height:1.75;color:#2a2a2a;margin-bottom:18px}
+.blog-callout{background:var(--gray-panel);border-radius:12px;padding:24px 28px;margin:24px 0}
+.blog-callout p{margin:0;font-size:16px}
+.blog-callout p:first-child{font-weight:700;color:var(--black);margin-bottom:8px}
+.blog-callout p:last-child{color:#5c5c5c;font-size:14px}
+.blog-closing{font-size:17px;font-weight:600;color:var(--black)}
+
+.blog-index{max-width:1000px;margin:0 auto;padding:64px 24px 96px}
+.blog-index h1{font-size:clamp(26px,4vw,44px);font-weight:800;letter-spacing:-.015em;margin-bottom:12px}
+.blog-index-intro{font-size:15px;line-height:1.6;color:#5c5c5c;margin-bottom:48px;max-width:600px}
+.blog-card{display:block;padding:28px 0;border-top:1px solid #ececec;text-decoration:none}
+.blog-card:first-of-type{border-top:none}
+.blog-card-title{font-size:20px;font-weight:700;color:var(--black);margin-bottom:8px;transition:color .2s}
+.blog-card:hover .blog-card-title{color:var(--red)}
+.blog-card-excerpt{font-size:14.5px;line-height:1.7;color:#5c5c5c;margin-bottom:10px}
+.blog-card-meta{font-size:12.5px;color:#878787;letter-spacing:.02em}
+
 /* ───────────────── FOOTER ───────────────── */
 .site-footer{background:var(--white);color:var(--black);border-top:1px solid #ececec}
 .footer-inner{
