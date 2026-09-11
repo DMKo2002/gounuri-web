@@ -42,7 +42,7 @@ export default function RootLayout({
               '@type': 'Organization',
               name: 'Gounuri',
               url: 'https://www.gounuri.com',
-              logo: 'https://www.gounuri.com/img/onboarding/g-logo-slogan.svg',
+              logo: 'https://www.gounuri.com/img/onboarding/gounuri-logo-slogan.svg',
               description:
                 'Plataforma para crear tiendas online en Argentina, para cualquier rubro: catalogo, pedidos, pagos y diseno profesional.',
               areaServed: 'AR',

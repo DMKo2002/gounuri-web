@@ -12,12 +12,12 @@ export function TiendaAxis() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/axis/photo-a.jpg" alt="Demo Axis - New Arrivals" />
-            <img className="state-b" src="/img/axis/photo-b.jpg" alt="Demo Axis - Timeless Design" />
+            <img className="state-a" src="/img/axis/gounuri-axis-photo-a.jpg" alt="Demo Axis - New Arrivals" />
+            <img className="state-b" src="/img/axis/gounuri-axis-photo-b.jpg" alt="Demo Axis - Timeless Design" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/axis/mask.png" alt="" />
+            <img src="/img/axis/gounuri-axis-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -44,8 +44,8 @@ export function TiendaAxis() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/axis/laptop-a.jpg" alt="Demo tienda Axis - vista 2" />
-        <img className="state-b" src="/img/axis/laptop-b.jpg" alt="Demo tienda Axis - vista 3" />
+        <img className="state-a" src="/img/axis/gounuri-axis-laptop-a.jpg" alt="Demo tienda Axis - vista 2" />
+        <img className="state-b" src="/img/axis/gounuri-axis-laptop-b.jpg" alt="Demo tienda Axis - vista 3" />
         <div className="shop-laptop-scrim" />
       </div>
 

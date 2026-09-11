@@ -12,12 +12,12 @@ export function TiendaMono() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/mono/photo-a.jpg" alt="Coleccion Mono" />
-            <img className="state-b" src="/img/mono/photo-b.jpg" alt="Coleccion Mono - moda" />
+            <img className="state-a" src="/img/mono/gounuri-mono-photo-a.jpg" alt="Coleccion Mono" />
+            <img className="state-b" src="/img/mono/gounuri-mono-photo-b.jpg" alt="Coleccion Mono - moda" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/mono/mask.png" alt="" />
+            <img src="/img/mono/gounuri-mono-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -44,8 +44,8 @@ export function TiendaMono() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/mono/laptop-a.jpg" alt="Demo tienda Mono - pagina de producto" />
-        <img className="state-b" src="/img/mono/laptop-b.jpg" alt="Demo tienda Mono - carrito" />
+        <img className="state-a" src="/img/mono/gounuri-mono-laptop-a.jpg" alt="Demo tienda Mono - pagina de producto" />
+        <img className="state-b" src="/img/mono/gounuri-mono-laptop-b.jpg" alt="Demo tienda Mono - carrito" />
         <div className="shop-laptop-scrim" />
       </div>
 

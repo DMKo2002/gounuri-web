@@ -12,12 +12,12 @@ export function TiendaAtelier() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/atelier/photo-a.jpg" alt="Coleccion Atelier" />
-            <img className="state-b" src="/img/atelier/photo-b.jpg" alt="Coleccion Atelier - moda" />
+            <img className="state-a" src="/img/atelier/gounuri-atelier-photo-a.jpg" alt="Coleccion Atelier" />
+            <img className="state-b" src="/img/atelier/gounuri-atelier-photo-b.jpg" alt="Coleccion Atelier - moda" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/atelier/mask.png" alt="" />
+            <img src="/img/atelier/gounuri-atelier-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -44,8 +44,8 @@ export function TiendaAtelier() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/atelier/laptop-a.jpg" alt="Demo tienda Atelier - pagina de producto" />
-        <img className="state-b" src="/img/atelier/laptop-b.jpg" alt="Demo tienda Atelier - fashion news" />
+        <img className="state-a" src="/img/atelier/gounuri-atelier-laptop-a.jpg" alt="Demo tienda Atelier - pagina de producto" />
+        <img className="state-b" src="/img/atelier/gounuri-atelier-laptop-b.jpg" alt="Demo tienda Atelier - fashion news" />
         <div className="shop-laptop-scrim" />
       </div>
 

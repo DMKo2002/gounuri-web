@@ -48,7 +48,7 @@ function stepFromParam(param: string | null): Step | null {
 // 1A/1B/1C" — misma pantalla, 3 fondos distintos) — bajadas y comprimidas
 // (PNG originales ~2.5-3.5MB c/u → JPG ~85% más liviano) en
 // public/img/onboarding/.
-const ONBOARDING_SLIDES = ['/img/onboarding/onboarding-01.jpg', '/img/onboarding/onboarding-02.jpg', '/img/onboarding/onboarding-03.jpg']
+const ONBOARDING_SLIDES = ['/img/onboarding/gounuri-onboarding-01.jpg', '/img/onboarding/gounuri-onboarding-02.jpg', '/img/onboarding/gounuri-onboarding-03.jpg']
 
 // Roadmap decorativo del panel derecho de los pasos 2+ (diseño Figma
 // "Registracion 2", "Registracion 3", ...) — mismo espíritu que el
@@ -859,7 +859,7 @@ function OnboardingContent() {
                 de alto (validación, error, etc). Agrandado 150% respecto al
                 tamaño anterior. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- asset SVG exportado de Figma tal cual, no una foto a optimizar */}
-            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
+            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
           </div>
 
           {/* Panel de imagen — foto exportada de Figma tal cual, sin filtro ni
@@ -1326,7 +1326,7 @@ function OnboardingContent() {
 
             {/* Logo fijo abajo a la izquierda, igual que en el paso 1. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/img/onboarding/g-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
+            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
           </div>
 
           {/* Panel de foto — misma pareja foto+franja que el paso 1, ancho
@@ -1334,7 +1334,7 @@ function OnboardingContent() {
           <div className="relative hidden lg:block lg:w-[41.1%]">
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url('/img/onboarding/onboarding-05-escalar.jpg')` }}
+              style={{ backgroundImage: `url('/img/onboarding/gounuri-onboarding-05-escalar.jpg')` }}
             />
             <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
               <div className="text-left">

@@ -14,12 +14,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/templates' },
 }
 
-// Busca el screenshot en public/templates/{slug}.jpg|.png (resuelto en build).
-// Para agregar previews: guardar las capturas con esos nombres y redeployar.
+// Busca el screenshot en public/templates/gounuri-template-{slug}.jpg|.png|.webp
+// (resuelto en build). Para agregar previews: guardar las capturas con ese
+// nombre y redeployar. (2026-09-11: nombre de archivo prefijado con
+// "gounuri-" para SEO de imágenes -- antes era {slug}.{ext} a secas.)
 function screenshotDe(slug: string): string | null {
   for (const ext of ['jpg', 'png', 'webp']) {
-    if (fs.existsSync(path.join(process.cwd(), 'public', 'templates', `${slug}.${ext}`))) {
-      return `/templates/${slug}.${ext}`
+    if (fs.existsSync(path.join(process.cwd(), 'public', 'templates', `gounuri-template-${slug}.${ext}`))) {
+      return `/templates/gounuri-template-${slug}.${ext}`
     }
   }
   return null

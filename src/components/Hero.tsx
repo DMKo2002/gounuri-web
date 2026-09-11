@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { REGISTRO_URL, REGISTRO_PAGO_URL } from '@/lib/site'
 
-const SLIDES = ['/img/hero/hero-01.jpg', '/img/hero/hero-02.jpg', '/img/hero/hero-03.jpg', '/img/hero/hero-04.jpg']
+const SLIDES = ['/img/hero/gounuri-hero-01.jpg', '/img/hero/gounuri-hero-02.jpg', '/img/hero/gounuri-hero-03.jpg', '/img/hero/gounuri-hero-04.jpg']
 
 function typeWriter(el: HTMLElement, speed = 32) {
   const text = el.dataset.text || ''

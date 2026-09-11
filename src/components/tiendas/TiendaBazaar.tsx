@@ -12,12 +12,12 @@ export function TiendaBazaar() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/bazaar/photo-a.jpg" alt="Coleccion Bazaar - Shin Ramyun" />
-            <img className="state-b" src="/img/bazaar/photo-b.jpg" alt="Coleccion Bazaar - bibimbap" />
+            <img className="state-a" src="/img/bazaar/gounuri-bazaar-photo-a.jpg" alt="Coleccion Bazaar - Shin Ramyun" />
+            <img className="state-b" src="/img/bazaar/gounuri-bazaar-photo-b.jpg" alt="Coleccion Bazaar - bibimbap" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/bazaar/mask.png" alt="" />
+            <img src="/img/bazaar/gounuri-bazaar-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -47,8 +47,8 @@ export function TiendaBazaar() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/bazaar/laptop-a.jpg" alt="Demo tienda Bazaar - desktop" />
-        <img className="state-b" src="/img/bazaar/laptop-b.jpg" alt="Demo tienda Bazaar - tablet y celular" />
+        <img className="state-a" src="/img/bazaar/gounuri-bazaar-laptop-a.jpg" alt="Demo tienda Bazaar - desktop" />
+        <img className="state-b" src="/img/bazaar/gounuri-bazaar-laptop-b.jpg" alt="Demo tienda Bazaar - tablet y celular" />
         <div className="shop-laptop-scrim" />
       </div>
 

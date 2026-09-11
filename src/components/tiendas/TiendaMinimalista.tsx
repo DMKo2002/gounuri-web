@@ -12,12 +12,12 @@ export function TiendaMinimalista() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/minimalista/photo-a.jpg" alt="Minimalista - moda hombre" />
-            <img className="state-b" src="/img/minimalista/photo-b.jpg" alt="Minimalista - moda hombre AW2026" />
+            <img className="state-a" src="/img/minimalista/gounuri-minimalista-photo-a.jpg" alt="Minimalista - moda hombre" />
+            <img className="state-b" src="/img/minimalista/gounuri-minimalista-photo-b.jpg" alt="Minimalista - moda hombre AW2026" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/minimalista/mask.png" alt="" />
+            <img src="/img/minimalista/gounuri-minimalista-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -44,8 +44,8 @@ export function TiendaMinimalista() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/minimalista/laptop-a.jpg" alt="Demo tienda Minimalista - home AW2026" />
-        <img className="state-b" src="/img/minimalista/laptop-b.jpg" alt="Demo tienda Minimalista - catalogo CONDOR'S" />
+        <img className="state-a" src="/img/minimalista/gounuri-minimalista-laptop-a.jpg" alt="Demo tienda Minimalista - home AW2026" />
+        <img className="state-b" src="/img/minimalista/gounuri-minimalista-laptop-b.jpg" alt="Demo tienda Minimalista - catalogo CONDOR'S" />
         <div className="shop-laptop-scrim" />
       </div>
 

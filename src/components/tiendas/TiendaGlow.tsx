@@ -12,12 +12,12 @@ export function TiendaGlow() {
       <div className="shop-graphic-outer">
         <div className="shop-graphic">
           <div className="shop-photo">
-            <img className="state-a" src="/img/glow/photo-a.jpg" alt="Beauty of Joseon - skincare coreano" />
-            <img className="state-b" src="/img/glow/photo-b.jpg" alt="TIRTIR - skincare coreano" />
+            <img className="state-a" src="/img/glow/gounuri-glow-photo-a.jpg" alt="Beauty of Joseon - skincare coreano" />
+            <img className="state-b" src="/img/glow/gounuri-glow-photo-b.jpg" alt="TIRTIR - skincare coreano" />
           </div>
 
           <div className="shop-mask">
-            <img src="/img/glow/mask.png" alt="" />
+            <img src="/img/glow/gounuri-glow-mask.png" alt="" />
           </div>
 
           <div className="shop-wordmark">
@@ -44,18 +44,18 @@ export function TiendaGlow() {
       </div>
 
       <div className="shop-laptop">
-        <img className="state-a" src="/img/glow/laptop-a.jpg" alt="Demo tienda Glow - home Beauty of Joseon" />
-        <img className="state-b" src="/img/glow/laptop-b.jpg" alt="Demo tienda Glow - productos destacados" />
+        <img className="state-a" src="/img/glow/gounuri-glow-laptop-a.jpg" alt="Demo tienda Glow - home Beauty of Joseon" />
+        <img className="state-b" src="/img/glow/gounuri-glow-laptop-b.jpg" alt="Demo tienda Glow - productos destacados" />
         <div className="shop-laptop-scrim" />
       </div>
 
       <div className="shop-grid" />
 
       <div className="shop-glow-avatar shop-glow-avatar-1">
-        <img className="state-b" src="/img/glow/avatar-1.png" alt="" />
+        <img className="state-b" src="/img/glow/gounuri-glow-avatar-1.png" alt="" />
       </div>
       <div className="shop-glow-avatar shop-glow-avatar-2">
-        <img className="state-b" src="/img/glow/avatar-2.png" alt="" />
+        <img className="state-b" src="/img/glow/gounuri-glow-avatar-2.png" alt="" />
       </div>
 
       <ShopCaptionsGeneric />
