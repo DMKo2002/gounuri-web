@@ -412,6 +412,7 @@ function OnboardingContent() {
   // dice al paso "Escalá con tus Ventas" que tiene que terminar en
   // plan/pago en vez de crear la tienda gratis de una.
   const [intentPago, setIntentPago] = useState(false)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
 
   // Métodos de pago habilitados desde superadmin (2026-08-22) — ver paso
   // "Pago" más abajo: si Mercado Pago está apagado, se ofrece transferencia
@@ -479,6 +480,13 @@ function OnboardingContent() {
     const monthsCookie = Number(cookies.find(c => c.startsWith('gounuri_months='))?.split('=')[1])
     if (isPlanId(planCookie)) setPlan(planCookie)
     if (isBillingTerm(monthsCookie)) setBillingTerm(monthsCookie)
+    // gounuri_ref (2026-09, programa de referidos) — seteada por /registro
+    // al enviar el form, con el código que vino del link ?ref= o el que se
+    // tipeó a mano. Solo se usa en el camino de prueba gratis (createTenant
+    // más abajo) — el camino de "pagar directo sin trial" (handlePagar) no
+    // lo soporta todavía, ver nota en panel-admin/billing/webhook/route.ts.
+    const refCookie = cookies.find(c => c.startsWith('gounuri_ref='))?.split('=')[1]
+    if (refCookie) setReferralCode(decodeURIComponent(refCookie))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -605,6 +613,8 @@ function OnboardingContent() {
         mpEnabled,
         transferEnabled,
         cashEnabled,
+        // Programa de referidos (2026-09) — ver gounuri_ref más arriba.
+        referralCode,
       }),
     })
     const json = await res.json().catch(() => ({}))

@@ -35,6 +35,11 @@ export async function POST(req: Request) {
     // quedaban hardcodeados en `true` sin que el dueño hubiera elegido nada
     // — ahora reflejan lo que tildó de verdad en ese paso.
     mpEnabled, transferEnabled, cashEnabled,
+    // Programa de referidos (2026-09) — código que vino de gounuri.com/registro
+    // (?ref= o tipeado a mano), guardado en gounuri_ref y leído en
+    // onboarding/page.tsx (createTenant). Se resuelve más abajo, después de
+    // crear el tenant, a un tenants.referred_by real.
+    referralCode,
   } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 })
 
@@ -83,6 +88,21 @@ export async function POST(req: Request) {
 
   const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 86_400_000).toISOString()
 
+  // Código de invitación (2026-09, programa de referidos) — best-effort: un
+  // código inválido/vencido/typeado mal simplemente no vincula nada, nunca
+  // bloquea la creación de la tienda. No se valida que sea "otro" tenant
+  // distinto del que se está creando a propósito -- no puede autoreferenciarse
+  // porque este insert es justo el que le da origen a su propio id.
+  let referredByTenantId: string | null = null
+  if (typeof referralCode === 'string' && referralCode.trim()) {
+    const { data: referrerRows } = await service
+      .from('tenants')
+      .select('id')
+      .eq('referral_code', referralCode.trim().toUpperCase())
+      .limit(1)
+    referredByTenantId = referrerRows?.[0]?.id ?? null
+  }
+
   const { data: tenant, error: tenantError } = await service
     .from('tenants')
     .insert({
@@ -94,6 +114,7 @@ export async function POST(req: Request) {
       plan_status: 'trial',
       trial_ends_at: trialEndsAt,
       status: 'active',
+      referred_by: referredByTenantId,
     })
     .select()
     .single()

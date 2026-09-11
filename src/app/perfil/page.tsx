@@ -6,6 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { isSuperAdmin } from '@/lib/superadmin'
 import { SignOutButton, BajaButton } from './PerfilActions'
 import PanelHandoffLink from '@/components/PanelHandoffLink'
+import ReferidosCard from '@/components/ReferidosCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -97,6 +98,9 @@ export default async function PerfilPage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-6 py-10">
+        {/* Pedido de David: "lo primero que se vea" en Mi Cuenta. */}
+        <ReferidosCard />
+
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{tenant.name}</h1>
         <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
 

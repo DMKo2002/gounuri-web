@@ -126,8 +126,27 @@ function RegistroForm() {
     if (monthsHint) document.cookie = `gounuri_months=${monthsHint}; path=/; max-age=3600; samesite=lax`
   }, [intentPago, planHint, monthsHint])
 
+  // Código de invitación (2026-09, programa de referidos): si llega por
+  // ?ref= (link que comparte quien invita, ver ReferidosCard.tsx), se
+  // precarga el campo y se resuelve el nombre de la tienda para mostrarlo
+  // en un banner de confirmación (endpoint público, solo devuelve
+  // valid+nombre, ver /api/referidos/validar). El código elegido (venga del
+  // link o tipeado a mano) se guarda en cookie recién al enviar el form —
+  // ver handleSubmit más abajo — porque /api/create-tenant recién se llama
+  // mucho después (tras confirmar el mail + completar el onboarding), y un
+  // query param no sobrevive eso.
+  const refParam = searchParams.get('ref')
+  const [invitadoPor, setInvitadoPor] = useState<string | null>(null)
+  useEffect(() => {
+    if (!refParam) return
+    fetch(`/api/referidos/validar?code=${encodeURIComponent(refParam)}`)
+      .then(res => res.json())
+      .then(json => { if (json.valid) setInvitadoPor(json.tiendaName) })
+      .catch(() => {})
+  }, [refParam])
+
   const [form, setForm] = useState({
-    email: '', password: '', confirmar: '',
+    email: '', password: '', confirmar: '', codigoInvitacion: refParam ?? '',
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmar, setShowConfirmar] = useState(false)
@@ -176,6 +195,10 @@ function RegistroForm() {
     }
 
     setLoading(true)
+    const codigo = form.codigoInvitacion.trim()
+    if (codigo) {
+      document.cookie = `gounuri_ref=${encodeURIComponent(codigo.toUpperCase())}; path=/; max-age=2592000; samesite=lax`
+    }
     try {
       const res = await fetch('/api/auth/registro', {
         method: 'POST',
@@ -302,6 +325,12 @@ function RegistroForm() {
               : `${TRIAL_DAYS} días gratis, sin tarjeta. En 2 minutos tenés tu tienda online.`}
           </p>
 
+          {invitadoPor && (
+            <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              🎉 <strong>{invitadoPor}</strong> te invitó a Gounuri — vas a tener 20% off tus primeros 2 meses.
+            </div>
+          )}
+
           {error && (
             <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           )}
@@ -368,6 +397,14 @@ function RegistroForm() {
               {showConfirmar ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
+
+          <label className="mt-4 block text-xs font-medium text-zinc-700">¿Tenés un código de invitación? (opcional)</label>
+          <input
+            type="text" value={form.codigoInvitacion}
+            onChange={e => set('codigoInvitacion', e.target.value.toUpperCase())}
+            placeholder="Ej: GN4X2K"
+            className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase focus:border-zinc-900 focus:outline-none"
+          />
 
           <div className="mt-5 flex justify-center">
             <Turnstile
