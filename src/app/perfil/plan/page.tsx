@@ -59,7 +59,7 @@ export default async function PlanPage() {
 
   const { data: _tenants } = await service
     .from('tenants')
-    .select('name, plan, plan_status, status, billing_term, next_billing_date, mp_preapproval_id, billing_paused_by_user, legacy_manual_billing')
+    .select('name, plan, plan_status, status, billing_term, next_billing_date, mp_preapproval_id, billing_paused_by_user, legacy_manual_billing, referred_by, referido_descuento_hasta')
     .eq('id', tenantId)
     .limit(1)
   const tenant = _tenants?.[0]
@@ -72,6 +72,9 @@ export default async function PlanPage() {
   // aparecer deshabilitado como si ya estuviera pago.
   const trialing = tenant.plan_status === 'trial' || tenant.status === 'suspended'
   const currentPlan = tenant.plan ?? 'standard'
+  // Mismo criterio que aplicaDescuentoReferido en api/billing/subscribe/route.ts
+  // (solo avisa -- la condición real la vuelve a chequear el backend al cobrar).
+  const elegibleDescuentoReferido = Boolean(tenant.referred_by) && !tenant.referido_descuento_hasta
 
   const paymentSettings = await getPlatformPaymentSettings(service)
   // 2026-08-29, pedido de ARam: precios editables desde /superadmin/planes
@@ -129,6 +132,7 @@ export default async function PlanPage() {
           billingPausedByUser={tenant.billing_paused_by_user ?? false}
           legacyManualBilling={tenant.legacy_manual_billing ?? false}
           paymentHistory={paymentHistory}
+          elegibleDescuentoReferido={elegibleDescuentoReferido}
         />
       </div>
     </main>

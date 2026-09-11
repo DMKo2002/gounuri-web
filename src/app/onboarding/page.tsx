@@ -170,7 +170,10 @@ function RoadmapPanel({
 // franja, solo cambia el color del bloque inferior).
 
 // ── Tarjeta de template — misma captura y textos que la página /templates
-//    (public/templates/{slug}.webp + TEMPLATES de lib/templates.ts), en vez
+//    (public/templates/gounuri-template-{slug}.webp + TEMPLATES de
+//    lib/templates.ts -- nombre de archivo actualizado 2026-09-11 junto con
+//    /templates/page.tsx, ver comentario de screenshotDe() ahí; este archivo
+//    había quedado con el nombre viejo, rompiendo las previews acá, en vez
 //    de reconstruir el mockup plano exportado de Figma: ese asset es solo
 //    una captura de referencia de esa página, no contenido para renderizar
 //    tal cual. Se le agrega el botón "Seleccionar" que no está en /templates
@@ -211,7 +214,7 @@ function TemplateCard({
             la página y vuelve (transition-[object-position]). */}
         {/* eslint-disable-next-line @next/next/no-img-element -- captura real, no asset vectorial */}
         <img
-          src={`/templates/${slug}.webp`}
+          src={`/templates/gounuri-template-${slug}.webp`}
           alt={`Preview del template ${nombre}`}
           className="aspect-[4/3] w-full border-b border-zinc-100 object-cover object-top transition-[object-position] duration-[4000ms] ease-in-out group-hover:object-bottom"
         />

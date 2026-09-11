@@ -148,6 +148,23 @@ function RegistroForm() {
   const [form, setForm] = useState({
     email: '', password: '', confirmar: '', codigoInvitacion: refParam ?? '',
   })
+
+  // 2026-09-11, fix (bug reportado por David en QA): esto ANTES se guardaba
+  // recién en handleSubmit, que solo corre para el alta con mail+contraseña
+  // -- quien se registra por "Continuar con Google" (OAuthButtons.tsx) nunca
+  // pasa por handleSubmit, así que la cookie nunca se guardaba y el
+  // referido se perdía (referred_by quedaba null). Mismo problema que ya
+  // resolvieron gounuri_intent/gounuri_plan/gounuri_months arriba -- se
+  // guarda apenas se conoce el código (viene del link o se tipea a mano),
+  // no al enviar el form, para cubrir las dos formas de crear cuenta.
+  useEffect(() => {
+    const codigo = form.codigoInvitacion.trim()
+    if (codigo) {
+      document.cookie = `gounuri_ref=${encodeURIComponent(codigo.toUpperCase())}; path=/; max-age=2592000; samesite=lax`
+    } else {
+      document.cookie = 'gounuri_ref=; path=/; max-age=0; samesite=lax'
+    }
+  }, [form.codigoInvitacion])
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmar, setShowConfirmar] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
@@ -195,10 +212,8 @@ function RegistroForm() {
     }
 
     setLoading(true)
-    const codigo = form.codigoInvitacion.trim()
-    if (codigo) {
-      document.cookie = `gounuri_ref=${encodeURIComponent(codigo.toUpperCase())}; path=/; max-age=2592000; samesite=lax`
-    }
+    // La cookie gounuri_ref ya se guarda en el useEffect de arriba apenas
+    // se conoce el código -- acá no hace falta repetirlo.
     try {
       const res = await fetch('/api/auth/registro', {
         method: 'POST',

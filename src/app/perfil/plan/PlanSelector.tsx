@@ -46,6 +46,7 @@ export default function PlanSelector({
   legacyManualBilling,
   paymentHistory,
   noTenantYet = false,
+  elegibleDescuentoReferido = false,
 }: {
   currentPlan: string | null
   trialing: boolean
@@ -62,6 +63,12 @@ export default function PlanSelector({
   billingPausedByUser: boolean
   legacyManualBilling: boolean
   paymentHistory: { id: string; amount: number; status: string; created_at: string; mpPaymentId: string | null; mpPreapprovalId: string | null }[]
+  // 2026-09-11 (bug reportado por David en QA: "no se ve el 20% en ningún
+  // lado"): true si el tenant llegó por invitación y todavía no usó su
+  // descuento (mismo criterio que aplicaDescuentoReferido en
+  // api/billing/subscribe/route.ts). Falso en noTenantYet -- sin tenant no
+  // hay referred_by todavía (ver comentario de scope en /api/create-tenant).
+  elegibleDescuentoReferido?: boolean
   // Logueado pero sin tenant todavía (2026-08-26, pedido de ARam): viene de
   // "Crear mi tienda" en la landing, ver /app/perfil/plan/page.tsx. En este
   // modo "Pagar con Mercado Pago" no pasa por /api/billing/subscribe (que
@@ -153,6 +160,12 @@ export default function PlanSelector({
       {/* Titulo general (2026-08-26, pedido de ARam) -- sin breadcrumb ni
           bajada, esta pantalla ahora es solo el selector de planes. */}
       <h2 className="text-2xl font-bold tracking-tight text-zinc-900">PLANES</h2>
+
+      {elegibleDescuentoReferido && (
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          🎁 Llegaste por invitación: tenés <strong>20% off tus primeros 2 meses</strong> pagando mes a mes (plazo Mensual). No se combina con los descuentos de Semestral/Anual.
+        </div>
+      )}
 
       <div className="mt-10 flex justify-center">
         {/* SVG de descuento inline (misma geometría del archivo original) para poder
