@@ -9,8 +9,8 @@ export default function Footer() {
             <img
               src="/img/gounuri-logo.png"
               alt="gounuri.com"
-              width={139}
-              height={133}
+              width={111}
+              height={106}
             />
           </div>
           <div className="footer-social">
