@@ -48,6 +48,7 @@ export default function PlanSelector({
   noTenantYet = false,
   elegibleDescuentoReferido = false,
   tieneReferido = false,
+  referidoDescuentoHasta = null,
 }: {
   currentPlan: string | null
   trialing: boolean
@@ -74,6 +75,10 @@ export default function PlanSelector({
   // false (y hay tenant, ver noTenantYet), se ofrece cargarlo acá antes de
   // pagar (ver /api/referidos/aplicar-codigo).
   tieneReferido?: boolean
+  // 2026-09-13, pedido de David en QA ("después de usar el 20% off de
+  // invitado, ¿no tendría que seguir viéndose? desaparece directamente el
+  // mensaje") -- ver mismo comentario en Panel Admin/SuscripcionSelector.tsx.
+  referidoDescuentoHasta?: string | null
   // Logueado pero sin tenant todavía (2026-08-26, pedido de ARam): viene de
   // "Crear mi tienda" en la landing, ver /app/perfil/plan/page.tsx. En este
   // modo "Pagar con Mercado Pago" no pasa por /api/billing/subscribe (que
@@ -202,6 +207,14 @@ export default function PlanSelector({
       {elegibleDescuentoReferido && (
         <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           🎁 Llegaste por invitación: tenés <strong>20% off tus primeros 2 meses en el plan Business</strong>, pagando mes a mes (plazo Mensual) — se aplica solo, no hace falta hacer nada más. No aplica a Mini ni Premium, y no se combina con los descuentos de Semestral/Anual.
+        </div>
+      )}
+
+      {/* 2026-09-13, pedido de David en QA: ver mismo comentario en Panel
+          Admin/SuscripcionSelector.tsx. */}
+      {!elegibleDescuentoReferido && referidoDescuentoHasta && new Date(referidoDescuentoHasta).getTime() > Date.now() && (
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          ✅ Tu 20% off de bienvenida por invitación sigue vigente hasta el <strong>{new Date(referidoDescuentoHasta).toLocaleDateString('es-AR')}</strong> — ya está aplicado a tu suscripción, no hace falta hacer nada más.
         </div>
       )}
 

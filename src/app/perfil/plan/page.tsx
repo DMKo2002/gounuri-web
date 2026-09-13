@@ -76,6 +76,11 @@ export default async function PlanPage() {
   // (solo avisa -- la condición real la vuelve a chequear el backend al cobrar).
   const elegibleDescuentoReferido = Boolean(tenant.referred_by) && !tenant.referido_descuento_hasta
   const tieneReferido = Boolean(tenant.referred_by)
+  // 2026-09-13, pedido de David en QA ("después de usar el 20% off de
+  // invitado, ¿no tendría que seguir viéndose? desaparece directamente el
+  // mensaje") -- ver mismo comentario en Panel Admin
+  // dashboard/facturacion/suscripcion/page.tsx.
+  const referidoDescuentoHasta = tenant.referido_descuento_hasta ?? null
 
   const paymentSettings = await getPlatformPaymentSettings(service)
   // 2026-08-29, pedido de ARam: precios editables desde /superadmin/planes
@@ -135,6 +140,7 @@ export default async function PlanPage() {
           paymentHistory={paymentHistory}
           elegibleDescuentoReferido={elegibleDescuentoReferido}
           tieneReferido={tieneReferido}
+          referidoDescuentoHasta={referidoDescuentoHasta}
         />
       </div>
     </main>
