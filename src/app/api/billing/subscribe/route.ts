@@ -15,12 +15,6 @@ import { getPlatformPaymentSettings } from '@/lib/platformBilling'
 import { isPlanId, isBillingTerm } from '@/lib/plans'
 import { PLACEHOLDER_TENANT_NAME } from '@/lib/site'
 
-// now + N meses de calendario -- mismo criterio que Panel Admin.
-function addMonths(date: Date, months: number): Date {
-  const d = new Date(date)
-  d.setMonth(d.getMonth() + months)
-  return d
-}
 
 // Descuento por referido (2026-09-11, bug reportado por David en QA: "el
 // descuento se hace únicamente por Mercado Pago desde Panel Admin, no desde
@@ -29,7 +23,6 @@ function addMonths(date: Date, months: number): Date {
 // principio. Mismo criterio exacto que panel-admin/src/app/api/billing/subscribe/route.ts:
 // 20% off 2 meses, SOLO plazo mensual, SOLO plan Business (pedido de David).
 const REFERIDO_DESCUENTO_PCT = 20
-const REFERIDO_DESCUENTO_MESES = 2
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -91,11 +84,14 @@ export async function POST(req: Request) {
       months,
       discountPct: aplicaDescuentoReferido ? REFERIDO_DESCUENTO_PCT : undefined,
     })
-    // Guardar el id ya mismo — el webhook confirma la activación después
-    const now = new Date()
+    // Guardar el id ya mismo — el webhook confirma la activación después.
+    // 2026-09-13 (bug reportado por David en QA): referido_descuento_hasta
+    // NO se toca acá -- ver el mismo fix en Panel Admin/api/billing/subscribe
+    // y api/billing/webhook (ese webhook, en Panel Admin, procesa TODOS los
+    // preapprovals sin importar en qué sitio se crearon, así que ya cubre
+    // también los que se originan acá).
     await service.from('tenants').update({
       mp_preapproval_id: preapproval.id,
-      ...(aplicaDescuentoReferido ? { referido_descuento_hasta: addMonths(now, REFERIDO_DESCUENTO_MESES).toISOString() } : {}),
     }).eq('id', userRow.tenant_id)
     return NextResponse.json({ init_point: preapproval.init_point, referidoDescuentoAplicado: aplicaDescuentoReferido })
   } catch (e) {
