@@ -79,6 +79,10 @@ export async function createPreapproval(opts: {
   payerEmail: string
   backUrl: string
   months?: BillingTerm
+  // Descuento por referido (2026-09) -- espejo de Panel Admin/src/lib/billing.ts,
+  // ver ese archivo para el razonamiento completo. 0-100, SOLO se aplica
+  // cuando months=1 (nunca se combina con el descuento de 6/12 meses).
+  discountPct?: number
 }): Promise<Preapproval> {
   const plan = PLANES.find(p => p.id === opts.planId)
   if (!plan) throw new Error(`[billing] plan desconocido: ${opts.planId}`)
@@ -95,7 +99,14 @@ export async function createPreapproval(opts: {
   // el hardcodeado de PLANES -- así una nueva alta cobra el precio que
   // superadmin haya dejado cargado hoy. Ver /superadmin/planes.
   const prices = await getPlatformPlanPrices(createServiceClient())
-  const amount = fullPriceForTerm(opts.planId, months, prices)
+  let amount = fullPriceForTerm(opts.planId, months, prices)
+  // Descuento por referido: SOLO afecta el monto de ESTE preapproval, igual
+  // que el ajuste de precio por inflación de arriba -- ver comentario largo
+  // en Panel Admin/src/lib/billing.ts sobre por qué esto no "vuelve solo" al
+  // precio de lista después de los 2 meses.
+  if (opts.discountPct && opts.discountPct > 0 && months === 1) {
+    amount = Math.round(amount * (1 - opts.discountPct / 100))
+  }
   const reason = months === 1
     ? `Gounuri — Plan ${plan.nombre}`
     : `Gounuri — Plan ${plan.nombre} (${months} meses)`

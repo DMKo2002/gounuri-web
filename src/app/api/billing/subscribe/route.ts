@@ -15,6 +15,22 @@ import { getPlatformPaymentSettings } from '@/lib/platformBilling'
 import { isPlanId, isBillingTerm } from '@/lib/plans'
 import { PLACEHOLDER_TENANT_NAME } from '@/lib/site'
 
+// now + N meses de calendario -- mismo criterio que Panel Admin.
+function addMonths(date: Date, months: number): Date {
+  const d = new Date(date)
+  d.setMonth(d.getMonth() + months)
+  return d
+}
+
+// Descuento por referido (2026-09-11, bug reportado por David en QA: "el
+// descuento se hace únicamente por Mercado Pago desde Panel Admin, no desde
+// gounuri.com") -- esta ruta nunca había tenido esta lógica, a pesar de que
+// Panel Admin (donde SÍ vive el checkout de Suscripción) la tiene desde el
+// principio. Mismo criterio exacto que panel-admin/src/app/api/billing/subscribe/route.ts:
+// 20% off 2 meses, SOLO plazo mensual, SOLO plan Business (pedido de David).
+const REFERIDO_DESCUENTO_PCT = 20
+const REFERIDO_DESCUENTO_MESES = 2
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: Request) {
@@ -52,8 +68,18 @@ export async function POST(req: Request) {
   // desde la landing sin tener tienda aún), después de pagar tiene que ir a
   // completar su tienda real en /onboarding en vez de volver a /perfil/plan
   // — ahí no hay nada que "ver" todavía. Pedido 2026-08-18.
-  const { data: _tenantRows } = await service.from('tenants').select('name').eq('id', userRow.tenant_id).limit(1)
-  const isPlaceholderTenant = _tenantRows?.[0]?.name === PLACEHOLDER_TENANT_NAME
+  const { data: _tenantRows } = await service
+    .from('tenants')
+    .select('name, referred_by, referido_descuento_hasta, mp_preapproval_id')
+    .eq('id', userRow.tenant_id).limit(1)
+  const tenantRow = _tenantRows?.[0]
+  const isPlaceholderTenant = tenantRow?.name === PLACEHOLDER_TENANT_NAME
+
+  // Se registró con un código de invitación y todavía no usó el descuento
+  // por referido -- solo vale la primera vez que se suscribe pagando mes a
+  // mes, y SOLO en el plan Business.
+  const aplicaDescuentoReferido = months === 1 && plan === 'standard'
+    && Boolean(tenantRow?.referred_by) && !tenantRow?.referido_descuento_hasta
 
   try {
     const origin = new URL(req.url).origin
@@ -63,10 +89,15 @@ export async function POST(req: Request) {
       payerEmail,
       backUrl: isPlaceholderTenant ? `${origin}/onboarding` : `${origin}/perfil/plan?sub=pendiente`,
       months,
+      discountPct: aplicaDescuentoReferido ? REFERIDO_DESCUENTO_PCT : undefined,
     })
     // Guardar el id ya mismo — el webhook confirma la activación después
-    await service.from('tenants').update({ mp_preapproval_id: preapproval.id }).eq('id', userRow.tenant_id)
-    return NextResponse.json({ init_point: preapproval.init_point })
+    const now = new Date()
+    await service.from('tenants').update({
+      mp_preapproval_id: preapproval.id,
+      ...(aplicaDescuentoReferido ? { referido_descuento_hasta: addMonths(now, REFERIDO_DESCUENTO_MESES).toISOString() } : {}),
+    }).eq('id', userRow.tenant_id)
+    return NextResponse.json({ init_point: preapproval.init_point, referidoDescuentoAplicado: aplicaDescuentoReferido })
   } catch (e) {
     console.error('[billing/subscribe]', e)
     return NextResponse.json({ error: 'No se pudo iniciar la suscripción. Probá de nuevo.' }, { status: 500 })

@@ -16,7 +16,7 @@
 // (Preapproval) sigue intacto acá abajo tal cual estaba.
 
 import { useEffect, useState, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Check, Loader2 } from 'lucide-react'
 import { PLANES } from '@/lib/site'
 import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, type PlanId, type BillingTerm } from '@/lib/plans'
@@ -47,6 +47,7 @@ export default function PlanSelector({
   paymentHistory,
   noTenantYet = false,
   elegibleDescuentoReferido = false,
+  tieneReferido = false,
 }: {
   currentPlan: string | null
   trialing: boolean
@@ -69,6 +70,10 @@ export default function PlanSelector({
   // api/billing/subscribe/route.ts). Falso en noTenantYet -- sin tenant no
   // hay referred_by todavía (ver comentario de scope en /api/create-tenant).
   elegibleDescuentoReferido?: boolean
+  // true si el tenant ya tiene un código de invitación cargado -- si es
+  // false (y hay tenant, ver noTenantYet), se ofrece cargarlo acá antes de
+  // pagar (ver /api/referidos/aplicar-codigo).
+  tieneReferido?: boolean
   // Logueado pero sin tenant todavía (2026-08-26, pedido de ARam): viene de
   // "Crear mi tienda" en la landing, ver /app/perfil/plan/page.tsx. En este
   // modo "Pagar con Mercado Pago" no pasa por /api/billing/subscribe (que
@@ -82,6 +87,39 @@ export default function PlanSelector({
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [payerEmail, setPayerEmail] = useState('')
+  const router = useRouter()
+  // Cupón de invitación cargado acá mismo (2026-09-11, pedido de David en
+  // QA) -- espejo del mismo bloque en Panel Admin/SuscripcionSelector.tsx,
+  // ver ese archivo para el razonamiento. router.refresh() vuelve a pedir
+  // los datos del server component (page.tsx) para reflejar el cambio.
+  const [cuponInput, setCuponInput] = useState('')
+  const [cuponLoading, setCuponLoading] = useState(false)
+  const [cuponError, setCuponError] = useState<string | null>(null)
+  const [cuponAplicado, setCuponAplicado] = useState<string | null>(null)
+  async function aplicarCupon() {
+    const codigo = cuponInput.trim()
+    if (!codigo) return
+    setCuponLoading(true)
+    setCuponError(null)
+    try {
+      const res = await fetch('/api/referidos/aplicar-codigo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codigo }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setCuponError(json.error ?? 'No se pudo aplicar el código.')
+      } else {
+        setCuponAplicado(json.tiendaName ?? null)
+        router.refresh()
+      }
+    } catch {
+      setCuponError('No se pudo aplicar el código. Probá de nuevo.')
+    } finally {
+      setCuponLoading(false)
+    }
+  }
   const [term, setTerm] = useState<BillingTerm>(1)
   const [expandedPlan, setExpandedPlan] = useState<PlanId | null>(null)
   // "Pagar con Mercado Pago" ahora abre un paso propio (email de la cuenta
@@ -163,7 +201,39 @@ export default function PlanSelector({
 
       {elegibleDescuentoReferido && (
         <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          🎁 Llegaste por invitación: tenés <strong>20% off tus primeros 2 meses</strong> pagando mes a mes (plazo Mensual). No se combina con los descuentos de Semestral/Anual.
+          🎁 Llegaste por invitación: tenés <strong>20% off tus primeros 2 meses en el plan Business</strong>, pagando mes a mes (plazo Mensual) — se aplica solo, no hace falta hacer nada más. No aplica a Mini ni Premium, y no se combina con los descuentos de Semestral/Anual.
+        </div>
+      )}
+
+      {!noTenantYet && !tieneReferido && !cuponAplicado && (
+        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+          <p className="text-sm font-medium text-zinc-700">¿Tenés un código de invitación?</p>
+          <p className="mt-0.5 text-xs text-zinc-500">Cargalo antes de pagar y llevate 20% off tus primeros 2 meses en el plan Business (mensual, por Mercado Pago o transferencia).</p>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={cuponInput}
+              onChange={e => { setCuponInput(e.target.value.toUpperCase()); setCuponError(null) }}
+              placeholder="CÓDIGO"
+              maxLength={12}
+              className="w-full max-w-[200px] rounded-lg border border-zinc-300 px-3 py-2 text-sm font-mono uppercase tracking-wide focus:border-zinc-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={aplicarCupon}
+              disabled={cuponLoading || !cuponInput.trim()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-900 px-3.5 py-2 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-900 hover:text-white disabled:opacity-50"
+            >
+              {cuponLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+              Aplicar código
+            </button>
+          </div>
+          {cuponError && <p className="mt-2 text-xs text-red-600">{cuponError}</p>}
+        </div>
+      )}
+      {cuponAplicado && (
+        <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          🎁 Código aplicado — {cuponAplicado} te invitó. Ya tenés <strong>20% off tus primeros 2 meses en el plan Business</strong>, pagando mes a mes.
         </div>
       )}
 
@@ -252,6 +322,10 @@ export default function PlanSelector({
       <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {PLANES.map(card => {
           const esActual = card.id === currentPlan && !trialing
+          // Descuento por referido: SOLO plazo mensual y SOLO plan Business
+          // (2026-09-11, pedido de David) -- espejo del mismo criterio en
+          // Panel Admin/SuscripcionSelector.tsx.
+          const descuentoCard = elegibleDescuentoReferido && term === 1 && card.id === 'standard'
           return (
             <div
               key={card.id}
@@ -307,6 +381,19 @@ export default function PlanSelector({
                       equivale a {formatARS(Math.round(priceForTerm(card.id, term, planPrices) / term))}/mes · Transferencia (-{Math.round(TERM_DISCOUNTS[term] * 100)}%)
                     </p>
                   </div>
+                </div>
+              ) : descuentoCard ? (
+                <div className="mt-6">
+                  <span className="text-base font-medium text-zinc-400 line-through">
+                    {formatARS(planPrices[card.id] ?? card.precioARS)}
+                  </span>
+                  <div>
+                    <span className="text-3xl font-bold tracking-tight text-emerald-700">
+                      {formatARS(Math.round((planPrices[card.id] ?? card.precioARS) * 0.8))}
+                    </span>
+                    <span className="ml-1 text-sm text-zinc-500">/ mes</span>
+                  </div>
+                  <p className="mt-0.5 text-xs font-medium text-emerald-600">20% off tus primeros 2 meses por invitación</p>
                 </div>
               ) : (
                 <div className="mt-6">
@@ -401,7 +488,7 @@ export default function PlanSelector({
                       planId={card.id}
                       planNombre={card.nombre}
                       term={term}
-                      monto={priceForTerm(card.id, term, planPrices)}
+                      monto={descuentoCard ? Math.round(priceForTerm(card.id, term, planPrices) * 0.8) : priceForTerm(card.id, term, planPrices)}
                       accion="pasar mi tienda"
                     />
                   </div>

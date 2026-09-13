@@ -137,13 +137,7 @@ function RegistroForm() {
   // query param no sobrevive eso.
   const refParam = searchParams.get('ref')
   const [invitadoPor, setInvitadoPor] = useState<string | null>(null)
-  useEffect(() => {
-    if (!refParam) return
-    fetch(`/api/referidos/validar?code=${encodeURIComponent(refParam)}`)
-      .then(res => res.json())
-      .then(json => { if (json.valid) setInvitadoPor(json.tiendaName) })
-      .catch(() => {})
-  }, [refParam])
+  const [codigoInvalido, setCodigoInvalido] = useState(false)
 
   const [form, setForm] = useState({
     email: '', password: '', confirmar: '', codigoInvitacion: refParam ?? '',
@@ -164,6 +158,38 @@ function RegistroForm() {
     } else {
       document.cookie = 'gounuri_ref=; path=/; max-age=0; samesite=lax'
     }
+  }, [form.codigoInvitacion])
+
+  // Validación en vivo del código (2026-09-11, pedido de David en QA: probó
+  // con un código inventado -- AAAAAA -- y el registro lo dejó pasar sin
+  // avisar nada; ANTES esto solo validaba refParam, o sea solo si llegaba
+  // por el link, nunca si se tipeaba a mano). No bloquea el registro si no
+  // valida (a propósito -- ver comentario de scope en /api/create-tenant:
+  // un código que no matchea simplemente no queda linkeado, no debe frenar
+  // el alta), pero ahora al menos avisa. Debounce corto para no pegarle a la
+  // API en cada tecla.
+  useEffect(() => {
+    const codigo = form.codigoInvitacion.trim()
+    if (codigo.length < 4) {
+      setInvitadoPor(null)
+      setCodigoInvalido(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      fetch(`/api/referidos/validar?code=${encodeURIComponent(codigo)}`)
+        .then(res => res.json())
+        .then(json => {
+          if (json.valid) {
+            setInvitadoPor(json.tiendaName)
+            setCodigoInvalido(false)
+          } else {
+            setInvitadoPor(null)
+            setCodigoInvalido(true)
+          }
+        })
+        .catch(() => {})
+    }, 400)
+    return () => clearTimeout(timer)
   }, [form.codigoInvitacion])
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmar, setShowConfirmar] = useState(false)
@@ -418,8 +444,16 @@ function RegistroForm() {
             type="text" value={form.codigoInvitacion}
             onChange={e => set('codigoInvitacion', e.target.value.toUpperCase())}
             placeholder="Ej: GN4X2K"
-            className="mt-1.5 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm uppercase focus:border-zinc-900 focus:outline-none"
+            className={`mt-1.5 w-full rounded-lg border px-3 py-2 text-sm uppercase focus:outline-none ${
+              codigoInvalido ? 'border-red-300 focus:border-red-500' : 'border-zinc-300 focus:border-zinc-900'
+            }`}
           />
+          {codigoInvalido && (
+            <p className="mt-1 text-xs text-red-600">Ese código no existe — revisalo, o dejalo vacío si no tenés uno.</p>
+          )}
+          {invitadoPor && !codigoInvalido && (
+            <p className="mt-1 text-xs text-emerald-600">✓ {invitadoPor} te invitó.</p>
+          )}
 
           <div className="mt-5 flex justify-center">
             <Turnstile

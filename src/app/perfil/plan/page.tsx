@@ -75,6 +75,7 @@ export default async function PlanPage() {
   // Mismo criterio que aplicaDescuentoReferido en api/billing/subscribe/route.ts
   // (solo avisa -- la condición real la vuelve a chequear el backend al cobrar).
   const elegibleDescuentoReferido = Boolean(tenant.referred_by) && !tenant.referido_descuento_hasta
+  const tieneReferido = Boolean(tenant.referred_by)
 
   const paymentSettings = await getPlatformPaymentSettings(service)
   // 2026-08-29, pedido de ARam: precios editables desde /superadmin/planes
@@ -133,6 +134,7 @@ export default async function PlanPage() {
           legacyManualBilling={tenant.legacy_manual_billing ?? false}
           paymentHistory={paymentHistory}
           elegibleDescuentoReferido={elegibleDescuentoReferido}
+          tieneReferido={tieneReferido}
         />
       </div>
     </main>
