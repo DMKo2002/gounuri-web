@@ -345,6 +345,8 @@
 .faq-item[open] .faq-icon::after{transform:translateX(-50%) scaleY(0)}
 .faq-item[open] summary{color:var(--red)}
 .faq-item p{font-size:14.5px;line-height:1.7;color:#2a2a2a;margin:0 0 22px}
+.faq-inline-link{color:var(--red);font-weight:600;text-decoration:none}
+.faq-inline-link:hover{text-decoration:underline}
 .faq-cta{margin-top:48px;padding:32px;background:var(--gray-panel);border-radius:12px;text-align:center}
 .faq-cta p{font-size:14px;color:#2a2a2a;margin-bottom:12px}
 .faq-cta a{
@@ -352,6 +354,72 @@
   padding:12px 28px;border-radius:8px;text-decoration:none;transition:opacity .2s;
 }
 .faq-cta a:hover{opacity:.9}
+
+/* ───────────────── GUÍA: conectar Instagram/Facebook (2026-09-21) ───────────────── */
+.guide-page{max-width:900px;margin:0 auto;padding:64px 24px 96px;background:var(--white);color:var(--black)}
+.guide-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;background:#FDE9E7;color:var(--red);
+  font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 14px;border-radius:999px;margin-bottom:16px;
+}
+.guide-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--red)}
+.guide-hero h1{font-size:clamp(24px,3.2vw,36px);font-weight:800;letter-spacing:-.01em;margin:0 0 14px}
+.guide-lede{font-size:15px;line-height:1.7;color:#2a2a2a;max-width:62ch;margin:0}
+.guide-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.guide-meta span{
+  font-size:12.5px;color:#2a2a2a;background:var(--white);border:1px solid #ececec;
+  border-radius:999px;padding:6px 12px;
+}
+.guide-checklist{
+  background:var(--gray-panel);border-radius:12px;padding:22px 24px;margin:32px 0 48px;
+}
+.guide-checklist h2{font-size:14px;font-weight:700;margin:0 0 12px}
+.guide-checklist ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.guide-checklist li{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:#2a2a2a}
+.guide-checklist li svg{flex:none;margin-top:2px;color:var(--red)}
+.guide-checklist li b{color:var(--black);font-weight:600}
+.guide-part{margin-bottom:56px}
+.guide-part-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.guide-part-num{
+  font-size:12.5px;font-weight:700;color:var(--red);background:#FDE9E7;
+  border-radius:8px;padding:2px 8px;
+}
+.guide-part-head h2{font-size:21px;font-weight:800;margin:0}
+.guide-part-sub{color:#6b6b6b;font-size:14px;margin:8px 0 26px}
+.guide-step{display:grid;grid-template-columns:300px 1fr;gap:26px;padding-block:28px;border-top:1px solid #ececec}
+.guide-step:first-of-type{border-top:none;padding-top:0}
+@media (max-width:760px){.guide-step{grid-template-columns:1fr}}
+.guide-step figure{margin:0;border:1px solid #ececec;border-radius:12px;overflow:hidden;background:var(--gray-panel)}
+.guide-step figure a{display:block;position:relative}
+.guide-step img{display:block;width:100%;height:auto}
+.guide-step .guide-zoom-hint{
+  position:absolute;right:8px;bottom:8px;font-size:11px;background:rgba(16,16,16,.72);
+  color:#fff;padding:4px 8px;border-radius:999px;
+}
+.guide-step-num{font-size:12.5px;color:#8f8f8f}
+.guide-step h3{font-size:16px;font-weight:700;margin:6px 0 8px}
+.guide-step p{color:#2a2a2a;font-size:14px;line-height:1.6;margin:0}
+.guide-step p+p{margin-top:8px}
+.guide-step code{font-size:13px;background:var(--gray-panel);padding:1px 6px;border-radius:5px;color:var(--black)}
+.guide-textstep{display:flex;gap:14px;padding-block:18px;border-top:1px solid #ececec}
+.guide-textstep:first-of-type{border-top:none;padding-top:0}
+.guide-textstep .guide-badge{
+  flex:none;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;
+}
+.guide-textstep h3{font-size:15.5px;font-weight:700;margin:0 0 4px}
+.guide-textstep p{color:#2a2a2a;font-size:14px;line-height:1.6;margin:0}
+.guide-faq-intro{font-size:14px;color:#6b6b6b;margin:8px 0 20px}
+.guide-tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;margin-right:8px;vertical-align:middle;
+}
+.guide-tag.gotcha{background:#FDE9E7;color:#B5292B}
+.guide-tag.info{background:var(--gray-panel);color:#2a2a2a}
+.guide-foot{
+  margin-top:56px;padding-top:24px;border-top:1px solid #ececec;color:#8f8f8f;font-size:13px;
+  display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
 
 /* ───────────────── BLOG (2026-09-10) ───────────────── */
 .blog-eyebrow{

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/faq' },
 }
 
-type Faq = { q: string; a: string }
+type Faq = { q: string; a: string; link?: { href: string; label: string } }
 type FaqGroup = { title: string; items: Faq[] }
 
 // 2026-08-24: pedido de David/Aram — hasta ahora el único mail que recibe
@@ -95,6 +95,16 @@ const FAQ_GROUPS: FaqGroup[] = [
     ],
   },
   {
+    title: 'Marketing y redes',
+    items: [
+      {
+        q: '¿Qué es el Meta Pixel y cómo lo conecto a mi tienda?',
+        a: `El Meta Pixel es un código gratuito que registra las visitas y acciones en tu tienda (ver un producto, agregar al carrito, comprar) para que Instagram y Facebook puedan mostrarte a quién ya te conoció. No hace falta pagar publicidad para que sirva — arranca a construir esa audiencia desde el día uno. Para usarlo primero tenés que pasar tu Instagram a cuenta profesional y crear la Página de Facebook de tu tienda; una vez que nos des acceso a esa página, nosotros nos encargamos de crear el Pixel y vos solo pegás el ID que te pasamos en Panel Admin → Meta Pixel.`,
+        link: { href: '/faq/conectar-redes', label: 'Cómo conectar Instagram y Facebook a tu tienda →' },
+      },
+    ],
+  },
+  {
     title: 'Soporte',
     items: [
       {
@@ -129,6 +139,9 @@ export default function FaqPage() {
                   <span className="faq-icon" aria-hidden="true" />
                 </summary>
                 <p>{item.a}</p>
+                {item.link && (
+                  <p><a href={item.link.href} className="faq-inline-link">{item.link.label}</a></p>
+                )}
               </details>
             ))}
           </section>
