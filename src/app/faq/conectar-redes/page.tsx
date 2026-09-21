@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { AccordionItem } from '@/components/Accordion'
 
 export const metadata: Metadata = {
   title: 'Conectá Instagram y Facebook a tu tienda — Gounuri',
@@ -215,32 +216,27 @@ export default function ConectarRedesPage() {
           </div>
           <p className="guide-faq-intro">Meta (la empresa de Instagram y Facebook) a veces tira mensajes raros que no significan que algo esté roto. Estos son los más comunes.</p>
 
-          <details className="faq-item">
-            <summary><span>&quot;Creaste demasiadas páginas recientemente&quot;</span><span className="faq-icon" aria-hidden="true" /></summary>
+          <AccordionItem question={"\"Creaste demasiadas páginas recientemente\""}>
             <p><span className="guide-tag gotcha">Gotcha</span>Es un freno automático de Meta contra el spam, no un error real de tu cuenta.</p>
             <p>Esperá entre 15 y 30 segundos y volvé a intentar. Si persiste, probá con un nombre de página distinto — a veces el problema es reintentar muy rápido con el mismo nombre.</p>
-          </details>
+          </AccordionItem>
 
-          <details className="faq-item">
-            <summary><span>Al iniciar sesión en Instagram desde Business Suite me tira &quot;Sorry, something went wrong&quot;</span><span className="faq-icon" aria-hidden="true" /></summary>
+          <AccordionItem question={"Al iniciar sesión en Instagram desde Business Suite me tira \"Sorry, something went wrong\""}>
             <p><span className="guide-tag gotcha">Gotcha</span>Es un error conocido con cuentas y páginas recién creadas.</p>
             <p>Cuando el Instagram, la página y el acceso se arman todos el mismo día, Meta suele aplicar restricciones temporales antifraude que se destraban solas en 24 a 48 horas. No hace falta rehacer nada — probá de nuevo al otro día.</p>
-          </details>
+          </AccordionItem>
 
-          <details className="faq-item">
-            <summary><span>¿Necesito crear una cuenta de &quot;Meta Business&quot; para darles acceso?</span><span className="faq-icon" aria-hidden="true" /></summary>
+          <AccordionItem question={"¿Necesito crear una cuenta de \"Meta Business\" para darles acceso?"}>
             <p><span className="guide-tag info">Aclaración</span>No. Apenas tenés una Página de Facebook, ya contás con un Business Suite básico habilitado automáticamente para administrarla — no hay que crear nada aparte ni llenar ningún formulario de &quot;crear negocio&quot;.</p>
-          </details>
+          </AccordionItem>
 
-          <details className="faq-item">
-            <summary><span>No me llega ninguna notificación a Facebook normal</span><span className="faq-icon" aria-hidden="true" /></summary>
+          <AccordionItem question={"No me llega ninguna notificación a Facebook normal"}>
             <p><span className="guide-tag info">Aclaración</span>Las solicitudes de acceso a páginas no aparecen en las notificaciones comunes de Facebook. Entrá directamente a <code>business.facebook.com</code> logueada con tu cuenta y revisá la campanita ahí — es donde vive este tipo de aviso.</p>
-          </details>
+          </AccordionItem>
 
-          <details className="faq-item">
-            <summary><span>¿Le doy acceso completo a mi página?</span><span className="faq-icon" aria-hidden="true" /></summary>
+          <AccordionItem question={"¿Le doy acceso completo a mi página?"}>
             <p><span className="guide-tag info">Aclaración</span>No hace falta, y no te lo vamos a pedir. Solo necesitamos <b>Contenido</b>, <b>Actividad de la comunidad</b>, <b>Anuncios</b> y <b>Estadísticas</b> — lo justo para publicar, responder comentarios, gestionar pauta y mostrarte resultados. Vos seguís siendo la única dueña de la página en todo momento.</p>
-          </details>
+          </AccordionItem>
         </section>
 
         <footer className="guide-foot">

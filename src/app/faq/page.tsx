@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { AccordionItem } from '@/components/Accordion'
 import { PANEL_URL, REGISTRO_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -133,16 +134,12 @@ export default function FaqPage() {
           <section key={group.title} className="faq-group">
             <h2>{group.title}</h2>
             {group.items.map(item => (
-              <details key={item.q} className="faq-item">
-                <summary>
-                  <span>{item.q}</span>
-                  <span className="faq-icon" aria-hidden="true" />
-                </summary>
+              <AccordionItem key={item.q} question={item.q}>
                 <p>{item.a}</p>
                 {item.link && (
                   <p><a href={item.link.href} className="faq-inline-link">{item.link.label}</a></p>
                 )}
-              </details>
+              </AccordionItem>
             ))}
           </section>
         ))}

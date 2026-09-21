@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import PageTransition from '@/components/PageTransition'
 
 export const metadata: Metadata = {
   title: 'Gounuri — Tu tienda online',
@@ -55,7 +56,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <PageTransition>{children}</PageTransition>
         <GoogleAnalytics />
       </body>
     </html>
