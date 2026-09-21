@@ -67,7 +67,7 @@ function PhotoPanel() {
       <div className="relative hidden lg:block lg:w-[41.1%]">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/img/onboarding/onboarding-05-escalar.jpg')" }}
+          style={{ backgroundImage: "url('/img/onboarding/gounuri-onboarding-05-escalar.jpg')" }}
         />
         <div className="absolute inset-0 flex items-center justify-center px-6 text-white">
           <div className="text-left">
