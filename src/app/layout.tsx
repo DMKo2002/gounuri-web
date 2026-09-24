@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import MetaPixel from '@/components/MetaPixel'
 import PageTransition from '@/components/PageTransition'
 
 export const metadata: Metadata = {
@@ -58,6 +59,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <PageTransition>{children}</PageTransition>
         <GoogleAnalytics />
+        <MetaPixel />
       </body>
     </html>
   )
