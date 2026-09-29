@@ -499,12 +499,14 @@
   font-size:12px;color:#878787;letter-spacing:.02em;transition:color .2s;
 }
 .footer-col a:hover{color:var(--red)}
-.footer-slogan{flex:0 0 auto;margin-left:32px}
+.footer-slogan{flex:0 0 auto;margin-left:32px;align-self:stretch;display:flex;flex-direction:column;justify-content:space-between;gap:24px}
 .footer-slogan svg{display:block;width:min(190px,14vw);height:auto}
 .footer-bottom{
   max-width:1600px;margin:0 auto;padding:20px 40px 32px;
   border-top:1px solid #ececec;
 }
+.footer-creart{display:flex;justify-content:flex-end;width:min(190px,14vw)}
+.footer-creart img{display:block;width:51%;height:auto}
 .footer-bottom p{
   font-size:10px;color:#878787;letter-spacing:.05em;
   display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;

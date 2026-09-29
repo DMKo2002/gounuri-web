@@ -23,6 +23,15 @@ type FaqGroup = { title: string; items: Faq[] }
 // sitio) para no hardcodear URLs que ya viven ahí.
 const FAQ_GROUPS: FaqGroup[] = [
   {
+    title: 'Quiénes somos',
+    items: [
+      {
+        q: '¿Quién está detrás de Gounuri?',
+        a: `Gounuri.com fue creado por los fundadores de CreArt, un estudio de diseño y fotografía con más de 20 años de experiencia trabajando en sitios web, diseño gráfico, logos, fotografía y campañas. Construimos Gounuri para que cualquier marca pueda tener su propia tienda online con el respaldo de un equipo real y con trayectoria.`,
+      },
+    ],
+  },
+  {
     title: 'Sobre Gounuri',
     items: [
       {
