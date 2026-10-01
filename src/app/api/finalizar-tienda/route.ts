@@ -16,6 +16,10 @@ import { TEMPLATES } from '@/lib/templates'
 import { PLACEHOLDER_TENANT_NAME, PANEL_URL, PLANES } from '@/lib/site'
 import { addSlugDomain } from '@/lib/vercel'
 import { sendEmail, emailBienvenidaTienda } from '@/lib/email'
+import { seedDemoStore } from '@/lib/seedDemoStore'
+
+// Copiar los archivos demo de Storage puede tardar unos segundos.
+export const maxDuration = 60
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -126,6 +130,13 @@ export async function POST(req: Request) {
       })
       .eq('tenant_id', tenantId)
   }
+
+  // Datos demo (2026-10-01): la tienda arranca con los productos, categorías,
+  // imágenes y textos de ejemplo de su template, marcados is_demo para que el
+  // Panel avise que son de ejemplo y se puedan borrar de una. Best effort:
+  // si falla, la tienda queda vacía como antes y no se frena el alta.
+  const demoResult = await seedDemoStore(service, tenantId, chosenTemplate)
+  if (!demoResult.ok) console.error('[finalizar-tienda] no se pudieron cargar los datos demo', demoResult.error)
 
   // Vincula el tenant a gounuri_accounts, igual que /api/create-tenant.
   const { data: accountRow } = await service
