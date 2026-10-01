@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
-import { fullPriceForTerm, type BillingTerm, type PlanId } from '@/lib/plans'
+import { fullPriceForTerm, priceForTerm, TERM_DISCOUNTS, type BillingTerm, type PlanId } from '@/lib/plans'
 
 // Leyenda entre el selector de plazo y las tarjetas — solo texto, sin marco
 // ni fondo, las 3 frases en un renglón.
@@ -153,19 +153,29 @@ export default function Pricing({
               <p className="mt-1 min-h-[60px] text-sm text-zinc-600">{plan.descripcion}</p>
 
               {term > 1 ? (
-                // 2026-08-26 (bug reportado por David en QA): esta card
-                // lleva directo al checkout de Mercado Pago (/api/ir-a-plan
-                // -> createSignupPreapproval), así que el precio mostrado
-                // tiene que ser el de lista -- el descuento por plazo es
-                // solo para transferencia, que acá ni se ofrece.
+                // 2026-10-01 (pedido de David): la landing no mostraba el
+                // descuento por plazo semestral/anual, solo el Panel Admin
+                // y /perfil/plan. Ahora se muestran los dos precios igual
+                // que ahí: lista (Mercado Pago) y con descuento
+                // (Transferencia). El descuento real lo sigue calculando
+                // priceForTerm -- mismo TERM_DISCOUNTS que el resto.
                 <div className="mt-6">
-                  <span className="text-3xl font-bold tracking-tight text-zinc-900">
+                  <span className="text-3xl font-bold tracking-tight text-zinc-500">
                     {formatARS(fullPriceForTerm(plan.id, term, planPrices))}
                   </span>
-                  <span className="ml-1 text-sm text-zinc-500">total / {term} meses</span>
-                  <p className="mt-1 text-xs text-zinc-400">
-                    equivale a {formatARS(Math.round(fullPriceForTerm(plan.id, term, planPrices) / term))}/mes
+                  <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    equivale a {formatARS(Math.round(fullPriceForTerm(plan.id, term, planPrices) / term))}/mes · Mercado Pago
                   </p>
+                  <div className="mt-3">
+                    <span className="text-3xl font-bold tracking-tight text-zinc-800">
+                      {formatARS(priceForTerm(plan.id, term, planPrices))}
+                    </span>
+                    <span className="ml-1 text-sm text-zinc-500">/ {term} meses</span>
+                    <p className="mt-0.5 text-xs font-medium text-emerald-600">
+                      equivale a {formatARS(Math.round(priceForTerm(plan.id, term, planPrices) / term))}/mes · Transferencia (-{Math.round(TERM_DISCOUNTS[term] * 100)}%)
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-6">
