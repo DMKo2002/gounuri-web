@@ -15,11 +15,11 @@ export const metadata: Metadata = {
       'Creá tu tienda online para cualquier rubro: catálogo, pedidos, pagos y diseño profesional.',
     locale: 'es_AR',
     type: 'website',
-    images: [{ url: '/img/hero/gounuri-hero-01.jpg', width: 1920, height: 1233, alt: 'Gounuri — Tu tienda online' }],
+    images: [{ url: '/img/gounuri-og.jpg', width: 1836, height: 842, alt: 'Gounuri — Tu tienda online' }],
   },
   twitter: {
     card: 'summary_large_image',
-    images: ['/img/hero/gounuri-hero-01.jpg'],
+    images: ['/img/gounuri-og.jpg'],
   },
 }
 
