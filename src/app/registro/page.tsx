@@ -212,6 +212,7 @@ function RegistroForm() {
   // independiente del form de arriba, con su propio email.
   const [resendEmail, setResendEmail] = useState('')
   const [resendState, setResendState] = useState<'idle' | 'enviando' | 'enviado'>('idle')
+  const [yaConfirmada, setYaConfirmada] = useState(false)
 
   function set(field: keyof typeof form, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -268,11 +269,13 @@ function RegistroForm() {
     if (!resendEmail.trim()) return
     setResendState('enviando')
     try {
-      await fetch('/api/auth/reenviar-confirmacion', {
+      const r = await fetch('/api/auth/reenviar-confirmacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resendEmail }),
       })
+      const d = await r.json().catch(() => ({}))
+      setYaConfirmada(d?.estado === 'ya_confirmada')
     } catch {
       // el mensaje de abajo es genérico igual — no hace falta distinguir
       // un error de red acá
@@ -288,10 +291,16 @@ function RegistroForm() {
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900">
           <Mail size={22} className="text-white" />
         </div>
-        <h1 className="mt-6 text-xl font-semibold text-zinc-900">Revisá tu casilla</h1>
+        <h1 className="mt-6 text-xl font-semibold text-zinc-900">{yaConfirmada ? 'Tu cuenta ya está confirmada' : 'Revisá tu casilla'}</h1>
         <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          Si hay una cuenta pendiente de confirmar con ese email, te mandamos un link nuevo a{' '}
-          <strong className="text-zinc-700">{resendEmail}</strong>. Puede tardar unos minutos — revisá spam / correo no deseado.
+          {yaConfirmada ? (
+            <>Ya podés iniciar sesión con <strong className="text-zinc-700">{resendEmail}</strong>. No hace falta confirmar de nuevo.</>
+          ) : (
+            <>
+              Si hay una cuenta pendiente de confirmar con ese email, te mandamos un link nuevo a{' '}
+              <strong className="text-zinc-700">{resendEmail}</strong>. Puede tardar unos minutos — revisá spam / correo no deseado.
+            </>
+          )}
         </p>
         <Link href={LOGIN_URL} className="mt-6 inline-block text-sm font-medium text-zinc-900 underline underline-offset-2">
           Ir al inicio de sesión

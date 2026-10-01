@@ -39,8 +39,16 @@ export async function POST(req: NextRequest) {
     // Ni cuenta pendiente de confirmar (ya confirmada, o nunca existió): no
     // hay nada que reenviar. Mismo mensaje que el caso "sí mandamos" para no
     // revelar si el mail existe.
-    if (!existente || existente.confirmed_at) {
+    if (!existente) {
       return NextResponse.json({ ok: true, message: MENSAJE_GENERICO })
+    }
+
+    // 2026-10-01: cuenta ya confirmada -> se le dice, en vez del mensaje
+    // genérico (caso típico: abrió el link de confirmación en otro
+    // navegador, se "gastó" y acá pedía reenvío sin recibir nada). Sí revela
+    // que ese mail tiene cuenta; se aceptó a propósito por claridad.
+    if (existente.confirmed_at) {
+      return NextResponse.json({ ok: true, estado: 'ya_confirmada', message: 'Tu cuenta ya está confirmada. Podés iniciar sesión.' })
     }
 
     const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host')
