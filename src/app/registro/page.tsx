@@ -44,6 +44,7 @@ import Turnstile from 'react-turnstile'
 import { AlertTriangle, Eye, EyeOff, Loader2, Mail } from 'lucide-react'
 import { LOGIN_URL, TRIAL_DAYS } from '@/lib/site'
 import { isPlanId, isBillingTerm } from '@/lib/plans'
+import { trackPixel } from '@/lib/pixel'
 import Navbar from '@/components/Navbar'
 import OAuthButtons from '@/components/OAuthButtons'
 import SideStrip from '@/components/SideStrip'
@@ -253,6 +254,7 @@ function RegistroForm() {
         setTurnstileKey(k => k + 1)
         return
       }
+      trackPixel('Lead')
       setEnviado(true)
     } catch {
       setError('Error de conexión. Intentá de nuevo.')

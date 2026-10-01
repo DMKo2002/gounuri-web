@@ -20,6 +20,7 @@ import Pricing from '@/components/Pricing'
 import SideStrip from '@/components/SideStrip'
 import TransferPaymentBlock from '@/components/TransferPaymentBlock'
 import { createClient } from '@/lib/supabase/client'
+import { trackPixelOnce } from '@/lib/pixel'
 import { TEMPLATES, demoUrl } from '@/lib/templates'
 import { PLANES, TRIAL_DAYS, formatPrecio } from '@/lib/site'
 import { priceForTerm, fullPriceForTerm, TERM_DISCOUNTS, isPlanId, isBillingTerm, type BillingTerm, type PlanId } from '@/lib/plans'
@@ -453,6 +454,11 @@ function OnboardingContent() {
   // `?store=`), deja la URL en línea con el paso inicial ya resuelto —
   // reemplaza en vez de empujar, para no sumar una entrada de historial
   // extra en la primera carga.
+  // Meta Pixel: llegar al onboarding = cuenta confirmada (mail o Google).
+  useEffect(() => {
+    trackPixelOnce('CompleteRegistration')
+  }, [])
+
   useEffect(() => {
     if (!searchParams.get('paso')) {
       router.replace(`/onboarding?paso=${stepParam(initialStep)}`, { scroll: false })
