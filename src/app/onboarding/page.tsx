@@ -361,8 +361,6 @@ function OnboardingContent() {
   const initialStep = stepFromParam(searchParams.get('paso')) ?? (storeFromQuery ? 'template' : 'nombre')
   const [step, setStepState] = useState<Step>(initialStep)
   const [name, setName] = useState(storeFromQuery)
-  const [dniCuit, setDniCuit] = useState('')
-  const [celular, setCelular] = useState('')
   const [template, setTemplate] = useState('minimalista')
   const [plan, setPlan] = useState<PlanId>('standard')
   const [billingTerm, setBillingTerm] = useState<BillingTerm>(1)
@@ -569,23 +567,6 @@ function OnboardingContent() {
       console.error('[onboarding] chequeo de nombre falló, se deja seguir', e)
     }
     setCheckingNombre(false)
-
-    // DNI/CUIT y WhatsApp son opcionales y no bloquean el paso — son datos
-    // de la tienda para dejarla más preparada (facturación, botón de
-    // WhatsApp de la tienda, etc.), no un requisito para poder crearla. Se
-    // guardan en gounuri_accounts vía el mismo endpoint que usa
-    // /perfil/datos — best effort: si falla, seguimos igual al paso 2, el
-    // dueño puede completarlos después desde /perfil.
-    if (dniCuit.trim() || celular.trim()) {
-      fetch('/api/perfil/datos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dni: dniCuit.trim(),
-          celular: celular.trim() ? `+54 ${celular.trim()}` : '',
-        }),
-      }).catch(e => console.error('[onboarding] no se pudieron guardar DNI/CUIT y WhatsApp', e))
-    }
 
     goToStep('template')
   }
@@ -819,31 +800,9 @@ function OnboardingContent() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    DNI / CUIT <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <input
-                    className="w-full rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-300"
-                    value={dniCuit}
-                    onChange={e => setDniCuit(e.target.value)}
-                    placeholder="Sin puntos"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-zinc-500">
-                    WhatsApp <span className="font-normal text-zinc-400">(opcional)</span>
-                  </label>
-                  <div className="flex items-center gap-2 rounded-[15px] border border-[#d9d9d9] bg-white px-4 py-3.5 focus-within:ring-1 focus-within:ring-zinc-300">
-                    <span className="text-sm text-zinc-900">+54</span>
-                    <input
-                      className="w-full border-none bg-transparent text-sm text-zinc-900 focus:outline-none"
-                      value={celular}
-                      onChange={e => setCelular(e.target.value)}
-                      placeholder="11 1234 5678"
-                    />
-                  </div>
-                </div>
+                {/* 2026-10-01: se sacan DNI/CUIT y WhatsApp de este paso — el DNI
+                    no se usa en ningún lado y el WhatsApp ya se pide en el paso
+                    "Contacto y redes" (store_config.whatsapp_number). */}
 
                 {/* 2026-08-29 (pedido de ARam): se saca el campo "Dominio
                     propio" de acá — un dominio sin verificar cargado antes
