@@ -506,7 +506,8 @@
   border-top:1px solid #ececec;
 }
 .footer-creart{display:flex;justify-content:flex-end;width:min(190px,14vw)}
-.footer-creart img{display:block;width:51%;height:auto}
+.footer-creart a{display:block;width:51%;cursor:pointer}
+.footer-creart img{display:block;width:100%;height:auto}
 .footer-bottom p{
   font-size:10px;color:#878787;letter-spacing:.05em;
   display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;

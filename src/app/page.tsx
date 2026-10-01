@@ -41,6 +41,11 @@ export const metadata: Metadata = {
     url: 'https://www.gounuri.com',
     locale: 'es_AR',
     type: 'website',
+    images: [{ url: '/img/hero/gounuri-hero-01.jpg', width: 1920, height: 1233, alt: 'Gounuri — Tu tienda online' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/img/hero/gounuri-hero-01.jpg'],
   },
 }
 

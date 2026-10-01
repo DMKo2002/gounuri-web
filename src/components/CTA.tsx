@@ -1,4 +1,4 @@
-import { REGISTRO_PAGO_URL } from '@/lib/site'
+import { REGISTRO_PAGO_URL, INSTAGRAM_URL } from '@/lib/site'
 
 // Revisado 2026-08-28 a pedido de Aram: la nota anterior (19/08) decia que
 // esta seccion ya no ofrecia alta self-serve porque un pilot manual en
@@ -34,7 +34,7 @@ export default function CTA() {
           </a>
         </div>
         <a
-          href="https://instagram.com/gounuri.com"
+          href={INSTAGRAM_URL}
           target="_blank"
           rel="noopener"
           className="mt-4 inline-block text-sm text-zinc-500 underline decoration-zinc-300 underline-offset-4 transition hover:text-zinc-700"

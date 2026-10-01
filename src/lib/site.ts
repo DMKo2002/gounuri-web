@@ -56,6 +56,12 @@ export const TERM_DISCOUNTS_PCT: Record<6 | 12, number> = { 6: 10, 12: 20 }
 // No tiene precio fijo ni se cobra por acá — es "contactanos" para catálogos
 // grandes, ecosistemas a medida o necesidades fuera de los planes de arriba.
 // El precio se evalúa caso por caso.
+// Redes oficiales de Gounuri (2026-10-01): fuente unica para footer, CTA y lo
+// que haga falta. Los 6 templates demo las toman de store_config en la DB.
+export const INSTAGRAM_URL = 'https://www.instagram.com/gounuri.tienda/'
+export const FACEBOOK_URL = 'https://www.facebook.com/profile.php?id=61594309083360'
+export const CREART_URL = 'https://www.creart2000.com'
+
 export const CONTACTO_EMAIL = 'info@gounuri.com'
 export const CONTACTO_WHATSAPP_NUM = '541131351972' // sin +, formato wa.me
 
