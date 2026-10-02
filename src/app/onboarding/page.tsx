@@ -762,11 +762,23 @@ function OnboardingContent() {
 
       {/* ── PASO 1: Nombre (diseño Figma "Registracion 1A/1B/1C") ── */}
       {step === 'nombre' && (
-        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
+        <div className="relative flex min-h-[calc(100vh-72px)] items-center justify-center overflow-hidden bg-white px-5 py-8 lg:items-stretch lg:justify-start lg:p-0">
+          {/* Mobile/tablet (< lg): la foto pasa a ser el fondo de toda la
+              pantalla, con un velo oscuro, y el formulario va en una tarjeta
+              blanca encima (pedido David 2026-10-02: en celular el onboarding
+              quedaba solo con fondo blanco, sin ninguna imagen). En desktop
+              no se ve: ahí la foto vive en su propio panel a la derecha. */}
+          <div
+            key={`m-${slideIndex}`}
+            className="absolute inset-0 bg-cover bg-center lg:hidden"
+            style={{ backgroundImage: `url('${ONBOARDING_SLIDES[slideIndex]}')` }}
+          />
+          <div className="absolute inset-0 bg-black/45 lg:hidden" />
+
           {/* Panel del formulario — el bloque de datos va centrado en el eje Y
               (flex-1 + justify-center), el logo queda fijo abajo a la
               izquierda sin importar cuánto contenido tenga el formulario. */}
-          <div className="relative flex w-full flex-col px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
+          <div className="relative z-10 flex w-full max-w-md flex-col rounded-3xl bg-white px-6 py-8 shadow-2xl sm:px-8 lg:w-1/2 lg:max-w-none lg:rounded-none lg:bg-transparent lg:px-24 lg:py-16 lg:shadow-none">
             {/* Título en el flujo normal, arriba del todo (ya no forma parte
                 del bloque centrado) — queda más arriba que antes. */}
             <h1 className="text-4xl font-extrabold leading-[1.15] text-zinc-900 sm:text-5xl">
@@ -837,7 +849,7 @@ function OnboardingContent() {
                 de alto (validación, error, etc). Agrandado 150% respecto al
                 tamaño anterior. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- asset SVG exportado de Figma tal cual, no una foto a optimizar */}
-            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
+            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto lg:left-24 lg:block" />
           </div>
 
           {/* Panel de imagen — foto exportada de Figma tal cual, sin filtro ni
@@ -1244,8 +1256,15 @@ function OnboardingContent() {
           crea la tienda directo con el plan por defecto (prueba gratis, sin
           elegir plan); la negra manda al selector de planes de siempre. */}
       {step === 'escalar' && (
-        <div className="relative flex min-h-[calc(100vh-72px)] overflow-hidden bg-white">
-          <div className="relative flex w-full flex-col px-6 py-12 sm:px-16 sm:py-16 lg:w-1/2 lg:px-24">
+        <div className="relative flex min-h-[calc(100vh-72px)] items-center justify-center overflow-hidden bg-white px-5 py-8 lg:items-stretch lg:justify-start lg:p-0">
+          {/* Mobile/tablet (< lg): foto de fondo con velo + tarjeta (ver paso 1). */}
+          <div
+            className="absolute inset-0 bg-cover bg-center lg:hidden"
+            style={{ backgroundImage: `url('/img/onboarding/gounuri-onboarding-05-escalar.jpg')` }}
+          />
+          <div className="absolute inset-0 bg-black/45 lg:hidden" />
+
+          <div className="relative z-10 flex w-full max-w-md flex-col rounded-3xl bg-white px-6 py-8 shadow-2xl sm:px-8 lg:w-1/2 lg:max-w-none lg:rounded-none lg:bg-transparent lg:px-24 lg:py-16 lg:shadow-none">
             {/* Título visible solo en mobile/tablet (en desktop va superpuesto
                 a la foto, como en el Figma) — el diseño de Figma es solo
                 desktop, esto es para no dejar la pantalla sin contexto en
@@ -1304,7 +1323,7 @@ function OnboardingContent() {
 
             {/* Logo fijo abajo a la izquierda, igual que en el paso 1. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto sm:left-16 sm:block lg:left-24" />
+            <img src="/img/onboarding/gounuri-logo-slogan.svg" alt="gounuri.com" className="absolute bottom-10 left-6 hidden h-36 w-auto lg:left-24 lg:block" />
           </div>
 
           {/* Panel de foto — misma pareja foto+franja que el paso 1, ancho
